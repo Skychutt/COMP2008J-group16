@@ -118,6 +118,20 @@ public class GameManager {
         checkWin();
     }
 
+    /**
+     * Print the current game state for all players.
+     * Useful for debugging and the project demo.
+     */
+    public void printGameState() {
+        System.out.println("===== Game State =====");
+        System.out.println("Current turn: " + getCurrentPlayer().getName());
+        for (Player p : players) {
+            System.out.println(p);  // calls Player.toString()
+        }
+        System.out.println("Deck remaining: " + Deck.getInstance().drawPileSize() + " cards");
+        System.out.println("======================");
+    }
+
     /** @return the player whose turn it currently is */
     public Player getCurrentPlayer() {
         return players.get(turn);

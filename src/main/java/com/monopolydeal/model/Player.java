@@ -127,13 +127,7 @@ public class Player implements ISubject {
         }
 
         // Find the card without removing it first, so we can validate its type
-        Card found = null;
-        for (Card c : hand.getCards()) {
-            if (c.getId() == cardId) {
-                found = c;
-                break;
-            }
-        }
+        Card found = hand.findCard(cardId);
 
         if (found == null) {
             notifyAllObservers("Card not found in hand (id=" + cardId + ")");
@@ -153,18 +147,6 @@ public class Player implements ISubject {
         notifyAllObservers(name + " deposited [" + found.getName() + "] to bank. Bank total: " + bankArea.total() + "M");
     }
 
-    /**
-     * Helper method: find a card in hand by its ID.
-     * Returns the card if found, or null if not found.
-     */
-    private Card findCardInHand(int cardId) {
-        for (Card c : hand.getCards()) {
-            if (c.getId() == cardId) {
-                return c;
-            }
-        }
-        return null;
-    }
 
     /**
      * Place a property card from hand into the property area.
@@ -179,7 +161,7 @@ public class Player implements ISubject {
         }
 
         // Find the card in hand
-        Card card = findCardInHand(cardId);
+        Card card = hand.findCard(cardId);
         if (card == null) {
             notifyAllObservers("Card not found in hand (id=" + cardId + ")");
             return;

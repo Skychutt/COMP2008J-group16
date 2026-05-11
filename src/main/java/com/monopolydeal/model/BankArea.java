@@ -31,6 +31,15 @@ public class BankArea {
         return sum;
     }
 
+    /**
+     * Check if the bank has enough money to pay the given amount.
+     * @param amount the amount to check
+     * @return true if bank total >= amount
+     */
+    public boolean canAfford(int amount) {
+        return total() >= amount;
+    }
+
     /** Deposit a card into the bank. */
     public void add(Card c) {
         money.add(c);

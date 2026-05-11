@@ -19,6 +19,19 @@ public class Hand {
         this.cards = new ArrayList<>();
     }
 
+    /**
+     * Find a card in hand by its ID without removing it.
+     * Returns the card if found, or null if not found.
+     */
+    public Card findCard(int cardId) {
+        for (Card c : cards) {
+            if (c.getId() == cardId) {
+                return c;
+            }
+        }
+        return null;
+    }
+
     /** @return the list of all cards in this hand */
     public List<Card> getCards() {
         return cards;
