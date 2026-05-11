@@ -2,7 +2,7 @@ package com.monopolydeal.model;
 
 import com.monopolydeal.interfaces.IGameObserver;
 import com.monopolydeal.interfaces.ISubject;
-import com.monopolydeal.model.card.Card;
+import com.monopolydeal.model.card.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +20,12 @@ public class Player implements ISubject {
     private BankArea bankArea;                  // Player's bank area for money storage
     private PropertyArea propertyArea;          // Player's property area for property sets
     private List<IGameObserver> observers;      // Registered observers for event notifications
+
+    /** Maximum cards allowed in hand at end of turn. */
+    public static final int MAX_HAND_SIZE = 7;
+
+    /** Number of actions allowed per turn. */
+    public static final int ACTIONS_PER_TURN = 3;
 
     /**
      * Construct a new Player with the given ID and name.
@@ -78,13 +84,12 @@ public class Player implements ISubject {
      */
     public void draw() {
         Deck deck = Deck.getInstance();
-        int count = hand.isEmpty() ? 5 : 2;
-        for (int i = 0; i < count; i++) {
-            Card c = deck.draw(1).get(0);
-            if (c != null) {
-                hand.add(c);
-            }
+        int count = hand.isEmpty() ? 5 : 2;   // empty hand → draw 5, else draw 2
+        List<Card> drawn = deck.draw(count);
+        for (Card c : drawn) {
+            hand.add(c);
         }
+        notifyAllObservers(name + " drew " + drawn.size() + " card(s). Hand size: " + hand.size());
     }
 
     /**
@@ -95,14 +100,102 @@ public class Player implements ISubject {
      */
     public void playCard(int cardId) {
         if (actions <= 0) {
+            notifyAllObservers(name + " has no actions left!");
             return;
         }
         Card c = hand.removeCard(cardId);
         if (c != null) {
-            c.executePlay(this);
-            actions--;
-            notifyAllObservers(name + " played " + c.getName());
+            notifyAllObservers("Card not found in hand (id=" + cardId + ")");
+            return;
         }
+        c.executePlay(this);
+        actions--;
+        notifyAllObservers(name + " played " + c.getName());
+
+    }
+
+    /**
+     * Deposit a money or action card from hand into the bank area.
+     * Property cards cannot be deposited as money.
+     * Consumes 1 action.
+     * @param cardId the unique ID of the card to deposit
+     */
+    public void putMoneyInBank(int cardId) {
+        if (actions <= 0) {
+            notifyAllObservers(name + " has no actions left!");
+            return;
+        }
+
+        // Find the card without removing it first, so we can validate its type
+        Card found = null;
+        for (Card c : hand.getCards()) {
+            if (c.getId() == cardId) {
+                found = c;
+                break;
+            }
+        }
+
+        if (found == null) {
+            notifyAllObservers("Card not found in hand (id=" + cardId + ")");
+            return;
+        }
+
+        // Property cards cannot be deposited into the bank
+        if (found instanceof PropertyCard) {
+            notifyAllObservers("Cannot put a Property Card into the bank!");
+            return;
+        }
+
+        // Now safely remove from hand and add to bank
+        hand.removeCard(cardId);
+        bankArea.add(found);
+        actions--;
+        notifyAllObservers(name + " deposited [" + found.getName() + "] to bank. Bank total: " + bankArea.total() + "M");
+    }
+
+    /**
+     * Helper method: find a card in hand by its ID.
+     * Returns the card if found, or null if not found.
+     */
+    private Card findCardInHand(int cardId) {
+        for (Card c : hand.getCards()) {
+            if (c.getId() == cardId) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Place a property card from hand into the property area.
+     * Consumes 1 action.
+     * @param cardId the unique ID of the property card to place
+     */
+    public void placeProperty(int cardId) {
+        // Check if player has actions remaining
+        if (actions <= 0) {
+            notifyAllObservers(name + " has no actions left!");
+            return;
+        }
+
+        // Find the card in hand
+        Card card = findCardInHand(cardId);
+        if (card == null) {
+            notifyAllObservers("Card not found in hand (id=" + cardId + ")");
+            return;
+        }
+
+        // Make sure it is a property card
+        if (!(card instanceof PropertyCard)) {
+            notifyAllObservers("Card [" + card.getName() + "] is not a Property Card!");
+            return;
+        }
+
+        // Remove from hand and place in property area
+        hand.removeCard(cardId);
+        propertyArea.add(card);
+        actions--;
+        notifyAllObservers(name + " placed [" + card.getName() + "]. Complete sets: " + propertyArea.countCompleteSets());
     }
 
     /**
@@ -110,11 +203,70 @@ public class Player implements ISubject {
      * To be implemented with UI interaction for card selection.
      * @param amount the amount to pay in millions
      */
-    public void payAmount(int amount) {
-        // Payment logic - player selects cards from bank/property area
-        // to be implemented with UI interaction
+    public List<Card> payAmount(int amount) {
+        List<Card> paid = new ArrayList<>();
+        int totalPaid = 0;
+
+        // Step 1: Pay from bank cards first
+        List<Card> bankCards = new ArrayList<>(bankArea.getMoney());
+        for (Card c : bankCards) {
+            if (totalPaid >= amount) break;
+            bankArea.remove(c);
+            paid.add(c);
+            totalPaid += c.getValue();
+        }
+
+        // Step 2: If bank is not enough, also pay with property cards
+        if (totalPaid < amount) {
+            List<PropertySet> sets = propertyArea.getSets();
+            for (PropertySet set : sets) {
+                List<PropertyCard> propCards = new ArrayList<>(set.getCards());
+                for (PropertyCard c : propCards) {
+                    if (totalPaid >= amount) break;
+                    propertyArea.remove(c);
+                    paid.add(c);
+                    totalPaid += c.getValue();
+                }
+            }
+        }
+
+        notifyAllObservers(name + " paid " + totalPaid + "M (owed " + amount + "M).");
+        return paid;
     }
 
+    /**
+     * Receive cards transferred from another player (e.g., as rent payment).
+     * All received cards go into this player's bank area.
+     * @param cards the list of cards received
+     */
+    public void receivePayment(List<Card> cards) {
+        for (Card c : cards) {
+            bankArea.add(c);
+        }
+        notifyAllObservers(name + " received " + cards.size() + " card(s) as payment. Bank: " + bankArea.total() + "M");
+    }
+
+    /**
+     * End the current turn.
+     * Enforces the 7-card hand limit: if more than 7 cards remain, the player must
+     * discard down to 7. The discarded cards are added to the deck's discard pile.
+     *
+     * Note: In a GUI version, the player would choose which cards to discard.
+     * Here we auto-discard from the end of the hand list for simplicity.
+     */
+    public void endTurn() {
+        Deck deck = Deck.getInstance();
+
+        // If hand has more than 7 cards, discard the extras one by one
+        while (hand.size() > MAX_HAND_SIZE) {
+            Card discard = hand.getCards().get(0);  // always take the first card
+            hand.removeCard(discard.getId());
+            deck.addToDiscard(discard);
+            notifyAllObservers(name + " discarded [" + discard.getName() + "] (hand limit).");
+        }
+
+        notifyAllObservers(name + "'s turn ended. Hand: " + hand.size() + " cards | Bank: " + bankArea.total() + "M");
+    }
     /**
      * Handle incoming game event updates.
      * @param event description of the game event

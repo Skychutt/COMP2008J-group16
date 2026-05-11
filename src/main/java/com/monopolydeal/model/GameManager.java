@@ -1,6 +1,7 @@
 package com.monopolydeal.model;
 
 import com.monopolydeal.interfaces.IGameObserver;
+import com.monopolydeal.model.card.Card;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ public class GameManager {
     private List<Player> players;              // List of all players in the game
     private int turn;                          // Index of the current player's turn
     private List<IGameObserver> observers;     // Registered observers for game events
+    private boolean gameOver;              // True once a winner has been found
 
     /** Private constructor - initializes empty player list and observer list. */
     private GameManager() {
@@ -49,6 +51,8 @@ public class GameManager {
      */
     public void initGame(int count) {
         players.clear();
+        gameOver = false;
+
         for (int i = 0; i < count; i++) {
             players.add(new Player(String.valueOf(i + 1), "Player " + (i + 1)));
         }
@@ -71,11 +75,15 @@ public class GameManager {
      * (2 cards normally, 5 if the hand is empty).
      */
     public void nextTurn() {
-        turn = (turn + 1) % players.size();
+        // End current player's turn (enforces 7-card hand limit)
         Player current = getCurrentPlayer();
-        current.setActions(3);
-        current.draw();
-        notifyAllObservers("Turn " + turn + ": " + current.getName() + "'s turn.");
+        current.endTurn();
+        turn = (turn + 1) % players.size();
+        // Set up the new current player for their turn
+        Player next = getCurrentPlayer();
+        next.setActions(3);
+        next.draw();
+        notifyAllObservers("Turn " + turn + ": " + current.getName() + "'s turn. Actions: " + next.getActions() + " | Hand: " + next.getHand().size() + " cards ===");
     }
 
     /**
@@ -86,11 +94,28 @@ public class GameManager {
     public boolean checkWin() {
         for (Player p : players) {
             if (p.getPropertyArea().countCompleteSets() >= 3) {
+                gameOver = true;
                 notifyAllObservers(p.getName() + " wins the game!");
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Collect rent from a target player on behalf of the current player.
+     * @param target     the player who must pay rent
+     * @param rentAmount the amount of rent owed
+     */
+    public void collectRent(Player target, int rentAmount) {
+        // Week 11-12: implement rent logic here
+        // Stub so the project compiles now
+        Player collector = getCurrentPlayer();
+        List<Card> paid = target.payAmount(rentAmount);
+        collector.receivePayment(paid);
+        notifyAllObservers(collector.getName() + " collected " + rentAmount
+                + "M rent from " + target.getName() + ".");
+        checkWin();
     }
 
     /** @return the player whose turn it currently is */
@@ -106,6 +131,11 @@ public class GameManager {
     /** @return the current turn index */
     public int getTurn() {
         return turn;
+    }
+
+    /** @return true if the game is over */
+    public boolean isGameOver() {
+        return gameOver;
     }
 
     /** Register an observer to receive game event notifications. */
