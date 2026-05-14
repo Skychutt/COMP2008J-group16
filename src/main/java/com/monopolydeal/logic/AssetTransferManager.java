@@ -1,7 +1,13 @@
 package com.monopolydeal.logic;
 
 import com.monopolydeal.model.Player;
+import com.monopolydeal.model.PropertySet;
 import com.monopolydeal.model.card.Card;
+import com.monopolydeal.model.card.PropertyCard;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -20,7 +26,22 @@ public class AssetTransferManager {
      * @return a result object indicating success, amount paid, and assets used
      */
     public PaymentResult processPayment(Player payer, Player receiver, int requiredAmount, PaymentMode paymentMode) {
-        return null;
+        if (payer == null || receiver == null || requiredAmount <= 0) {
+            return new PaymentResult(false, 0, Collections.emptyList(), "Invalid payment request.");
+        }
+        if (!canAfford(payer, requiredAmount)) {
+            return new PaymentResult(false, 0, Collections.emptyList(), payer.getName() + " cannot afford " + requiredAmount + "M.");
+        }
+
+        List<Card> eligible = getEligibleAssets(payer, paymentMode);
+        List<Card> selected = selectOptimalPaymentAssets(eligible, requiredAmount);
+        if (selected.isEmpty()) {
+            return new PaymentResult(false, 0, Collections.emptyList(), "No eligible assets for this payment mode.");
+        }
+        int totalPaid = selected.stream().mapToInt(Card::getValue).sum();
+        executeTransfer(payer, receiver, selected);
+        return new PaymentResult(true, totalPaid, selected,
+                payer.getName() + " paid " + totalPaid + "M to " + receiver.getName() + " (owed " + requiredAmount + "M, no change).");
     }
 
     /**
@@ -30,17 +51,46 @@ public class AssetTransferManager {
      * @return true if the player can afford the payment
      */
     public boolean canAfford(Player player, int requiredAmount) {
-        return false;
+        if (player == null || requiredAmount <= 0) {
+            return true;
+        }
+        int total = 0;
+        for (Card c : player.getBankArea().getMoney()) {
+            total += c.getValue();
+        }
+        for (PropertySet set : player.getPropertyArea().getSets()) {
+            for (PropertyCard pc : set.getCards()) {
+                total += pc.getValue();
+            }
+        }
+        return total >= requiredAmount;
     }
 
     /**
-     * Selects an optimal combination of assets to cover the required amount, following no-change rules.
+     * Selects assets to cover the required amount (greedy ascending value to limit overpay).
      * @param availableAssets list of all assets the player can use for payment
      * @param requiredAmount the minimum total value needed
      * @return a list of selected assets to pay with
      */
     public List<Card> selectOptimalPaymentAssets(List<Card> availableAssets, int requiredAmount) {
-        return null;
+        if (availableAssets == null || availableAssets.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Card> sorted = new ArrayList<>(availableAssets);
+        sorted.sort(Comparator.comparingInt(Card::getValue));
+        List<Card> chosen = new ArrayList<>();
+        int sum = 0;
+        for (Card c : sorted) {
+            if (sum >= requiredAmount) {
+                break;
+            }
+            chosen.add(c);
+            sum += c.getValue();
+        }
+        if (sum < requiredAmount) {
+            return Collections.emptyList();
+        }
+        return chosen;
     }
 
     /**
@@ -50,7 +100,12 @@ public class AssetTransferManager {
      * @param assetsToTransfer the list of assets to move
      */
     private void executeTransfer(Player from, Player to, List<Card> assetsToTransfer) {
-        // Implementation will move cards from Bank/Property areas
+        for (Card c : assetsToTransfer) {
+            from.getBankArea().remove(c);
+            from.getPropertyArea().remove(c);
+        }
+        List<Card> copy = new ArrayList<>(assetsToTransfer);
+        to.receivePayment(copy);
     }
 
     /**
@@ -60,7 +115,22 @@ public class AssetTransferManager {
      * @return a filtered list of cards eligible for payment
      */
     private List<Card> getEligibleAssets(Player player, PaymentMode mode) {
-        return null;
+        List<Card> bank = new ArrayList<>(player.getBankArea().getMoney());
+        List<Card> props = new ArrayList<>();
+        for (PropertySet set : player.getPropertyArea().getSets()) {
+            props.addAll(new ArrayList<>(set.getCards()));
+        }
+        switch (mode) {
+            case USE_MONEY_ONLY:
+                return bank;
+            case USE_PROPERTY_ONLY:
+                return props;
+            case USE_MIXED:
+            default:
+                List<Card> all = new ArrayList<>(bank);
+                all.addAll(props);
+                return all;
+        }
     }
 
     /**
@@ -88,7 +158,6 @@ public class AssetTransferManager {
             this.message = message;
         }
 
-        // Getters
         public boolean isSuccess() { return success; }
         public int getTotalPaid() { return totalPaid; }
         public List<Card> getAssetsUsed() { return assetsUsed; }

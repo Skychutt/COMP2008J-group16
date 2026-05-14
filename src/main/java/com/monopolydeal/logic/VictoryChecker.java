@@ -1,12 +1,13 @@
 package com.monopolydeal.logic;
 
 import com.monopolydeal.model.Player;
-import com.monopolydeal.model.PropertySet;
 
 /**
  * Checks the victory condition (3 complete property sets of different colors).
  */
 public class VictoryChecker {
+
+    private static final int SETS_TO_WIN = 3;
 
     /**
      * Determines if the player has met the victory condition.
@@ -14,7 +15,7 @@ public class VictoryChecker {
      * @return true if the player has won
      */
     public boolean checkWinner(Player player) {
-        return false;
+        return countCompletedSets(player) >= SETS_TO_WIN;
     }
 
     /**
@@ -23,6 +24,6 @@ public class VictoryChecker {
      * @return the count of completed sets
      */
     public int countCompletedSets(Player player) {
-        return 0;
+        return player.getPropertyArea().countCompleteSets();
     }
 }

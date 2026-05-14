@@ -37,15 +37,15 @@ public class Main {
         System.out.println("\n[5] Initializing 3-player game...");
         GameManager gm = GameManager.getInstance();
         gm.initGame(3);
+        gm.beginCurrentPlayerTurn();
 
         for (Player p : gm.getPlayers()) {
             System.out.println("    " + p.getName() + " hand: " + p.getHand().size() + " cards");
         }
         System.out.println("    Draw pile remaining: " + Deck.getInstance().drawPileSize() + " cards");
 
-        // 6. Test turn: draw cards
-        System.out.println("\n[6] Next turn (Player 1 draws)...");
-        gm.nextTurn();
+        // 6. Current player state (first turn already started)
+        System.out.println("\n[6] First turn (current player)...");
         Player current = gm.getCurrentPlayer();
         System.out.println("    Current player: " + current.getName());
         System.out.println("    Hand size: " + current.getHand().size());

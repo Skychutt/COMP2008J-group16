@@ -1,13 +1,18 @@
 package com.monopolydeal.logic;
 
+import com.monopolydeal.enums.ActionType;
+import com.monopolydeal.model.card.ActionCard;
+import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 import com.monopolydeal.model.PropertySet;
 
 /**
  * Responsible for calculating rent values based on property sets, buildings, and modifiers.
- * Core logic for the rent collection phase.
  */
 public class RentCalculator {
+
+    private static final int HOUSE_BONUS = 3;
+    private static final int HOTEL_BONUS = 4;
 
     /**
      * Calculates the final rent to charge, including base rent, building bonuses, and multipliers.
@@ -16,25 +21,35 @@ public class RentCalculator {
      * @return the total rent amount to be paid
      */
     public static int calculateFinalRent(PropertySet set, boolean isDoubleRent) {
-        return 0;
+        if (!canCollectRent(set)) {
+            return 0;
+        }
+        int rent = getBaseRent(set) + getBuildingBonus(set);
+        if (isDoubleRent) {
+            rent *= 2;
+        }
+        return rent;
     }
 
-    /**
-     * Retrieves the base rent value for a given property set, without any modifiers.
-     * @param set the target property set
-     * @return the base rent value
-     */
     private static int getBaseRent(PropertySet set) {
-        return 0;
+        return set.getRent();
     }
 
-    /**
-     * Calculates the additional rent bonus from House and Hotel cards on the property set.
-     * @param set the target property set
-     * @return the total building bonus
-     */
     private static int getBuildingBonus(PropertySet set) {
-        return 0;
+        int bonus = 0;
+        for (PropertyCard pc : set.getCards()) {
+            for (Card u : pc.getUpgrades()) {
+                if (u instanceof ActionCard) {
+                    ActionType t = ((ActionCard) u).getType();
+                    if (t == ActionType.HOUSE) {
+                        bonus += HOUSE_BONUS;
+                    } else if (t == ActionType.HOTEL) {
+                        bonus += HOTEL_BONUS;
+                    }
+                }
+            }
+        }
+        return bonus;
     }
 
     /**
@@ -43,6 +58,6 @@ public class RentCalculator {
      * @return true if the set is complete and rent can be collected
      */
     public static boolean canCollectRent(PropertySet set) {
-        return false;
+        return set != null && set.isComplete();
     }
 }

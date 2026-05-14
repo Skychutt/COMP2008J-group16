@@ -104,7 +104,7 @@ public class Player implements ISubject {
             return;
         }
         Card c = hand.removeCard(cardId);
-        if (c != null) {
+        if (c == null) {
             notifyAllObservers("Card not found in hand (id=" + cardId + ")");
             return;
         }
@@ -223,7 +223,11 @@ public class Player implements ISubject {
      */
     public void receivePayment(List<Card> cards) {
         for (Card c : cards) {
-            bankArea.add(c);
+            if (c instanceof PropertyCard) {
+                propertyArea.add(c);
+            } else {
+                bankArea.add(c);
+            }
         }
         notifyAllObservers(name + " received " + cards.size() + " card(s) as payment. Bank: " + bankArea.total() + "M");
     }

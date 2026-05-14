@@ -70,20 +70,29 @@ public class GameManager {
     }
 
     /**
+     * Begins the current player's first draw phase and action allowance (call after {@link #initGame(int)}).
+     * Draws 2 cards (or 5 if hand is empty) and sets actions to 3.
+     */
+    public void beginCurrentPlayerTurn() {
+        Player p = getCurrentPlayer();
+        p.setActions(Player.ACTIONS_PER_TURN);
+        p.draw();
+        notifyAllObservers(p.getName() + "'s turn started. Actions: " + p.getActions());
+    }
+
+    /**
      * Advance to the next player's turn.
      * Resets the action count to 3 and triggers the draw phase
      * (2 cards normally, 5 if the hand is empty).
      */
     public void nextTurn() {
-        // End current player's turn (enforces 7-card hand limit)
         Player current = getCurrentPlayer();
         current.endTurn();
         turn = (turn + 1) % players.size();
-        // Set up the new current player for their turn
+        beginCurrentPlayerTurn();
         Player next = getCurrentPlayer();
-        next.setActions(3);
-        next.draw();
-        notifyAllObservers("Turn " + turn + ": " + current.getName() + "'s turn. Actions: " + next.getActions() + " | Hand: " + next.getHand().size() + " cards ===");
+        notifyAllObservers("Now " + next.getName() + "'s turn | Hand: " + next.getHand().size()
+                + " cards | Actions: " + next.getActions());
     }
 
     /**
@@ -94,12 +103,20 @@ public class GameManager {
     public boolean checkWin() {
         for (Player p : players) {
             if (p.getPropertyArea().countCompleteSets() >= 3) {
-                gameOver = true;
-                notifyAllObservers(p.getName() + " wins the game!");
+                markWinner(p);
                 return true;
             }
         }
         return false;
+    }
+
+    /** Marks the game as finished with the given winner (victory condition: 3 complete sets). */
+    public void markWinner(Player winner) {
+        if (gameOver) {
+            return;
+        }
+        gameOver = true;
+        notifyAllObservers(winner.getName() + " wins the game!");
     }
 
     /**
