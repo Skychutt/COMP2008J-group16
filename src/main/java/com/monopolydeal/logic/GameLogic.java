@@ -24,6 +24,7 @@ public class GameLogic {
     private final ActionHandler actionHandler;
     private final RuleValidator ruleValidator;
     private final VictoryChecker victoryChecker;
+    private boolean doubleRentActive;
 
     /**
      * Constructor for the main game logic controller.
@@ -38,7 +39,10 @@ public class GameLogic {
         this.actionHandler = new ActionHandler(this);
         this.ruleValidator = new RuleValidator();
         this.victoryChecker = new VictoryChecker();
+        this.doubleRentActive = false;
     }
+    public boolean isDoubleRentActive() { return doubleRentActive; }
+    public void setDoubleRentActive(boolean active) { this.doubleRentActive = active; }
 
     /**
      * Starts a new game loop: begins the first turn (draw + actions) and syncs the turn manager.
