@@ -55,7 +55,15 @@ public class PropertySet {
 
     /** @return true if this set has enough cards to be considered complete */
     public boolean isComplete() {
-        return cards.size() >= need;
+        if (need <= 0 || cards.size() < need) {
+            return false;
+        }
+        for (PropertyCard card : cards) {
+            if (!card.isWild()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

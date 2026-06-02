@@ -26,22 +26,145 @@ public class AssetTransferManager {
      * @return a result object indicating success, amount paid, and assets used
      */
     public PaymentResult processPayment(Player payer, Player receiver, int requiredAmount, PaymentMode paymentMode) {
+        return processPayment(payer, receiver, requiredAmount, paymentMode, null);
+    }
+
+    /**
+     * Processes payment and allows an optional payer-driven card selection strategy.
+     * When the chooser returns an invalid/insufficient selection, fallback selection is used
+     * so payment still follows game rules.
+     */
+    public PaymentResult processPayment(
+            Player payer,
+            Player receiver,
+            int requiredAmount,
+            PaymentMode paymentMode,
+            PaymentChooser chooser
+    ) {
         if (payer == null || receiver == null || requiredAmount <= 0) {
             return new PaymentResult(false, 0, Collections.emptyList(), "Invalid payment request.");
         }
-        if (!canAfford(payer, requiredAmount)) {
-            return new PaymentResult(false, 0, Collections.emptyList(), payer.getName() + " cannot afford " + requiredAmount + "M.");
-        }
 
         List<Card> eligible = getEligibleAssets(payer, paymentMode);
-        List<Card> selected = selectOptimalPaymentAssets(eligible, requiredAmount);
+        List<Card> selected = choosePaymentAssets(payer, receiver, eligible, requiredAmount, chooser);
         if (selected.isEmpty()) {
-            return new PaymentResult(false, 0, Collections.emptyList(), "No eligible assets for this payment mode.");
+            return new PaymentResult(true, 0, Collections.emptyList(),
+                    payer.getName() + " has no payable assets and pays 0M to " + receiver.getName()
+                            + " (owed " + requiredAmount + "M).");
         }
         int totalPaid = selected.stream().mapToInt(Card::getValue).sum();
         executeTransfer(payer, receiver, selected);
+        if (totalPaid < requiredAmount) {
+            return new PaymentResult(true, totalPaid, selected,
+                    payer.getName() + " could only pay " + totalPaid + "M to " + receiver.getName()
+                            + " (owed " + requiredAmount + "M).");
+        }
         return new PaymentResult(true, totalPaid, selected,
-                payer.getName() + " paid " + totalPaid + "M to " + receiver.getName() + " (owed " + requiredAmount + "M, no change).");
+                payer.getName() + " paid " + totalPaid + "M to " + receiver.getName()
+                        + " (owed " + requiredAmount + "M, no change).");
+    }
+
+    private List<Card> choosePaymentAssets(
+            Player payer,
+            Player receiver,
+            List<Card> eligible,
+            int requiredAmount,
+            PaymentChooser chooser
+    ) {
+        if (eligible == null || eligible.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Card> bankCards = new ArrayList<>();
+        List<Card> propertyCards = new ArrayList<>();
+        for (Card card : eligible) {
+            if (card instanceof PropertyCard) {
+                propertyCards.add(card);
+            } else {
+                bankCards.add(card);
+            }
+        }
+
+        int bankTotal = totalValue(bankCards);
+        if (bankTotal >= requiredAmount) {
+            return chooseFromSubset(payer, receiver, bankCards, requiredAmount, chooser);
+        }
+
+        List<Card> selected = new ArrayList<>(bankCards);
+        int remaining = requiredAmount - bankTotal;
+        if (remaining <= 0 || propertyCards.isEmpty()) {
+            return selected;
+        }
+
+        selected.addAll(chooseFromSubset(payer, receiver, propertyCards, remaining, chooser));
+        return selected;
+    }
+
+    private List<Card> chooseFromSubset(
+            Player payer,
+            Player receiver,
+            List<Card> subset,
+            int requiredAmount,
+            PaymentChooser chooser
+    ) {
+        if (subset == null || subset.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Card> chosen = null;
+        if (chooser != null) {
+            chosen = chooser.choose(
+                    payer,
+                    receiver,
+                    Collections.unmodifiableList(new ArrayList<>(subset)),
+                    requiredAmount
+            );
+        }
+
+        List<Card> normalized = normalizeSelection(subset, chosen);
+        int availableTotal = totalValue(subset);
+        int chosenTotal = totalValue(normalized);
+
+        if (normalized.isEmpty()) {
+            return selectOptimalPaymentAssets(subset, requiredAmount);
+        }
+        if (availableTotal < requiredAmount) {
+            return new ArrayList<>(subset);
+        }
+        if (chosenTotal < requiredAmount) {
+            return selectOptimalPaymentAssets(subset, requiredAmount);
+        }
+        return normalized;
+    }
+
+    private List<Card> normalizeSelection(List<Card> eligible, List<Card> chosen) {
+        if (chosen == null || chosen.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Card> remaining = new ArrayList<>(eligible);
+        List<Card> normalized = new ArrayList<>();
+        for (Card c : chosen) {
+            if (c == null) {
+                continue;
+            }
+            if (remaining.remove(c)) {
+                normalized.add(c);
+            }
+        }
+        return normalized;
+    }
+
+    private int totalValue(List<Card> cards) {
+        int total = 0;
+        if (cards == null) {
+            return 0;
+        }
+        for (Card card : cards) {
+            if (card != null) {
+                total += card.getValue();
+            }
+        }
+        return total;
     }
 
     /**
@@ -87,9 +210,6 @@ public class AssetTransferManager {
             chosen.add(c);
             sum += c.getValue();
         }
-        if (sum < requiredAmount) {
-            return Collections.emptyList();
-        }
         return chosen;
     }
 
@@ -118,8 +238,14 @@ public class AssetTransferManager {
         List<Card> bank = new ArrayList<>(player.getBankArea().getMoney());
         List<Card> props = new ArrayList<>();
         for (PropertySet set : player.getPropertyArea().getSets()) {
-            props.addAll(new ArrayList<>(set.getCards()));
+            for (PropertyCard pc : set.getCards()) {
+                if (pc.canBeUsedAsPayment()) {
+                    props.add(pc);
+                }
+            }
         }
+        bank.removeIf(c -> c == null || c.getValue() <= 0);
+        props.removeIf(c -> c == null || c.getValue() <= 0);
         switch (mode) {
             case USE_MONEY_ONLY:
                 return bank;
@@ -140,6 +266,12 @@ public class AssetTransferManager {
         USE_MONEY_ONLY,
         USE_PROPERTY_ONLY,
         USE_MIXED
+    }
+
+    /** Callback used by UI/input layers when payer chooses which cards to give. */
+    @FunctionalInterface
+    public interface PaymentChooser {
+        List<Card> choose(Player payer, Player receiver, List<Card> eligibleAssets, int requiredAmount);
     }
 
     /**

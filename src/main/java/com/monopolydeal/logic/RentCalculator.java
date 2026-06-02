@@ -16,7 +16,7 @@ public class RentCalculator {
 
     /**
      * Calculates the final rent to charge, including base rent, building bonuses, and multipliers.
-     * @param set the completed property set to collect rent from
+     * @param set the property set to collect rent from
      * @param isDoubleRent whether a Double Rent modifier is active
      * @return the total rent amount to be paid
      */
@@ -53,11 +53,12 @@ public class RentCalculator {
     }
 
     /**
-     * Checks if the property set is complete and eligible for rent collection.
+     * Checks if the property set is eligible for rent collection.
+     * In Monopoly Deal, rent can be charged on incomplete sets too.
      * @param set the property set to check
-     * @return true if the set is complete and rent can be collected
+     * @return true if the set has a valid rent value
      */
     public static boolean canCollectRent(PropertySet set) {
-        return set != null && set.isComplete();
+        return set != null && !set.getCards().isEmpty() && set.getRent() > 0;
     }
 }

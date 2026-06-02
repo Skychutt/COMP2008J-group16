@@ -84,11 +84,9 @@ public class Player implements ISubject {
      */
     public void draw() {
         Deck deck = Deck.getInstance();
-        int count = hand.isEmpty() ? 5 : 2;   // empty hand → draw 5, else draw 2
+        int count = hand.isEmpty() ? 5 : 2;
         List<Card> drawn = deck.draw(count);
-        for (Card c : drawn) {
-            hand.add(c);
-        }
+        hand.getCards().addAll(drawn);
         notifyAllObservers(name + " drew " + drawn.size() + " card(s). Hand size: " + hand.size());
     }
 
@@ -117,68 +115,65 @@ public class Player implements ISubject {
     /**
      * Deposit a money or action card from hand into the bank area.
      * Property cards cannot be deposited as money.
-     * Consumes 1 action.
+     * Consumes 1 action when successful.
      * @param cardId the unique ID of the card to deposit
+     * @return true if the card was banked successfully
      */
-    public void putMoneyInBank(int cardId) {
+    public boolean putMoneyInBank(int cardId) {
         if (actions <= 0) {
             notifyAllObservers(name + " has no actions left!");
-            return;
+            return false;
         }
 
-        // Find the card without removing it first, so we can validate its type
         Card found = hand.findCard(cardId);
-
         if (found == null) {
             notifyAllObservers("Card not found in hand (id=" + cardId + ")");
-            return;
+            return false;
         }
 
-        // Property cards cannot be deposited into the bank
         if (found instanceof PropertyCard) {
             notifyAllObservers("Cannot put a Property Card into the bank!");
-            return;
+            return false;
         }
 
-        // Now safely remove from hand and add to bank
         hand.removeCard(cardId);
         bankArea.add(found);
         actions--;
         notifyAllObservers(name + " deposited [" + found.getName() + "] to bank. Bank total: " + bankArea.total() + "M");
+        return true;
     }
 
 
     /**
      * Place a property card from hand into the property area.
-     * Consumes 1 action.
+     * Consumes 1 action when successful.
      * @param cardId the unique ID of the property card to place
+     * @return true if the property card was placed successfully
      */
-    public void placeProperty(int cardId) {
-        // Check if player has actions remaining
+    public boolean placeProperty(int cardId) {
         if (actions <= 0) {
             notifyAllObservers(name + " has no actions left!");
-            return;
+            return false;
         }
 
-        // Find the card in hand
         Card card = hand.findCard(cardId);
         if (card == null) {
             notifyAllObservers("Card not found in hand (id=" + cardId + ")");
-            return;
+            return false;
         }
 
-        // Make sure it is a property card
         if (!(card instanceof PropertyCard)) {
             notifyAllObservers("Card [" + card.getName() + "] is not a Property Card!");
-            return;
+            return false;
         }
 
-        // Remove from hand and place in property area
         hand.removeCard(cardId);
         propertyArea.add(card);
         actions--;
         notifyAllObservers(name + " placed [" + card.getName() + "]. Complete sets: " + propertyArea.countCompleteSets());
+        return true;
     }
+
 
     /**
      * Pay a specified amount using cards from the bank or property area.
@@ -222,20 +217,20 @@ public class Player implements ISubject {
      * @param cards the list of cards received
      */
     public void receivePayment(List<Card> cards) {
-        for (Card c : cards) {
+        cards.forEach(c -> {
             if (c instanceof PropertyCard) {
                 propertyArea.add(c);
             } else {
                 bankArea.add(c);
             }
-        }
+        });
         notifyAllObservers(name + " received " + cards.size() + " card(s) as payment. Bank: " + bankArea.total() + "M");
     }
 
     /**
      * End the current turn.
      * Enforces the 7-card hand limit: if more than 7 cards remain, the player must
-     * discard down to 7. The discarded cards are added to the deck's discard pile.
+     * discard down to 7. The discarded cards are added to the discard pile.
      *
      * Note: In a GUI version, the player would choose which cards to discard.
      * Here we auto-discard from the end of the hand list for simplicity.

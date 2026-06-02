@@ -6,7 +6,12 @@ import com.monopolydeal.interfaces.IUpgradable;
 import com.monopolydeal.model.Player;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * Represents a property card that belongs to a specific color group.
@@ -48,6 +53,52 @@ public class PropertyCard extends Card implements IPlayable, IUpgradable {
         return isWild;
     }
 
+    /** @return true if this is the multi-color (10-color) wild card */
+    public boolean isFullColorWild() {
+        if (!isWild) {
+            return false;
+        }
+        if (color == PropertyType.RAINBOW) {
+            return true;
+        }
+        String lower = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        return lower.contains("rainbow") || lower.contains("multicolored");
+    }
+
+    /**
+     * Returns all colors this card can represent on table.
+     * Normal properties return a single fixed color.
+     */
+    public Set<PropertyType> getAssignableColors() {
+        if (!isWild) {
+            return Collections.singleton(color);
+        }
+
+        if (isFullColorWild()) {
+            EnumSet<PropertyType> all = EnumSet.allOf(PropertyType.class);
+            all.remove(PropertyType.RAINBOW);
+            return all;
+        }
+
+        Set<PropertyType> parsed = parseColorsFromName();
+        if (!parsed.isEmpty()) {
+            return parsed;
+        }
+
+        if (color != null && color != PropertyType.RAINBOW) {
+            return Collections.singleton(color);
+        }
+        return Collections.emptySet();
+    }
+
+    /**
+     * Multi-color wild card cannot be used as payment on its own.
+     * Other property cards can be used.
+     */
+    public boolean canBeUsedAsPayment() {
+        return !isFullColorWild() && value > 0;
+    }
+
     /** @return the list of upgrade cards (House/Hotel) attached to this property */
     public List<Card> getUpgrades() {
         return upgrades;
@@ -74,5 +125,64 @@ public class PropertyCard extends Card implements IPlayable, IUpgradable {
     @Override
     public String toString() {
         return name + " [" + color + "]" + (isWild ? " (Wild)" : "") + " (Value: " + value + "M)";
+    }
+
+    private Set<PropertyType> parseColorsFromName() {
+        if (name == null) {
+            return Collections.emptySet();
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        int idx = lower.indexOf("wild");
+        if (idx < 0) {
+            return Collections.emptySet();
+        }
+
+        String tail = name.substring(idx + 4).trim();
+        if (tail.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        String[] parts = tail.split("/");
+        Set<PropertyType> colors = new LinkedHashSet<>();
+        for (String raw : parts) {
+            PropertyType t = parsePropertyType(raw);
+            if (t != null && t != PropertyType.RAINBOW) {
+                colors.add(t);
+            }
+        }
+        return colors;
+    }
+
+    private PropertyType parsePropertyType(String token) {
+        if (token == null) {
+            return null;
+        }
+        String n = token.replaceAll("[\\s_\\-]", "").toLowerCase(Locale.ROOT);
+        switch (n) {
+            case "brown":
+                return PropertyType.BROWN;
+            case "lightblue":
+                return PropertyType.LIGHTBLUE;
+            case "purple":
+                return PropertyType.PURPLE;
+            case "orange":
+                return PropertyType.ORANGE;
+            case "red":
+                return PropertyType.RED;
+            case "yellow":
+                return PropertyType.YELLOW;
+            case "green":
+                return PropertyType.GREEN;
+            case "blue":
+                return PropertyType.BLUE;
+            case "black":
+            case "railroad":
+                return PropertyType.BLACK;
+            case "lightgreen":
+            case "utility":
+                return PropertyType.LIGHTGREEN;
+            default:
+                return null;
+        }
     }
 }

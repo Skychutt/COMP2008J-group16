@@ -24,7 +24,7 @@ public class GameLogic {
     private final ActionHandler actionHandler;
     private final RuleValidator ruleValidator;
     private final VictoryChecker victoryChecker;
-    private boolean doubleRentActive;
+    private int pendingDoubleRentCount;
 
     /**
      * Constructor for the main game logic controller.
@@ -37,17 +37,70 @@ public class GameLogic {
         this.rentCalculator = new RentCalculator();
         this.assetTransferManager = new AssetTransferManager();
         this.actionHandler = new ActionHandler(this);
-        this.ruleValidator = new RuleValidator();
+        this.ruleValidator = new RuleValidator(gameManager);
         this.victoryChecker = new VictoryChecker();
-        this.doubleRentActive = false;
+        this.pendingDoubleRentCount = 0;
     }
-    public boolean isDoubleRentActive() { return doubleRentActive; }
-    public void setDoubleRentActive(boolean active) { this.doubleRentActive = active; }
+
+    /** Add one pending Double The Rent effect for the current turn. */
+    public void addPendingDoubleRent() {
+        pendingDoubleRentCount++;
+    }
+
+    /** @return how many Double The Rent cards are pending this turn */
+    public int getPendingDoubleRentCount() {
+        return pendingDoubleRentCount;
+    }
+
+    /**
+     * Consume pending Double The Rent effects and return the rent multiplier.
+     * 0 pending -> x1, 1 pending -> x2, 2 pending -> x4.
+     */
+    public int consumeRentMultiplier() {
+        int multiplier = 1;
+        for (int i = 0; i < pendingDoubleRentCount; i++) {
+            multiplier *= 2;
+        }
+        pendingDoubleRentCount = 0;
+        return multiplier;
+    }
+
+    /** Clear any unused pending Double The Rent effects (end-of-turn cleanup). */
+    public void clearPendingDoubleRent() {
+        pendingDoubleRentCount = 0;
+    }
+
+    /** @return how many cards the player still needs to discard to reach the hand limit */
+    public int getRequiredDiscardCount(Player player) {
+        if (player == null) {
+            return 0;
+        }
+        return Math.max(0, player.getHand().size() - Player.MAX_HAND_SIZE);
+    }
+
+    /**
+     * Discard one card from the given player's hand into the discard pile.
+     * @return true if the card was removed from hand and sent to discard
+     */
+    public boolean discardCard(Player player, int cardId) {
+        if (gameManager.isGameOver() || player == null) {
+            return false;
+        }
+
+        Card discard = player.getHand().removeCard(cardId);
+        if (discard == null) {
+            return false;
+        }
+
+        Deck.getInstance().addToDiscard(discard);
+        return true;
+    }
 
     /**
      * Starts a new game loop: begins the first turn (draw + actions) and syncs the turn manager.
      */
     public void startGame() {
+        clearPendingDoubleRent();
         gameManager.beginCurrentPlayerTurn();
         Player current = gameManager.getCurrentPlayer();
         turnManager.startTurn(current);
@@ -102,14 +155,15 @@ public class GameLogic {
     }
 
     private void playActionCard(Player player, ActionCard card) {
-        if (player.getHand().findCard(card.getId()) == null) {
+        int originalIndex = player.getHand().getCards().indexOf(card);
+        if (originalIndex < 0) {
             return;
         }
         if (card.getType() == ActionType.HOUSE || card.getType() == ActionType.HOTEL) {
             player.getHand().removeCard(card.getId());
             player.setActions(player.getActions() - 1);
             if (!actionHandler.tryAttachBuilding(player, card)) {
-                player.getHand().add(card);
+                player.getHand().insertAt(originalIndex, card);
                 player.setActions(player.getActions() + 1);
             }
             return;
@@ -117,9 +171,19 @@ public class GameLogic {
 
         player.getHand().removeCard(card.getId());
         player.setActions(player.getActions() - 1);
-        actionHandler.executeAction(player, card);
+        boolean resolved = actionHandler.executeAction(player, card);
+        if (!resolved) {
+            restorePlayedCard(player, card, originalIndex);
+            return;
+        }
 
         Deck.getInstance().addToDiscard(card);
+    }
+
+    /** Put a cancelled card back into the hand at its original slot. */
+    private void restorePlayedCard(Player player, Card card, int originalIndex) {
+        player.getHand().insertAt(originalIndex, card);
+        player.setActions(player.getActions() + 1);
     }
 
     /**
@@ -159,6 +223,9 @@ public class GameLogic {
      * Ends the current player's turn and passes to the next player.
      */
     public void endTurn() {
+        Player current = gameManager.getCurrentPlayer();
+        actionHandler.enforceEndTurnDiscard(current);
+        clearPendingDoubleRent();
         gameManager.nextTurn();
         turnManager.startTurn(gameManager.getCurrentPlayer());
     }

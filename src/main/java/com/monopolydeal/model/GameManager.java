@@ -60,10 +60,7 @@ public class GameManager {
         deck.shuffle();
         // Deal 5 cards to each player at game start
         for (Player p : players) {
-            List<com.monopolydeal.model.card.Card> cards = deck.draw(5);
-            for (com.monopolydeal.model.card.Card c : cards) {
-                p.getHand().add(c);
-            }
+            p.getHand().getCards().addAll(deck.draw(5));
         }
         turn = 0;
         notifyAllObservers("Game initialized with " + count + " players.");
@@ -120,13 +117,10 @@ public class GameManager {
     }
 
     /**
-     * Collect rent from a target player on behalf of the current player.
-     * @param target     the player who must pay rent
-     * @param rentAmount the amount of rent owed
+     * Legacy helper kept for the older console flow.
+     * New rent handling is routed through GameLogic and ActionHandler.
      */
     public void collectRent(Player target, int rentAmount) {
-        // Week 11-12: implement rent logic here
-        // Stub so the project compiles now
         Player collector = getCurrentPlayer();
         List<Card> paid = target.payAmount(rentAmount);
         collector.receivePayment(paid);
