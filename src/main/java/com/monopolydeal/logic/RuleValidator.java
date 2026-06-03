@@ -35,48 +35,79 @@ public class RuleValidator {
      * @return true if the play is allowed
      */
     public boolean canPlayCard(Player player, Card card) {
-        if (player == null || card == null) {
-            return false;
+        return explainPlayCardFailure(player, card) == null;
+    }
+
+    /**
+     * Returns a human-readable reason when a card cannot be played.
+     * @return null if the play is legal
+     */
+    public String explainPlayCardFailure(Player player, Card card) {
+        if (player == null) {
+            return "There is no active player, so no card can be played.";
+        }
+        if (card == null) {
+            return "No card was selected.";
         }
         if (player.getActions() <= 0) {
-            return false;
+            return "Cannot play [" + card.getName() + "] because " + player.getName() + " has no actions left.";
         }
         if (player.getHand().findCard(card.getId()) == null) {
-            return false;
+            return "Cannot play [" + card.getName() + "] because it is no longer in " + player.getName() + "'s hand.";
         }
+
         if (card instanceof ActionCard) {
             ActionCard actionCard = (ActionCard) card;
             switch (actionCard.getType()) {
                 case HOUSE:
-                    return canAddHouseToAnySet(player);
+                    return canAddHouseToAnySet(player)
+                            ? null
+                            : "Cannot play [House] because there is no complete property set that can take a house.";
                 case HOTEL:
-                    return canAddHotelToAnySet(player);
+                    return canAddHotelToAnySet(player)
+                            ? null
+                            : "Cannot play [Hotel] because there is no complete property set that can take a hotel.";
                 case JUST_SAY_NO:
                     // Just Say No cannot be proactively played as a normal turn action.
-                    return false;
+                    return "Cannot play [Just Say No] proactively; it only works as a response.";
                 case SLY_DEAL:
-                    return hasStealablePropertyOnOpponents(player);
+                    return hasStealablePropertyOnOpponents(player)
+                            ? null
+                            : "Cannot play [Sly Deal] because opponents have no stealable property outside complete sets.";
                 case FORCED_DEAL:
-                    return hasForcedDealCandidates(player);
+                    return hasForcedDealCandidates(player)
+                            ? null
+                            : "Cannot play [Forced Deal] because there is no legal property swap target on either side.";
                 case DEAL_BREAKER:
-                    return hasOpponentCompleteSet(player);
+                    return hasOpponentCompleteSet(player)
+                            ? null
+                            : "Cannot play [Deal Breaker] because no opponent has a complete property set.";
                 case BIRTHDAY:
+                    return hasAtLeastOneOpponent(player)
+                            ? null
+                            : "Cannot play [It's My Birthday] because there is no opponent to charge.";
                 case DEBT_DEAL:
-                    return hasAtLeastOneOpponent(player);
+                    return hasAtLeastOneOpponent(player)
+                            ? null
+                            : "Cannot play [Debt Collector] because there is no opponent to charge.";
                 case DOUBLE_RENT:
                     if (isDoubleRentBoostCard(actionCard)) {
-                        return canUseDoubleRentNow(player);
+                        return canUseDoubleRentNow(player)
+                                ? null
+                                : "Cannot play [Double The Rent] because there is no rent card and matching property set to boost this turn.";
                     }
                     if (isRentCard(actionCard)) {
-                        return hasRentableSetForCard(player, actionCard);
+                        return hasRentableSetForCard(player, actionCard)
+                                ? null
+                                : "Cannot play [" + actionCard.getName() + "] because there is no matching property set to charge rent on.";
                     }
-                    return false;
+                    return null;
                 case GO_PASS:
                 default:
-                    return true;
+                    return null;
             }
         }
-        return true;
+        return null;
     }
 
     private boolean isDoubleRentBoostCard(ActionCard card) {
@@ -350,3 +381,4 @@ public class RuleValidator {
         return player != null && player.getHand().size() > Player.MAX_HAND_SIZE;
     }
 }
+

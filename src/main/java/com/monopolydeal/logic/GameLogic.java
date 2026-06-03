@@ -134,8 +134,9 @@ public class GameLogic {
             gameManager.notifyAllObservers("Only the active player may play a card.");
             return;
         }
-        if (!ruleValidator.canPlayCard(player, card)) {
-            gameManager.notifyAllObservers("Illegal play for " + player.getName() + ".");
+        String reason = ruleValidator.explainPlayCardFailure(player, card);
+        if (reason != null) {
+            gameManager.notifyAllObservers(reason);
             return;
         }
 

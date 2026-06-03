@@ -194,3 +194,4 @@ public class ControlPanel extends JPanel {
         txtGameLog.setText(sb.toString());
     }
 }
+

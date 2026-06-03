@@ -819,7 +819,9 @@ public class ActionHandler {
         }
 
         if (legalSets.isEmpty()) {
-            gameLogic.getGameManager().notifyAllObservers(player.getName() + " could not place " + building.getName() + " (no valid set).");
+            gameLogic.getGameManager().notifyAllObservers(
+                    player.getName() + " could not place [" + building.getName()
+                            + "] because there was no legal property set to attach it to.");
             return false;
         }
 

@@ -132,7 +132,7 @@ public class Player implements ISubject {
         }
 
         if (found instanceof PropertyCard) {
-            notifyAllObservers("Cannot put a Property Card into the bank!");
+            notifyAllObservers("Cannot bank [" + found.getName() + "] because property cards must stay in the property area.");
             return false;
         }
 

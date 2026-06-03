@@ -53,7 +53,7 @@ public class OpponentsPanel extends JPanel {
         seatRow.setLayout(new GridLayout(1, columns, 12, 0));
 
         if (opponents.isEmpty()) {
-            JLabel empty = new JLabel("(no opponents)");
+            JLabel empty = new JLabel("(No opponents)");
             empty.setFont(UITheme.FONT_BODY);
             empty.setForeground(new java.awt.Color(248, 233, 191));
             seatRow.add(empty);
@@ -132,3 +132,4 @@ public class OpponentsPanel extends JPanel {
         }
     }
 }
+

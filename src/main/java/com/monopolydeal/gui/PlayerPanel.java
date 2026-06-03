@@ -15,11 +15,14 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.Point;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
@@ -28,6 +31,8 @@ import java.util.function.IntConsumer;
  * Bottom player seat: fan-style hand cards with drag-to-play.
  */
 public class PlayerPanel extends JPanel {
+    private static final int CARD_W = 118;
+    private static final int CARD_H = 178;
     private static final Color END_TURN_READY_BG = new Color(45, 143, 76);
     private static final Color END_TURN_READY_TEXT = Color.WHITE;
     private static final Color END_TURN_WAIT_BG = new Color(242, 197, 67);
@@ -143,9 +148,9 @@ public class PlayerPanel extends JPanel {
         this.discardMode = discardMode;
         this.discardRemaining = Math.max(0, discardRemaining);
         if (discardMode) {
-            lblSeat.setText(current.getName() + " - Discard " + this.discardRemaining + " card(s) by dragging to center");
+            lblSeat.setText(current.getName() + " - Drag to center to discard " + this.discardRemaining + " card(s)");
         } else {
-            lblSeat.setText(current.getName() + " - Drag to center to PLAY, or drag valuable cards to BANK");
+            lblSeat.setText(current.getName() + " - Drag to the center to play, or drag valuable cards to the bank zone on the right");
         }
         refreshBankDropZoneStyle(false);
         lblActions.setText("Actions: " + current.getActions() + " / 3");
@@ -169,7 +174,7 @@ public class PlayerPanel extends JPanel {
         }
 
         btnEndTurn.setText("End Turn");
-        // Match the Hearthstone-style cue: yellow means you can still act, green means end the turn now.
+        // Yellow means you can still act; green means you can end the turn now.
         if (gameOver || discardMode) {
             btnEndTurn.setEnabled(false);
             btnEndTurn.setBackground(END_TURN_DISABLED_BG);
@@ -204,12 +209,10 @@ public class PlayerPanel extends JPanel {
             return;
         }
 
-        int cardW = 118;
-        int cardH = 178;
-        // Keep cards mostly fully visible (Hearthstone/STS-style arc with very light overlap).
-        int step = cardW - 10;
+        // Keep cards mostly fully visible with a light fan so the hand stays readable.
+        int step = CARD_W - 10;
         int n = cards.size();
-        int totalW = cardW + Math.max(0, n - 1) * step;
+        int totalW = CARD_W + Math.max(0, n - 1) * step;
         int canvasW = Math.max(1040, totalW + 80);
         handCanvas.setPreferredSize(new Dimension(canvasW, 220));
 
@@ -222,7 +225,7 @@ public class PlayerPanel extends JPanel {
             double d = Math.abs(i - middle);
             int y = 14 + (int) (d * d * 2.2);
             JLabel cardLabel = buildDraggableCardLabel(current, card);
-            cardLabel.setBounds(x, y, cardW, cardH);
+            cardLabel.setBounds(x, y, CARD_W, CARD_H);
             handCanvas.add(cardLabel);
         }
 
@@ -231,7 +234,7 @@ public class PlayerPanel extends JPanel {
     }
 
     private JLabel buildDraggableCardLabel(Player current, Card card) {
-        JLabel label = new JLabel(mainFrame.getImageResolver().getCardIcon(card, 118, 178));
+        JLabel label = new JLabel(mainFrame.getImageResolver().getCardIcon(card, CARD_W, CARD_H));
         label.setOpaque(true);
         label.setBackground(new Color(255, 255, 255, 18));
         label.setBorder(BorderFactory.createLineBorder(new Color(246, 229, 173), 1, true));
@@ -248,12 +251,25 @@ public class PlayerPanel extends JPanel {
         } else {
             label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             if (discardMode) {
-                label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - drag to center to discard");
+                label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Drag to center to discard");
             } else if (!canPlay && canBank) {
                 label.setBorder(BorderFactory.createLineBorder(UITheme.BANK_ZONE_BORDER, 2, true));
                 label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Bank only");
             }
-            label.setTransferHandler(new CardDragTransferHandler(card.getId()));
+            CardDragTransferHandler handler = new CardDragTransferHandler(card.getId());
+            label.setTransferHandler(handler);
+            label.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    // Use the card image itself as the drag image so the card follows the mouse.
+                    handler.prepareDragImage(label, e);
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    handler.clearDragImage();
+                }
+            });
             label.addMouseMotionListener(new MouseAdapter() {
                 @Override
                 public void mouseDragged(MouseEvent e) {
@@ -270,6 +286,32 @@ public class PlayerPanel extends JPanel {
 
         CardDragTransferHandler(int cardId) {
             this.cardId = cardId;
+        }
+
+        void prepareDragImage(JLabel label, MouseEvent e) {
+            if (label == null || label.getIcon() == null) {
+                return;
+            }
+            setDragImage(createDragImage(label));
+            // Center the hotspot so the card feels "pinched" instead of grabbed from a corner.
+            setDragImageOffset(new Point(label.getWidth() / 2, label.getHeight() / 2));
+        }
+
+        void clearDragImage() {
+            setDragImage(null);
+        }
+
+        /**
+         * Paint the card label itself so the drag image matches the hand card exactly.
+         */
+        private java.awt.Image createDragImage(JLabel label) {
+            int width = Math.max(1, label.getWidth());
+            int height = Math.max(1, label.getHeight());
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = image.createGraphics();
+            label.paint(g2);
+            g2.dispose();
+            return image;
         }
 
         @Override
@@ -311,3 +353,4 @@ public class PlayerPanel extends JPanel {
         }
     }
 }
+
