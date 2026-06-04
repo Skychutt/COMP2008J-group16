@@ -245,6 +245,39 @@ public class TopStatusPanel extends JPanel {
         lblRecentEvent.setText("Recent: " + event);
     }
 
+    /**
+     *Displaying message (Connection in progress / Used when waiting for other players to join)
+     */
+    public void showWaitingMessage(String message) {
+        lblCurrentPlayer.setText(message);
+        lblActions.setText("");
+        setRecentEventText("");
+        refreshDropZoneState(false);
+    }
+
+    /**
+     * Update the central area of the desktop based on the online game snapshot.
+     * Same as the updateTableCenter(Player, ...) function, but the data comes from server-pushed snapshots.
+     */
+    public void updateFromSnapshot(com.monopolydeal.network.GameStateParser.Snapshot snap,
+                                   CardImageResolver resolver,
+                                   boolean myTurn, boolean discardMode, int discardRemaining) {
+        if (snap == null) return;
+        this.gameOver = snap.gameOver;
+        this.discardMode = discardMode;
+        this.discardRemaining = discardRemaining;
+
+        lblCurrentPlayer.setText("Current Player: " + snap.currentPlayer);
+        lblActions.setText(myTurn ? "Your turn!" : "Waiting for " + snap.currentPlayer + "...");
+
+        // Deck preview
+        try {
+            updateDeckPreviews(com.monopolydeal.model.Deck.getInstance(), resolver);
+        } catch (Exception ignored) {}
+
+        refreshDropZoneState(false);
+    }
+
     private class CardDropTransferHandler extends TransferHandler {
         @Override
         public boolean canImport(TransferSupport support) {
