@@ -10,6 +10,7 @@ import com.monopolydeal.model.card.MoneyCard;
 import com.monopolydeal.model.card.PropertyCard;
 
 import com.monopolydeal.enums.ActionType;
+import com.monopolydeal.enums.PropertyType;
 
 /**
  * The central game logic controller.
@@ -141,7 +142,9 @@ public class GameLogic {
         }
 
         if (card instanceof PropertyCard) {
-            player.placeProperty(card.getId());
+            if (player.placeProperty(card.getId())) {
+                checkGameOver();
+            }
         } else if (card instanceof MoneyCard) {
             player.putMoneyInBank(card.getId());
         } else if (card instanceof ActionCard) {
@@ -152,6 +155,27 @@ public class GameLogic {
 
         if (checkGameOver()) {
             return;
+        }
+    }
+
+    /**
+     * Places a property card, optionally with a locked color choice for two-color wilds.
+     */
+    public void placeProperty(Player player, PropertyCard card, PropertyType chosenColor) {
+        if (gameManager.isGameOver() || player == null || card == null) {
+            return;
+        }
+        if (!player.equals(gameManager.getCurrentPlayer())) {
+            gameManager.notifyAllObservers("Only the active player may play a card.");
+            return;
+        }
+        String reason = ruleValidator.explainPlayCardFailure(player, card);
+        if (reason != null) {
+            gameManager.notifyAllObservers(reason);
+            return;
+        }
+        if (player.placeProperty(card.getId(), chosenColor)) {
+            checkGameOver();
         }
     }
 
@@ -196,10 +220,14 @@ public class GameLogic {
      */
     public void collectRent(Player collector, Player target, PropertySet set, boolean isDoubleRent) {
         if (!RentCalculator.canCollectRent(set)) {
-            gameManager.notifyAllObservers("Rent: set is not complete.");
+            gameManager.notifyAllObservers("Rent: no rent can be charged on that property set.");
             return;
         }
         int amount = RentCalculator.calculateFinalRent(set, isDoubleRent);
+        if (amount <= 0) {
+            gameManager.notifyAllObservers("Rent: amount is 0M for the chosen set.");
+            return;
+        }
         AssetTransferManager.PaymentResult result = assetTransferManager.processPayment(
                 target, collector, amount, AssetTransferManager.PaymentMode.USE_MIXED);
         gameManager.notifyAllObservers(result.getMessage());

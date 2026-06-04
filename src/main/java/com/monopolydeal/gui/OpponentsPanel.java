@@ -81,10 +81,19 @@ public class OpponentsPanel extends JPanel {
         seat.add(info);
         seat.add(Box.createVerticalStrut(4));
 
-        JPanel bankRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
+        JPanel bankRow = new JPanel(new BorderLayout(6, 0));
         bankRow.setOpaque(false);
         bankRow.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(UITheme.BORDER), "Bank"));
-        addCardsPreview(bankRow, opponent.getBankArea().getMoney(), 34, 52, 4);
+
+        JLabel bankTotal = new JLabel(opponent.getBankArea().total() + "M");
+        bankTotal.setFont(UITheme.FONT_BANK_TOTAL);
+        bankTotal.setForeground(UITheme.TEXT_MAIN);
+        bankRow.add(bankTotal, BorderLayout.WEST);
+
+        JPanel bankCards = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
+        bankCards.setOpaque(false);
+        addCardsPreview(bankCards, opponent.getBankArea().getMoney(), 34, 52, 4);
+        bankRow.add(bankCards, BorderLayout.CENTER);
         seat.add(bankRow);
 
         JPanel propsRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));

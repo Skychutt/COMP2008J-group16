@@ -4,6 +4,7 @@ import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.interfaces.IPlayable;
 import com.monopolydeal.interfaces.IUpgradable;
 import com.monopolydeal.model.Player;
+import com.monopolydeal.model.WildcardArtOrientation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +23,8 @@ import java.util.Set;
 public class PropertyCard extends Card implements IPlayable, IUpgradable {
     private PropertyType color;     // The color group this property belongs to
     private boolean isWild;         // True if this is a wildcard property
+    private boolean colorCommitted; // Once set for this game, assigned color cannot change
+    private boolean displayFlipped; // Locked 180° rotation so chosen color faces up on art
     private List<Card> upgrades;    // Attached upgrades (House/Hotel)
 
     /**
@@ -43,9 +46,74 @@ public class PropertyCard extends Card implements IPlayable, IUpgradable {
         return color;
     }
 
-    /** Set the color group (used when a wild card changes its assigned color). */
+    /** Set the color group before it is locked for this game. */
     public void setColor(PropertyType color) {
+        if (colorCommitted) {
+            return;
+        }
         this.color = color;
+    }
+
+    /** @return true when this card's color choice is locked for the rest of the game */
+    public boolean isColorCommitted() {
+        return colorCommitted;
+    }
+
+    /**
+     * Locks the assigned color for this card instance (survives trades and steals).
+     */
+    public void commitColor(PropertyType chosen) {
+        if (chosen == null) {
+            return;
+        }
+        if (colorCommitted) {
+            return;
+        }
+        Set<PropertyType> options = getAssignableColors();
+        if (!options.isEmpty() && !options.contains(chosen) && chosen != PropertyType.RAINBOW) {
+            return;
+        }
+        this.color = chosen;
+        if (isTwoColorWild()) {
+            displayFlipped = WildcardArtOrientation.shouldFlipForChosenColor(this, chosen);
+        }
+        if (isWild()) {
+            this.colorCommitted = true;
+        }
+    }
+
+    /** Two-color wild property (not the 10-color rainbow wild). */
+    public boolean isTwoColorWild() {
+        return isWild() && !isFullColorWild() && getNameColorOrder().size() == 2;
+    }
+
+    /**
+     * Player must pick a color before placing (two-color wilds and rainbow / multi-color wilds).
+     */
+    public boolean needsColorChoiceOnPlacement() {
+        if (colorCommitted || !isWild()) {
+            return false;
+        }
+        return getAssignableColors().size() > 1;
+    }
+
+    /**
+     * Property cards with a monetary value may be banked (rainbow / 10-color wild cannot).
+     */
+    public boolean canBankAsMoney() {
+        return canBeUsedAsPayment();
+    }
+
+    /**
+     * Colors in card art order (top color first) parsed from the card name.
+     */
+    public List<PropertyType> getNameColorOrder() {
+        return new ArrayList<>(parseColorsFromName());
+    }
+
+    /** Rotate 180° so the committed color appears at the top of the card art. */
+    public boolean isDisplayFlipped() {
+        return colorCommitted && isTwoColorWild() && displayFlipped;
     }
 
     /** @return true if this is a wildcard property */
@@ -110,7 +178,7 @@ public class PropertyCard extends Card implements IPlayable, IUpgradable {
      */
     @Override
     public void executePlay(Player p) {
-        p.getPropertyArea().add(this);
+        // Placement is handled by Player.placeProperty / GameLogic.playCard so actions and hand removal stay correct.
     }
 
     /**
@@ -127,30 +195,30 @@ public class PropertyCard extends Card implements IPlayable, IUpgradable {
         return name + " [" + color + "]" + (isWild ? " (Wild)" : "") + " (Value: " + value + "M)";
     }
 
-    private Set<PropertyType> parseColorsFromName() {
+    private LinkedHashSet<PropertyType> parseColorsFromName() {
         if (name == null) {
-            return Collections.emptySet();
+            return new LinkedHashSet<>();
         }
         String lower = name.toLowerCase(Locale.ROOT);
         int idx = lower.indexOf("wild");
         if (idx < 0) {
-            return Collections.emptySet();
+            return new LinkedHashSet<>();
         }
 
         String tail = name.substring(idx + 4).trim();
         if (tail.isEmpty()) {
-            return Collections.emptySet();
+            return new LinkedHashSet<>();
         }
 
         String[] parts = tail.split("/");
-        Set<PropertyType> colors = new LinkedHashSet<>();
+        LinkedHashSet<PropertyType> colors = new LinkedHashSet<>();
         for (String raw : parts) {
             PropertyType t = parsePropertyType(raw);
             if (t != null && t != PropertyType.RAINBOW) {
                 colors.add(t);
             }
         }
-        return colors;
+        return colors.isEmpty() ? new LinkedHashSet<>() : colors;
     }
 
     private PropertyType parsePropertyType(String token) {

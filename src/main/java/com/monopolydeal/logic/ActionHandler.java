@@ -240,6 +240,7 @@ public class ActionHandler {
             );
             gm.notifyAllObservers(r.getMessage());
         }
+        checkVictoryAfterStateChange();
     }
 
     private AssetTransferManager.PaymentResult processPaymentWithChoice(
@@ -353,6 +354,7 @@ public class ActionHandler {
                 "Debt Collector"
         );
         gm.notifyAllObservers(r.getMessage());
+        checkVictoryAfterStateChange();
         return true;
     }
 
@@ -404,6 +406,7 @@ public class ActionHandler {
         victim.getPropertyArea().remove(stolen);
         thief.getPropertyArea().add(stolen);
         gm.notifyAllObservers(thief.getName() + " stole [" + stolen.getName() + "] from " + victim.getName() + " with Sly Deal.");
+        checkVictoryAfterStateChange();
         return true;
     }
 
@@ -478,6 +481,7 @@ public class ActionHandler {
 
         gm.notifyAllObservers(player.getName() + " swapped [" + myCard.getName() + "] for "
                 + victim.getName() + "'s [" + theirCard.getName() + "] with Forced Deal.");
+        checkVictoryAfterStateChange();
         return true;
     }
 
@@ -532,6 +536,7 @@ public class ActionHandler {
         }
         gm.notifyAllObservers(thief.getName() + " stole a complete " + targetSet.getColor()
                 + " set from " + victim.getName() + " with Deal Breaker.");
+        checkVictoryAfterStateChange();
         return true;
     }
 
@@ -659,7 +664,12 @@ public class ActionHandler {
                 gm.notifyAllObservers(r.getMessage());
             }
         }
+        checkVictoryAfterStateChange();
         return true;
+    }
+
+    private void checkVictoryAfterStateChange() {
+        gameLogic.checkGameOver();
     }
 
     /** Return every opponent except the current player. */
@@ -849,6 +859,7 @@ public class ActionHandler {
         host.attachUpgrade(building);
         gameLogic.getGameManager().notifyAllObservers(player.getName() + " placed "
                 + building.getName() + " on " + target.getColor() + " set.");
+        checkVictoryAfterStateChange();
         return true;
     }
 

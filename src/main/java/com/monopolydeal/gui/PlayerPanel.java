@@ -6,11 +6,11 @@ import com.monopolydeal.model.card.PropertyCard;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.TransferHandler;
+import javax.swing.TransferHandler.TransferSupport;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -33,23 +33,21 @@ import java.util.function.IntConsumer;
 public class PlayerPanel extends JPanel {
     private static final int CARD_W = 118;
     private static final int CARD_H = 178;
-    private static final Color END_TURN_READY_BG = new Color(45, 143, 76);
-    private static final Color END_TURN_READY_TEXT = Color.WHITE;
-    private static final Color END_TURN_WAIT_BG = new Color(242, 197, 67);
-    private static final Color END_TURN_WAIT_TEXT = new Color(56, 43, 16);
-    private static final Color END_TURN_DISABLED_BG = new Color(101, 101, 101);
-    private static final Color END_TURN_DISABLED_TEXT = new Color(232, 232, 232);
-    private static final Color BANK_ZONE_DISCARD_BG = new Color(225, 225, 225);
-    private static final Color BANK_ZONE_DISCARD_BORDER = new Color(165, 165, 165);
+    private static final int DROP_ZONE_W = 170;
+    private static final int DROP_ZONE_H = 100;
+    /** Bank + Property + End Turn, with small gaps between. */
+    private static final int RIGHT_DOCK_H = DROP_ZONE_H * 3 + 24;
 
     private final GameFrame mainFrame;
     private final JLabel lblSeat;
     private final JLabel lblActions;
     private final JPanel handCanvas;
-    private final JPanel bankDropZone;
-    private final JButton btnEndTurn;
+    private final ButtonDropZone bankDropZone;
+    private final ButtonDropZone propertyDropZone;
+    private final ImageActionButton btnEndTurn;
 
     private IntConsumer bankDropHandler;
+    private IntConsumer propertyDropHandler;
     private Runnable endTurnHandler;
     private boolean gameOver;
     private boolean discardMode;
@@ -63,7 +61,7 @@ public class PlayerPanel extends JPanel {
         setOpaque(false);
         setLayout(new BorderLayout(10, 6));
         setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
-        setPreferredSize(new Dimension(1400, 270));
+        setPreferredSize(new Dimension(1400, RIGHT_DOCK_H + 40));
 
         lblSeat = new JLabel("Your Seat");
         lblSeat.setFont(UITheme.FONT_SUBTITLE);
@@ -95,14 +93,8 @@ public class PlayerPanel extends JPanel {
         handWrapper.add(scroll, BorderLayout.CENTER);
         add(handWrapper, BorderLayout.CENTER);
 
-        btnEndTurn = new JButton("End Turn");
-        btnEndTurn.setFocusPainted(false);
-        btnEndTurn.setOpaque(true);
-        btnEndTurn.setContentAreaFilled(true);
-        btnEndTurn.setBorderPainted(false);
-        btnEndTurn.setFont(UITheme.FONT_SUBTITLE);
-        btnEndTurn.setBorder(BorderFactory.createEmptyBorder(10, 8, 10, 8));
-        btnEndTurn.setPreferredSize(new Dimension(170, 48));
+        btnEndTurn = new ImageActionButton("End Turn.png", DROP_ZONE_W, DROP_ZONE_H);
+        btnEndTurn.setToolTipText("End Turn");
         btnEndTurn.addActionListener(e -> {
             if (gameOver || endTurnHandler == null) {
                 return;
@@ -111,29 +103,40 @@ public class PlayerPanel extends JPanel {
         });
         updateEndTurnButtonStyle(0, false, false);
 
-        bankDropZone = new JPanel(new BorderLayout());
-        bankDropZone.setOpaque(true);
-        bankDropZone.setBackground(UITheme.BANK_ZONE);
-        bankDropZone.setBorder(BorderFactory.createLineBorder(UITheme.BANK_ZONE_BORDER, 2, true));
-        bankDropZone.setMaximumSize(new Dimension(170, 120));
-        bankDropZone.setPreferredSize(new Dimension(170, 120));
-        JLabel bankDropText = new JLabel("<html><center>Drag Here<br/>To Bank</center></html>", JLabel.CENTER);
-        bankDropText.setFont(UITheme.FONT_SUBTITLE);
-        bankDropText.setForeground(UITheme.TEXT_MAIN);
-        bankDropZone.add(bankDropText, BorderLayout.CENTER);
+        bankDropZone = new ButtonDropZone("Bank.png", DROP_ZONE_W, DROP_ZONE_H);
+        bankDropZone.setImageOffsetY(6);
         bankDropZone.setTransferHandler(new BankDropTransferHandler());
+        bankDropZone.setToolTipText("Drag money, action, or property cards here to bank as money");
 
-        JPanel rightDock = new JPanel(new BorderLayout(0, 8));
+        propertyDropZone = new ButtonDropZone("Property.png", DROP_ZONE_W, DROP_ZONE_H);
+        propertyDropZone.setTransferHandler(new PropertyDropTransferHandler());
+        propertyDropZone.setToolTipText("Drag property cards here to play");
+
+        JPanel rightDock = new JPanel();
+        rightDock.setLayout(new javax.swing.BoxLayout(rightDock, javax.swing.BoxLayout.Y_AXIS));
         rightDock.setOpaque(false);
-        rightDock.setPreferredSize(new Dimension(190, 240));
-        rightDock.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-        rightDock.add(bankDropZone, BorderLayout.NORTH);
-        rightDock.add(btnEndTurn, BorderLayout.SOUTH);
+        Dimension dockSize = new Dimension(DROP_ZONE_W + 8, RIGHT_DOCK_H);
+        rightDock.setPreferredSize(dockSize);
+        rightDock.setMinimumSize(dockSize);
+        rightDock.setMaximumSize(new Dimension(DROP_ZONE_W + 8, RIGHT_DOCK_H));
+        rightDock.setBorder(BorderFactory.createEmptyBorder(0, 8, 4, 0));
+        alignDockButton(bankDropZone);
+        alignDockButton(propertyDropZone);
+        alignDockButton(btnEndTurn);
+        rightDock.add(bankDropZone);
+        rightDock.add(javax.swing.Box.createVerticalStrut(8));
+        rightDock.add(propertyDropZone);
+        rightDock.add(javax.swing.Box.createVerticalStrut(8));
+        rightDock.add(btnEndTurn);
         add(rightDock, BorderLayout.EAST);
     }
 
     public void setBankDropHandler(IntConsumer bankDropHandler) {
         this.bankDropHandler = bankDropHandler;
+    }
+
+    public void setPropertyDropHandler(IntConsumer propertyDropHandler) {
+        this.propertyDropHandler = propertyDropHandler;
     }
 
     public void setEndTurnHandler(Runnable endTurnHandler) {
@@ -150,22 +153,27 @@ public class PlayerPanel extends JPanel {
         if (discardMode) {
             lblSeat.setText(current.getName() + " - Drag to center to discard " + this.discardRemaining + " card(s)");
         } else {
-            lblSeat.setText(current.getName() + " - Drag to the center to play, or drag valuable cards to the bank zone on the right");
+            lblSeat.setText(current.getName()
+                    + " - Drag to center to play actions, bank (right) for money, property (right) for land cards");
         }
-        refreshBankDropZoneStyle(false);
+        refreshDropZoneHighlight(false, false);
         lblActions.setText("Actions: " + current.getActions() + " / 3");
         updateEndTurnButtonStyle(current.getActions(), gameOver, discardMode);
         renderHand(current);
     }
 
-    private void refreshBankDropZoneStyle(boolean hovered) {
-        if (discardMode) {
-            bankDropZone.setBackground(BANK_ZONE_DISCARD_BG);
-            bankDropZone.setBorder(BorderFactory.createLineBorder(BANK_ZONE_DISCARD_BORDER, 2, true));
-            return;
+    private static void alignDockButton(java.awt.Component button) {
+        if (button instanceof JComponent) {
+            ((JComponent) button).setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         }
-        bankDropZone.setBackground(hovered ? UITheme.BANK_ZONE_ACTIVE : UITheme.BANK_ZONE);
-        bankDropZone.setBorder(BorderFactory.createLineBorder(UITheme.BANK_ZONE_BORDER, 2, true));
+    }
+
+    private void refreshDropZoneHighlight(boolean bankHovered, boolean propertyHovered) {
+        boolean enabled = !gameOver && !discardMode;
+        bankDropZone.setHighlight(enabled && bankHovered);
+        bankDropZone.setHoverText(enabled && bankHovered ? "Move to Bank" : null);
+        propertyDropZone.setHighlight(enabled && propertyHovered);
+        propertyDropZone.setHoverText(enabled && propertyHovered ? "Move to Property" : null);
     }
 
     private void updateEndTurnButtonStyle(int actionsLeft, boolean gameOver, boolean discardMode) {
@@ -173,20 +181,15 @@ public class PlayerPanel extends JPanel {
             return;
         }
 
-        btnEndTurn.setText("End Turn");
-        // Yellow means you can still act; green means you can end the turn now.
         if (gameOver || discardMode) {
             btnEndTurn.setEnabled(false);
-            btnEndTurn.setBackground(END_TURN_DISABLED_BG);
-            btnEndTurn.setForeground(END_TURN_DISABLED_TEXT);
+            btnEndTurn.setVisualState(ImageActionButton.VisualState.DISABLED);
         } else if (actionsLeft > 0) {
             btnEndTurn.setEnabled(true);
-            btnEndTurn.setBackground(END_TURN_WAIT_BG);
-            btnEndTurn.setForeground(END_TURN_WAIT_TEXT);
+            btnEndTurn.setVisualState(ImageActionButton.VisualState.WAITING);
         } else {
             btnEndTurn.setEnabled(true);
-            btnEndTurn.setBackground(END_TURN_READY_BG);
-            btnEndTurn.setForeground(END_TURN_READY_TEXT);
+            btnEndTurn.setVisualState(ImageActionButton.VisualState.ENABLED);
         }
 
         lastActionsLeft = actionsLeft;
@@ -241,7 +244,9 @@ public class PlayerPanel extends JPanel {
         label.setToolTipText(card.getName() + " (" + card.getValue() + "M)");
 
         boolean canPlay = mainFrame.getGameLogic().getRuleValidator().canPlayCard(current, card);
-        boolean canBank = current.getActions() > 0 && !(card instanceof PropertyCard);
+        boolean canBank = current.getActions() > 0
+                && (!(card instanceof PropertyCard) || ((PropertyCard) card).canBankAsMoney());
+        boolean canPlaceProperty = card instanceof PropertyCard && canPlay;
         boolean draggable = discardMode || canPlay || canBank;
 
         label.setEnabled(draggable);
@@ -252,6 +257,12 @@ public class PlayerPanel extends JPanel {
             label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             if (discardMode) {
                 label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Drag to center to discard");
+            } else if (canPlaceProperty && canBank) {
+                label.setBorder(BorderFactory.createLineBorder(new Color(76, 130, 68), 2, true));
+                label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Property zone, center, or Bank");
+            } else if (canPlaceProperty) {
+                label.setBorder(BorderFactory.createLineBorder(new Color(76, 130, 68), 2, true));
+                label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Drag to Property zone or center");
             } else if (!canPlay && canBank) {
                 label.setBorder(BorderFactory.createLineBorder(UITheme.BANK_ZONE_BORDER, 2, true));
                 label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Bank only");
@@ -328,8 +339,13 @@ public class PlayerPanel extends JPanel {
     private class BankDropTransferHandler extends TransferHandler {
         @Override
         public boolean canImport(TransferSupport support) {
-            boolean ok = !gameOver && !discardMode && support.isDataFlavorSupported(DataFlavor.stringFlavor);
-            refreshBankDropZoneStyle(ok);
+            if (gameOver || discardMode || !support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                refreshDropZoneHighlight(false, false);
+                return false;
+            }
+            Card card = findDraggedCard(support);
+            boolean ok = card != null && canDropOnBank(card);
+            refreshDropZoneHighlight(ok, false);
             return ok;
         }
 
@@ -339,8 +355,7 @@ public class PlayerPanel extends JPanel {
                 return false;
             }
             try {
-                String cardIdText = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                int cardId = Integer.parseInt(cardIdText.trim());
+                int cardId = parseCardId(support);
                 if (bankDropHandler != null) {
                     bankDropHandler.accept(cardId);
                 }
@@ -348,9 +363,69 @@ public class PlayerPanel extends JPanel {
             } catch (Exception ignored) {
                 return false;
             } finally {
-                refreshBankDropZoneStyle(false);
+                refreshDropZoneHighlight(false, false);
             }
         }
+    }
+
+    private class PropertyDropTransferHandler extends TransferHandler {
+        @Override
+        public boolean canImport(TransferSupport support) {
+            if (gameOver || discardMode || !support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                refreshDropZoneHighlight(false, false);
+                return false;
+            }
+            Card card = findDraggedCard(support);
+            boolean ok = card instanceof PropertyCard;
+            refreshDropZoneHighlight(false, ok);
+            return ok;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+            if (!canImport(support)) {
+                return false;
+            }
+            try {
+                int cardId = parseCardId(support);
+                if (propertyDropHandler != null) {
+                    propertyDropHandler.accept(cardId);
+                }
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            } finally {
+                refreshDropZoneHighlight(false, false);
+            }
+        }
+    }
+
+    private Card findDraggedCard(TransferSupport support) {
+        try {
+            int cardId = parseCardId(support);
+            Player current = mainFrame.getGameManager().getCurrentPlayer();
+            if (current == null) {
+                return null;
+            }
+            return current.getHand().findCard(cardId);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private static int parseCardId(TransferSupport support) throws Exception {
+        String cardIdText = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
+        return Integer.parseInt(cardIdText.trim());
+    }
+
+    private static boolean canDropOnBank(Card card) {
+        if (card == null) {
+            return false;
+        }
+        if (!(card instanceof PropertyCard)) {
+            return true;
+        }
+        return ((PropertyCard) card).canBankAsMoney();
     }
 }
 

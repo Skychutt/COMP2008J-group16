@@ -50,11 +50,31 @@ public class GameManager {
      * @param count the number of players (2-5)
      */
     public void initGame(int count) {
+        List<String> defaultNames = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            defaultNames.add("Player " + (i + 1));
+        }
+        initGame(count, defaultNames);
+    }
+
+    /**
+     * Initialize a new game with custom display names for each player.
+     * @param count number of players (2-5)
+     * @param displayNames one name per player in seat order
+     */
+    public void initGame(int count, List<String> displayNames) {
         players.clear();
         gameOver = false;
 
         for (int i = 0; i < count; i++) {
-            players.add(new Player(String.valueOf(i + 1), "Player " + (i + 1)));
+            String name = "Player " + (i + 1);
+            if (displayNames != null && i < displayNames.size()) {
+                String custom = displayNames.get(i);
+                if (custom != null && custom.trim().length() > 0) {
+                    name = custom.trim();
+                }
+            }
+            players.add(new Player(String.valueOf(i + 1), name));
         }
         Deck deck = Deck.getInstance();
         deck.shuffle();
@@ -84,7 +104,7 @@ public class GameManager {
      */
     public void nextTurn() {
         Player current = getCurrentPlayer();
-        current.endTurn();
+        current.finalizeTurnEnd();
         turn = (turn + 1) % players.size();
         beginCurrentPlayerTurn();
         Player next = getCurrentPlayer();
@@ -117,15 +137,19 @@ public class GameManager {
     }
 
     /**
-     * Legacy helper kept for the older console flow.
-     * New rent handling is routed through GameLogic and ActionHandler.
+     * @deprecated Use {@link com.monopolydeal.logic.GameLogic#collectRent} instead.
      */
+    @Deprecated
     public void collectRent(Player target, int rentAmount) {
         Player collector = getCurrentPlayer();
+        if (target == null || collector == null || rentAmount <= 0) {
+            return;
+        }
         List<Card> paid = target.payAmount(rentAmount);
-        collector.receivePayment(paid);
-        notifyAllObservers(collector.getName() + " collected " + rentAmount
-                + "M rent from " + target.getName() + ".");
+        if (!paid.isEmpty()) {
+            collector.receivePayment(paid);
+        }
+        notifyAllObservers(collector.getName() + " collected rent from " + target.getName() + ".");
         checkWin();
     }
 

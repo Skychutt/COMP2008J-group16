@@ -44,11 +44,20 @@ public class PropertyArea {
      * @param c the card to add (must be a PropertyCard)
      */
     public void add(Card c) {
+        add(c, null);
+    }
+
+    /**
+     * @param chosenColor player-selected color for two-color wilds; ignored if already committed
+     */
+    public void add(Card c, PropertyType chosenColor) {
         if (c instanceof PropertyCard) {
             PropertyCard pc = (PropertyCard) c;
-            PropertyType color = resolvePlacementColor(pc);
+            PropertyType color = resolvePlacementColor(pc, chosenColor);
             sets.computeIfAbsent(color, PropertySet::new);
-            pc.setColor(color);
+            if (!pc.isColorCommitted()) {
+                pc.commitColor(chosenColor != null ? chosenColor : color);
+            }
             sets.get(color).add(pc);
         }
     }
@@ -81,16 +90,54 @@ public class PropertyArea {
         if (card == null || targetColor == null) {
             return false;
         }
+        if (card.isColorCommitted() && card.getColor() != targetColor) {
+            return false;
+        }
         Set<PropertyType> options = card.getAssignableColors();
         if (!options.contains(targetColor)) {
             return false;
         }
 
         remove(card);
-        card.setColor(targetColor);
+        if (!card.isColorCommitted()) {
+            card.setColor(targetColor);
+        }
         sets.computeIfAbsent(targetColor, PropertySet::new);
         sets.get(targetColor).add(card);
         return true;
+    }
+
+    /**
+     * When a real property of color {@code placedColor} is played onto that set,
+     * reclaim one two-color wildcard already in the set (official swap rule).
+     * @return the wildcard returned to hand, or null if none was swapped
+     */
+    public PropertyCard tryReclaimWildcardAfterPlacement(PropertyCard placed) {
+        if (placed == null || placed.isWild()) {
+            return null;
+        }
+        PropertyType placedColor = placed.getColor();
+        PropertySet set = sets.get(placedColor);
+        if (set == null) {
+            return null;
+        }
+
+        for (PropertyCard existing : new ArrayList<>(set.getCards())) {
+            if (existing == placed) {
+                continue;
+            }
+            if (!existing.isWild() || existing.isFullColorWild()) {
+                continue;
+            }
+            if (existing.getAssignableColors().contains(placedColor)) {
+                set.remove(existing);
+                if (set.getCards().isEmpty()) {
+                    sets.remove(placedColor);
+                }
+                return existing;
+            }
+        }
+        return null;
     }
 
     /**
@@ -117,7 +164,14 @@ public class PropertyArea {
         return sb.toString();
     }
 
-    private PropertyType resolvePlacementColor(PropertyCard card) {
+    private PropertyType resolvePlacementColor(PropertyCard card, PropertyType chosenColor) {
+        if (card.isColorCommitted()) {
+            return card.getColor();
+        }
+        if (chosenColor != null && card.getAssignableColors().contains(chosenColor)) {
+            return chosenColor;
+        }
+
         Set<PropertyType> options = card.getAssignableColors();
         if (options.isEmpty()) {
             return card.getColor();
@@ -126,11 +180,7 @@ public class PropertyArea {
             return options.iterator().next();
         }
 
-        // 10-color wild may stay on its own when no other set exists.
-        if (card.isFullColorWild() && hasNoPlacedProperties()) {
-            return PropertyType.RAINBOW;
-        }
-
+        // Multi-color wild must be chosen by the player in GUI; console/auto uses best-fit color.
         PropertyType best = null;
         int bestScore = Integer.MIN_VALUE;
         for (PropertyType option : options) {

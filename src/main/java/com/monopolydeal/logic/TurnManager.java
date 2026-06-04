@@ -51,7 +51,7 @@ public class TurnManager {
      */
     public void executeEndPhase() {
         if (currentPlayer != null) {
-            currentPlayer.endTurn();
+            currentPlayer.finalizeTurnEnd();
         }
     }
 

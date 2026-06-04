@@ -8,7 +8,7 @@ import com.monopolydeal.model.card.PropertyCard;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
-import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,15 +27,17 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Resolves card images from resources/Card_Library.
- * Matching order: exact file name -> normalized name -> fuzzy score -> card back.
+ * Resolves card images from resources/Card_Library (root and category subfolders).
  */
 public class CardImageResolver {
 
     private static final String LIBRARY_PATH = "Card_Library";
     private static final String FALLBACK_FILE = "card_back.jpg";
 
+    /** Relative paths from Card_Library, e.g. {@code PropertyCard/brown-....png}. */
     private final List<String> allFiles;
+    /** Basename -> relative path (first match wins). */
+    private final Map<String, String> fileByBaseName;
     private final Map<String, String> normalizedNameToFile;
     private final Map<PropertyType, List<String>> propertyImagesByColor;
     private final Map<Integer, String> propertyImageByCardId;
@@ -43,9 +45,12 @@ public class CardImageResolver {
 
     public CardImageResolver() {
         this.allFiles = scanLibraryFiles();
+        this.fileByBaseName = new HashMap<>();
         this.normalizedNameToFile = new HashMap<>();
-        for (String file : allFiles) {
-            normalizedNameToFile.put(normalize(removeExtension(file)), file);
+        for (String relativePath : allFiles) {
+            String base = baseName(relativePath);
+            fileByBaseName.putIfAbsent(base, relativePath);
+            normalizedNameToFile.putIfAbsent(normalize(removeExtension(base)), relativePath);
         }
         this.propertyImagesByColor = buildPropertyGroups(allFiles);
         this.propertyImageByCardId = new HashMap<>();
@@ -58,17 +63,23 @@ public class CardImageResolver {
         }
 
         String fileName = resolveFileName(card);
-        ImageIcon icon = loadIcon(fileName, width, height);
+        boolean flipped = card instanceof PropertyCard && ((PropertyCard) card).isDisplayFlipped();
+        String cacheSuffix = "";
+        if (card instanceof PropertyCard) {
+            PropertyCard pc = (PropertyCard) card;
+            cacheSuffix = "|id" + card.getId() + "|" + pc.getColor()
+                    + (pc.isDisplayFlipped() ? "|flip" : "")
+                    + (pc.isColorCommitted() ? "|locked" : "");
+        }
+        ImageIcon icon = loadIcon(fileName, width, height, flipped, cacheSuffix);
         if (icon != null) {
             return icon;
         }
-
-        // Last safety fallback keeps the GUI usable even when one image is missing.
         return getFallbackIcon(width, height);
     }
 
     public ImageIcon getFallbackIcon(int width, int height) {
-        ImageIcon fallback = loadIcon(FALLBACK_FILE, width, height);
+        ImageIcon fallback = loadIcon(FALLBACK_FILE, width, height, false, "");
         if (fallback != null) {
             return fallback;
         }
@@ -86,12 +97,13 @@ public class CardImageResolver {
             exact = resolveActionFile((ActionCard) card);
         }
 
-        if (exists(exact)) {
-            return exact;
+        String located = locateFile(exact);
+        if (located != null) {
+            return located;
         }
 
         String normalizedHit = exact == null ? null : normalizedNameToFile.get(normalize(removeExtension(exact)));
-        if (normalizedHit != null && exists(normalizedHit)) {
+        if (normalizedHit != null) {
             return normalizedHit;
         }
 
@@ -100,7 +112,26 @@ public class CardImageResolver {
             return fuzzy;
         }
 
-        return FALLBACK_FILE;
+        return locateFile(FALLBACK_FILE);
+    }
+
+    private String locateFile(String fileName) {
+        if (fileName == null) {
+            return null;
+        }
+        if (allFiles.contains(fileName)) {
+            return fileName;
+        }
+        String byBase = fileByBaseName.get(fileName);
+        if (byBase != null) {
+            return byBase;
+        }
+        for (String path : allFiles) {
+            if (path.endsWith("/" + fileName) || path.equals(fileName)) {
+                return path;
+            }
+        }
+        return null;
     }
 
     private String resolveMoneyFile(MoneyCard card) {
@@ -220,7 +251,7 @@ public class CardImageResolver {
     private List<String> collectByPrefix(List<String> fileNames, String prefix) {
         List<String> out = new ArrayList<>();
         for (String file : fileNames) {
-            String lower = file.toLowerCase(Locale.ROOT);
+            String lower = baseName(file).toLowerCase(Locale.ROOT);
             if (lower.startsWith(prefix) && lower.contains("property-card")) {
                 out.add(file);
             }
@@ -242,7 +273,7 @@ public class CardImageResolver {
         int bestScore = -1;
         String bestFile = null;
         for (String file : allFiles) {
-            String candidate = normalize(removeExtension(file));
+            String candidate = normalize(removeExtension(baseName(file)));
             int score = score(normalizedQuery, candidate);
             if (score > bestScore || (score == bestScore && bestFile != null && file.compareTo(bestFile) < 0)) {
                 bestScore = score;
@@ -294,29 +325,32 @@ public class CardImageResolver {
         return sb.toString();
     }
 
-    private ImageIcon loadIcon(String fileName, int width, int height) {
-        if (fileName == null || width <= 0 || height <= 0) {
+    private ImageIcon loadIcon(String relativePath, int width, int height, boolean flipped, String cacheSuffix) {
+        if (relativePath == null || width <= 0 || height <= 0) {
             return null;
         }
 
-        String key = fileName + "|" + width + "x" + height;
+        String key = relativePath + "|" + width + "x" + height + (flipped ? "|flip" : "") + cacheSuffix;
         if (iconCache.containsKey(key)) {
             return iconCache.get(key);
         }
 
-        Image image = loadRawImage(fileName);
+        java.awt.Image image = loadRawImage(relativePath);
         if (image == null) {
             return null;
         }
 
-        Image scaled = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+        BufferedImage scaled = ImageScaleUtil.scaleExact(image, width, height);
+        if (flipped) {
+            scaled = ImageScaleUtil.rotate180(scaled);
+        }
         ImageIcon icon = new ImageIcon(scaled);
         iconCache.put(key, icon);
         return icon;
     }
 
-    private Image loadRawImage(String fileName) {
-        String resourcePath = LIBRARY_PATH + "/" + fileName;
+    private java.awt.Image loadRawImage(String relativePath) {
+        String resourcePath = LIBRARY_PATH + "/" + relativePath.replace('\\', '/');
 
         try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
             if (in != null) {
@@ -325,7 +359,7 @@ public class CardImageResolver {
         } catch (IOException ignored) {
         }
 
-        Path localPath = Paths.get("src", "main", "resources", LIBRARY_PATH, fileName);
+        Path localPath = Paths.get("src", "main", "resources", LIBRARY_PATH).resolve(relativePath.replace('/', java.io.File.separatorChar));
         if (Files.exists(localPath)) {
             try (InputStream in = new FileInputStream(localPath.toFile())) {
                 return ImageIO.read(in);
@@ -336,10 +370,6 @@ public class CardImageResolver {
         return null;
     }
 
-    private boolean exists(String fileName) {
-        return fileName != null && allFiles.contains(fileName);
-    }
-
     private List<String> scanLibraryFiles() {
         List<String> files = new ArrayList<>();
 
@@ -348,7 +378,7 @@ public class CardImageResolver {
             if (url != null && "file".equalsIgnoreCase(url.getProtocol())) {
                 Path dir = Paths.get(url.toURI());
                 if (Files.isDirectory(dir)) {
-                    addFilesFromDirectory(dir, files);
+                    collectImageFiles(dir, dir, files);
                 }
             }
         } catch (IOException ignored) {
@@ -359,25 +389,43 @@ public class CardImageResolver {
             Path localDir = Paths.get("src", "main", "resources", LIBRARY_PATH);
             if (Files.isDirectory(localDir)) {
                 try {
-                    addFilesFromDirectory(localDir, files);
+                    collectImageFiles(localDir, localDir, files);
                 } catch (IOException ignored) {
                 }
             }
-        }
-
-        if (files.isEmpty()) {
-            files.add(FALLBACK_FILE);
         }
 
         files.sort(Comparator.naturalOrder());
         return files;
     }
 
-    private void addFilesFromDirectory(Path dir, List<String> files) throws IOException {
-        try (java.util.stream.Stream<Path> stream = Files.list(dir)) {
-            stream.filter(Files::isRegularFile)
-                    .forEach(path -> files.add(path.getFileName().toString()));
+    private void collectImageFiles(Path root, Path current, List<String> files) throws IOException {
+        try (java.util.stream.Stream<Path> stream = Files.list(current)) {
+            List<Path> entries = new ArrayList<>();
+            stream.forEach(entries::add);
+            entries.sort(Comparator.naturalOrder());
+            for (Path path : entries) {
+                if (Files.isDirectory(path)) {
+                    collectImageFiles(root, path, files);
+                } else if (isImageFile(path)) {
+                    String relative = root.relativize(path).toString().replace('\\', '/');
+                    files.add(relative);
+                }
+            }
         }
+    }
+
+    private boolean isImageFile(Path path) {
+        String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+        return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg");
+    }
+
+    private static String baseName(String relativePath) {
+        if (relativePath == null) {
+            return "";
+        }
+        int slash = Math.max(relativePath.lastIndexOf('/'), relativePath.lastIndexOf('\\'));
+        return slash >= 0 ? relativePath.substring(slash + 1) : relativePath;
     }
 
     private String removeExtension(String fileName) {

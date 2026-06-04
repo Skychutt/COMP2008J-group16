@@ -35,10 +35,14 @@ public final class UITheme {
     public static final Color BANK_ZONE_BORDER = new Color(96, 150, 80);
     public static final Color BANK_ZONE_ACTIVE = new Color(214, 245, 195);
 
-    public static final Font FONT_TITLE = new Font("Microsoft YaHei UI", Font.BOLD, 16);
-    public static final Font FONT_SUBTITLE = new Font("Microsoft YaHei UI", Font.BOLD, 13);
-    public static final Font FONT_BODY = new Font("Microsoft YaHei UI", Font.PLAIN, 12);
-    public static final Font FONT_SMALL = new Font("Microsoft YaHei UI", Font.PLAIN, 11);
+    public static final Font FONT_MENU_TITLE = new Font("Segoe UI", Font.BOLD, 36);
+    public static final Font FONT_MENU_SUBTITLE = new Font("Segoe UI", Font.PLAIN, 16);
+    public static final Font FONT_MENU_BUTTON = new Font("Segoe UI", Font.BOLD, 15);
+    public static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 16);
+    public static final Font FONT_SUBTITLE = new Font("Segoe UI", Font.BOLD, 13);
+    public static final Font FONT_BODY = new Font("Segoe UI", Font.PLAIN, 12);
+    public static final Font FONT_SMALL = new Font("Segoe UI", Font.PLAIN, 11);
+    public static final Font FONT_BANK_TOTAL = new Font("Segoe UI", Font.BOLD, 22);
 
     private UITheme() {
     }
@@ -81,6 +85,17 @@ public final class UITheme {
         button.setFocusPainted(false);
         button.setFont(FONT_SUBTITLE);
         button.setBorder(BorderFactory.createLineBorder(BORDER, 1, true));
+    }
+
+    public static void styleMenuButton(JButton button) {
+        button.setBackground(new Color(255, 255, 255, 240));
+        button.setForeground(Color.BLACK);
+        button.setFocusPainted(false);
+        button.setFont(FONT_MENU_BUTTON);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(60, 60, 60), 2, true),
+                BorderFactory.createEmptyBorder(10, 24, 10, 24)
+        ));
     }
 
     public static void styleLogArea(JTextArea logArea) {

@@ -32,8 +32,7 @@ public class ControlPanel extends JPanel {
 
     public ControlPanel(GameFrame mainFrame) {
         this.mainFrame = mainFrame;
-        setOpaque(true);
-        setBackground(UITheme.PANEL_BG);
+        setOpaque(false);
         setPreferredSize(new Dimension(330, 420));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -45,11 +44,11 @@ public class ControlPanel extends JPanel {
         add(lblActionsLeft);
 
         lblBankTotal = new JLabel("Bank: 0M");
-        lblBankTotal.setFont(UITheme.FONT_BODY);
-        lblBankTotal.setForeground(UITheme.TEXT_SUB);
+        lblBankTotal.setFont(UITheme.FONT_BANK_TOTAL);
+        lblBankTotal.setForeground(UITheme.TEXT_MAIN);
         lblBankTotal.setAlignmentX(LEFT_ALIGNMENT);
         add(lblBankTotal);
-        add(Box.createVerticalStrut(8));
+        add(Box.createVerticalStrut(6));
 
         pnlBank = createStripPanel();
         add(createSectionBox("Bank Cards", pnlBank, 96));

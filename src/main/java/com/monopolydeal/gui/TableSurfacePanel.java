@@ -9,7 +9,7 @@ import java.awt.Polygon;
 import java.awt.RenderingHints;
 
 /**
- * Paints a green card-table background with a wood frame and subtle perspective.
+ * In-game table backdrop (green felt). The home screen uses {@link MainMenuPanel} instead.
  */
 public class TableSurfacePanel extends JPanel {
 
@@ -27,15 +27,12 @@ public class TableSurfacePanel extends JPanel {
         int h = getHeight();
         int frame = Math.max(14, Math.min(w, h) / 28);
 
-        // Wood outer frame
         g2.setColor(UITheme.WOOD_OUTER);
         g2.fillRoundRect(0, 0, w, h, 34, 34);
 
-        // Wood inner edge
         g2.setColor(UITheme.WOOD_INNER);
         g2.fillRoundRect(frame / 2, frame / 2, w - frame, h - frame, 28, 28);
 
-        // Felt area with light perspective (wider at bottom).
         int leftTop = frame + frame / 2;
         int rightTop = w - leftTop;
         int leftBottom = frame / 2;
@@ -56,7 +53,6 @@ public class TableSurfacePanel extends JPanel {
         g2.setPaint(feltPaint);
         g2.fillPolygon(felt);
 
-        // Soft vignette to strengthen table depth.
         g2.setColor(new Color(0, 0, 0, 35));
         g2.fillRoundRect(frame + 4, topY + 4, w - (frame + 4) * 2, h - (frame + 12) * 2, 26, 26);
 

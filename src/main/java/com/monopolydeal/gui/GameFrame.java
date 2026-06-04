@@ -5,6 +5,7 @@ import com.monopolydeal.logic.GameLogic;
 import com.monopolydeal.model.GameManager;
 import com.monopolydeal.model.Player;
 import com.monopolydeal.model.card.Card;
+import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.model.card.PropertyCard;
 
 import javax.swing.JFrame;
@@ -27,14 +28,17 @@ public class GameFrame extends JFrame implements IGameObserver {
     private final OpponentsPanel opponentsPanel;
     private final ControlPanel controlPanel;
 
+    private final JFrame homeFrame;
+
     private boolean gameOverDialogShown;
     private String latestEvent;
     private boolean discardMode;
     private int discardRemaining;
 
-    public GameFrame(GameManager gameManager, GameLogic gameLogic) {
+    public GameFrame(GameManager gameManager, GameLogic gameLogic, JFrame homeFrame) {
         this.gameManager = gameManager;
         this.gameLogic = gameLogic;
+        this.homeFrame = homeFrame;
         this.imageResolver = new CardImageResolver();
         this.latestEvent = "Welcome to Monopoly Deal.";
         this.discardMode = false;
@@ -61,6 +65,7 @@ public class GameFrame extends JFrame implements IGameObserver {
 
         topStatusPanel.setCardDropHandler(this::handleCenterCardDrop);
         playerPanel.setBankDropHandler(this::bankCardById);
+        playerPanel.setPropertyDropHandler(this::placePropertyById);
         playerPanel.setEndTurnHandler(this::endCurrentTurn);
 
         add(opponentsPanel, BorderLayout.NORTH);
@@ -70,6 +75,21 @@ public class GameFrame extends JFrame implements IGameObserver {
 
         gameManager.attach(this);
         refreshUI();
+
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                returnToHomeScreen();
+            }
+        });
+    }
+
+    private void returnToHomeScreen() {
+        if (homeFrame instanceof MainMenuFrame) {
+            ((MainMenuFrame) homeFrame).showHomeAgain();
+        } else if (homeFrame != null) {
+            homeFrame.setVisible(true);
+        }
     }
 
     @Override
@@ -109,7 +129,16 @@ public class GameFrame extends JFrame implements IGameObserver {
             return;
         }
 
-        gameLogic.playCard(current, card);
+        if (card instanceof PropertyCard) {
+            PropertyCard propertyCard = (PropertyCard) card;
+            PropertyType chosen = resolvePlacementColor(propertyCard);
+            if (propertyCard.needsColorChoiceOnPlacement() && chosen == null) {
+                return;
+            }
+            gameLogic.placeProperty(current, propertyCard, chosen);
+        } else {
+            gameLogic.playCard(current, card);
+        }
         refreshUI();
     }
 
@@ -123,6 +152,42 @@ public class GameFrame extends JFrame implements IGameObserver {
             return;
         }
         playCard(card);
+    }
+
+    /**
+     * Places a property card from hand via the property drop zone (same rules as center play).
+     */
+    public void placePropertyById(int cardId) {
+        Player current = gameManager.getCurrentPlayer();
+        if (current == null || gameManager.isGameOver() || discardMode) {
+            return;
+        }
+
+        Card card = current.getHand().findCard(cardId);
+        if (card == null) {
+            reportProblem("Property Failed", "This card is no longer in your hand.");
+            return;
+        }
+
+        if (!(card instanceof PropertyCard)) {
+            reportProblem("Property Failed", "Only property cards can be placed in the property area.");
+            return;
+        }
+
+        PropertyCard propertyCard = (PropertyCard) card;
+        PropertyType chosen = resolvePlacementColor(propertyCard);
+        if (propertyCard.needsColorChoiceOnPlacement() && chosen == null) {
+            return;
+        }
+
+        String reason = gameLogic.getRuleValidator().explainPlayCardFailure(current, propertyCard);
+        if (reason != null) {
+            reportProblem("Property Failed", reason);
+            return;
+        }
+
+        gameLogic.placeProperty(current, propertyCard, chosen);
+        refreshUI();
     }
 
     public void bankCardById(int cardId) {
@@ -143,9 +208,9 @@ public class GameFrame extends JFrame implements IGameObserver {
             return;
         }
 
-        if (card instanceof PropertyCard) {
+        if (card instanceof PropertyCard && !((PropertyCard) card).canBankAsMoney()) {
             reportProblem("Bank Failed",
-                    "Cannot bank [" + card.getName() + "] because property cards must stay in the property area.");
+                    "Cannot bank [" + card.getName() + "] because it has no monetary value.");
             return;
         }
 
@@ -237,6 +302,14 @@ public class GameFrame extends JFrame implements IGameObserver {
      * Shows the same problem both in a dialog and in the event log.
      * Keeping the message in one place makes GUI errors easier to read.
      */
+    private PropertyType resolvePlacementColor(PropertyCard card) {
+        PropertyType chosen = PropertyColorChooser.prompt(this, card);
+        if (card.needsColorChoiceOnPlacement() && chosen == null) {
+            return null;
+        }
+        return chosen;
+    }
+
     private void reportProblem(String title, String message) {
         JOptionPane.showMessageDialog(this, message, title, JOptionPane.WARNING_MESSAGE);
         gameManager.notifyAllObservers(message);

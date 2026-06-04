@@ -1,5 +1,6 @@
 package com.monopolydeal.model;
 
+import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.interfaces.IGameObserver;
 import com.monopolydeal.interfaces.ISubject;
 import com.monopolydeal.model.card.*;
@@ -114,7 +115,7 @@ public class Player implements ISubject {
 
     /**
      * Deposit a money or action card from hand into the bank area.
-     * Property cards cannot be deposited as money.
+     * Property cards with value may be deposited as money (except rainbow wild).
      * Consumes 1 action when successful.
      * @param cardId the unique ID of the card to deposit
      * @return true if the card was banked successfully
@@ -132,8 +133,11 @@ public class Player implements ISubject {
         }
 
         if (found instanceof PropertyCard) {
-            notifyAllObservers("Cannot bank [" + found.getName() + "] because property cards must stay in the property area.");
-            return false;
+            PropertyCard property = (PropertyCard) found;
+            if (!property.canBankAsMoney()) {
+                notifyAllObservers("Cannot bank [" + found.getName() + "] because this property card cannot be used as money.");
+                return false;
+            }
         }
 
         hand.removeCard(cardId);
@@ -151,6 +155,10 @@ public class Player implements ISubject {
      * @return true if the property card was placed successfully
      */
     public boolean placeProperty(int cardId) {
+        return placeProperty(cardId, null);
+    }
+
+    public boolean placeProperty(int cardId, PropertyType chosenColor) {
         if (actions <= 0) {
             notifyAllObservers(name + " has no actions left!");
             return false;
@@ -167,8 +175,20 @@ public class Player implements ISubject {
             return false;
         }
 
+        PropertyCard propertyCard = (PropertyCard) card;
+
+        if (chosenColor != null && !propertyCard.isColorCommitted()) {
+            propertyCard.commitColor(chosenColor);
+        }
+
         hand.removeCard(cardId);
-        propertyArea.add(card);
+        propertyArea.add(propertyCard, chosenColor);
+        PropertyCard reclaimedWild = propertyArea.tryReclaimWildcardAfterPlacement(propertyCard);
+        if (reclaimedWild != null) {
+            hand.add(reclaimedWild);
+            notifyAllObservers(name + " replaced a wildcard with [" + propertyCard.getName()
+                    + "] and took [" + reclaimedWild.getName() + "] back to hand.");
+        }
         actions--;
         notifyAllObservers(name + " placed [" + card.getName() + "]. Complete sets: " + propertyArea.countCompleteSets());
         return true;
@@ -181,25 +201,36 @@ public class Player implements ISubject {
      * @param amount the amount to pay in millions
      */
     public List<Card> payAmount(int amount) {
+        if (amount <= 0) {
+            return new ArrayList<>();
+        }
+
         List<Card> paid = new ArrayList<>();
         int totalPaid = 0;
 
-        // Step 1: Pay from bank cards first
         List<Card> bankCards = new ArrayList<>(bankArea.getMoney());
         for (Card c : bankCards) {
-            if (totalPaid >= amount) break;
+            if (totalPaid >= amount) {
+                break;
+            }
             bankArea.remove(c);
             paid.add(c);
             totalPaid += c.getValue();
         }
 
-        // Step 2: If bank is not enough, also pay with property cards
         if (totalPaid < amount) {
             List<PropertySet> sets = propertyArea.getSets();
             for (PropertySet set : sets) {
-                List<PropertyCard> propCards = new ArrayList<>(set.getCards());
+                List<PropertyCard> propCards = new ArrayList<>();
+                for (PropertyCard pc : set.getCards()) {
+                    if (pc.canBeUsedAsPayment()) {
+                        propCards.add(pc);
+                    }
+                }
                 for (PropertyCard c : propCards) {
-                    if (totalPaid >= amount) break;
+                    if (totalPaid >= amount) {
+                        break;
+                    }
                     propertyArea.remove(c);
                     paid.add(c);
                     totalPaid += c.getValue();
@@ -207,7 +238,11 @@ public class Player implements ISubject {
             }
         }
 
-        notifyAllObservers(name + " paid " + totalPaid + "M (owed " + amount + "M).");
+        if (paid.isEmpty()) {
+            notifyAllObservers(name + " has no bank or property to pay (owed " + amount + "M).");
+        } else {
+            notifyAllObservers(name + " paid " + totalPaid + "M (owed " + amount + "M).");
+        }
         return paid;
     }
 
@@ -235,18 +270,14 @@ public class Player implements ISubject {
      * Note: In a GUI version, the player would choose which cards to discard.
      * Here we auto-discard from the end of the hand list for simplicity.
      */
-    public void endTurn() {
-        Deck deck = Deck.getInstance();
-
-        // If hand has more than 7 cards, discard the extras one by one
-        while (hand.size() > MAX_HAND_SIZE) {
-            Card discard = hand.getCards().get(0);  // always take the first card
-            hand.removeCard(discard.getId());
-            deck.addToDiscard(discard);
-            notifyAllObservers(name + " discarded [" + discard.getName() + "] (hand limit).");
-        }
-
+    public void finalizeTurnEnd() {
         notifyAllObservers(name + "'s turn ended. Hand: " + hand.size() + " cards | Bank: " + bankArea.total() + "M");
+    }
+
+    /** @deprecated Use {@link #finalizeTurnEnd()} — discarding is handled by game logic before turn change. */
+    @Deprecated
+    public void endTurn() {
+        finalizeTurnEnd();
     }
     /**
      * Handle incoming game event updates.
