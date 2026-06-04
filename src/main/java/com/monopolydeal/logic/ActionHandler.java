@@ -1,6 +1,7 @@
 package com.monopolydeal.logic;
 
 import com.monopolydeal.enums.ActionType;
+import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.model.Deck;
 import com.monopolydeal.model.GameManager;
 import com.monopolydeal.model.Player;
@@ -9,10 +10,12 @@ import com.monopolydeal.model.card.ActionCard;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
+import javax.swing.JOptionPane;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-
+import java.util.Set;
 
 /**
  * Handles the execution of all action card effects.
@@ -24,15 +27,27 @@ public class ActionHandler {
 
     private final GameLogic gameLogic;
     private Scanner scanner;
+    private boolean useDialogInput;
 
     public ActionHandler(GameLogic gameLogic) {
         this.gameLogic = gameLogic;
         this.scanner = new Scanner(System.in);
+        this.useDialogInput = false;
     }
+
     /** Refresh the scanner to pick up changes to System.in (useful for testing). */
     public void refreshScanner() {
         this.scanner = new Scanner(System.in);
+    }
 
+    /** Switch between console input and dialog input (GUI mode). */
+    public void setUseDialogInput(boolean useDialogInput) {
+        this.useDialogInput = useDialogInput;
+    }
+
+    /** @return true when dialogs are used for player decisions */
+    public boolean isUseDialogInput() {
+        return useDialogInput;
     }
 
     /**
@@ -40,45 +55,36 @@ public class ActionHandler {
      * @param player the player playing the card
      * @param card the action card to execute
      */
-    public void executeAction(Player player, ActionCard card) {
+    public boolean executeAction(Player player, ActionCard card) {
         if (player == null || card == null) {
-            return;
+            return true;
         }
         switch (card.getType()) {
             case GO_PASS:
                 handlePassGo(player);
-                break;
+                return true;
             case BIRTHDAY:
                 handleBirthday(player);
-                break;
+                return true;
             case DEBT_DEAL:
                 handleDebtCollector(player);
-                break;
+                return true;
             case SLY_DEAL:
-                handleSlyDealAuto(player, card);
-                break;
+                handleSlyDeal(player, card);
+                return true;
             case FORCED_DEAL:
-                handleForcedDealStub(player, card);
-                break;
+                handleForcedDeal(player, card);
+                return true;
             case DEAL_BREAKER:
-                handleDealBreakerAuto(player, card);
-                break;
+                handleDealBreaker(player, card);
+                return true;
             case DOUBLE_RENT:
-                handleDoubleRentOrRentStub(player, card);
-                break;
+                return handleDoubleRentOrRent(player, card);
             case JUST_SAY_NO:
-                break;
+                return true;
             default:
-                break;
+                return true;
         }
-    }
-    private PropertySet firstCompleteSet(Player player) {
-        for (PropertySet s : player.getPropertyArea().getSets()) {
-            if (RentCalculator.canCollectRent(s)) {
-                return s;
-            }
-        }
-        return null;
     }
 
     /**
@@ -92,16 +98,42 @@ public class ActionHandler {
         if (defender == null || attackCard == null || !attackCard.isCanDefend()) {
             return false;
         }
-        Card js = findJustSayNo(defender);
-        if (js == null) {
-            return false;
+
+        GameManager gm = gameLogic.getGameManager();
+        Player responder = defender;
+        Player challenger = attacker;
+        boolean blocked = false;
+
+        while (responder != null) {
+            Card js = findJustSayNo(responder);
+            if (js == null) {
+                break;
+            }
+
+            if (!askUseJustSayNo(responder, attackCard, blocked, challenger)) {
+                break;
+            }
+
+            responder.getHand().removeCard(js.getId());
+            Deck.getInstance().addToDiscard(js);
+
+            if (!blocked) {
+                String challengerName = challenger != null ? challenger.getName() : "an opponent";
+                gm.notifyAllObservers(responder.getName() + " blocked " + challengerName
+                        + "'s [" + attackCard.getName() + "] with Just Say No!");
+            } else {
+                String challengerName = challenger != null ? challenger.getName() : "the previous player";
+                gm.notifyAllObservers(responder.getName() + " countered " + challengerName
+                        + "'s Just Say No with another Just Say No!");
+            }
+
+            blocked = !blocked;
+            Player temp = responder;
+            responder = challenger;
+            challenger = temp;
         }
-        defender.getHand().removeCard(js.getId());
-        Deck.getInstance().addToDiscard(js);
-        String attackerName = attacker != null ? attacker.getName() : "an opponent";
-        gameLogic.getGameManager().notifyAllObservers(defender.getName() + " blocked " + attackerName
-                + "'s [" + attackCard.getName() + "] with Just Say No!");
-        return true;
+
+        return blocked;
     }
 
     private Card findJustSayNo(Player defender) {
@@ -113,6 +145,36 @@ public class ActionHandler {
         return null;
     }
 
+    /**
+     * Ask whether a player wants to use Just Say No.
+     * First response blocks the attack, next response counter-blocks, and so on.
+     */
+    private boolean askUseJustSayNo(Player responder, ActionCard attackCard, boolean attackCurrentlyBlocked, Player otherSide) {
+        String attackName = attackCard.getName() == null ? "this action" : attackCard.getName();
+        String prompt;
+        if (!attackCurrentlyBlocked) {
+            String attackerName = otherSide != null ? otherSide.getName() : "the opponent";
+            prompt = responder.getName() + ": " + attackerName + " played [" + attackName + "]. Use Just Say No?";
+        } else {
+            String previousName = otherSide != null ? otherSide.getName() : "the other player";
+            prompt = responder.getName() + ": " + previousName
+                    + " just used Just Say No. Use yours to counter?";
+        }
+
+        List<String> options = new ArrayList<>();
+        options.add("Use Just Say No");
+        options.add("Do Not Use");
+
+        int choice = chooseOption(
+                "Just Say No",
+                prompt,
+                options,
+                false
+        );
+
+        return choice == 0;
+    }
+
     public void handlePassGo(Player player) {
         List<Card> extra = Deck.getInstance().draw(2);
         for (Card c : extra) {
@@ -121,186 +183,294 @@ public class ActionHandler {
         gameLogic.getGameManager().notifyAllObservers(player.getName() + " drew " + extra.size() + " extra card(s) from Pass Go.");
     }
 
+    /**
+     * Enforce end-turn hand limit by letting the player choose which cards to discard.
+     * Rule reference: if hand has more than 7 cards at end of turn, discard extras.
+     */
+    public void enforceEndTurnDiscard(Player player) {
+        if (player == null) {
+            return;
+        }
+        GameManager gm = gameLogic.getGameManager();
+
+        while (player.getHand().size() > Player.MAX_HAND_SIZE) {
+            List<Card> handCards = new ArrayList<>(player.getHand().getCards());
+            List<String> options = new ArrayList<>();
+            for (Card card : handCards) {
+                options.add("[" + card.getName() + "] (" + card.getValue() + "M) #ID " + card.getId());
+            }
+
+            int needDiscard = player.getHand().size() - Player.MAX_HAND_SIZE;
+            int index = chooseOption(
+                    "Discard To 7 Cards",
+                    player.getName() + " must discard " + needDiscard + " more card(s):",
+                    options,
+                    false
+            );
+
+            if (index < 0 || index >= handCards.size()) {
+                index = 0;
+            }
+
+            Card discard = handCards.get(index);
+            player.getHand().removeCard(discard.getId());
+            Deck.getInstance().addToDiscard(discard);
+            gm.notifyAllObservers(player.getName() + " discarded [" + discard.getName() + "] (hand limit).");
+        }
+    }
+
     public void handleRent(Player collector, Player target, int amount) {
-        AssetTransferManager.PaymentResult r = gameLogic.getAssetTransferManager()
-                .processPayment(target, collector, amount, AssetTransferManager.PaymentMode.USE_MIXED);
+        AssetTransferManager.PaymentResult r = processPaymentWithChoice(
+                target,
+                collector,
+                amount,
+                "Rent"
+        );
         gameLogic.getGameManager().notifyAllObservers(r.getMessage());
     }
 
     public void handleBirthday(Player initiator) {
         GameManager gm = gameLogic.getGameManager();
-        for (Player other : gm.getPlayers()) {
-            if (other == initiator) {
-                continue;
-            }
-            AssetTransferManager.PaymentResult r = gameLogic.getAssetTransferManager()
-                    .processPayment(other, initiator, BIRTHDAY_PAYMENT, AssetTransferManager.PaymentMode.USE_MIXED);
+        for (Player other : getOpponents(initiator)) {
+            AssetTransferManager.PaymentResult r = processPaymentWithChoice(
+                    other,
+                    initiator,
+                    BIRTHDAY_PAYMENT,
+                    "Birthday"
+            );
             gm.notifyAllObservers(r.getMessage());
         }
     }
 
-    private void handleDebtCollector(Player collector) {
-        GameManager gm = gameLogic.getGameManager();
-        List<Player> others = new ArrayList<>();
-        for (Player p : gm.getPlayers()) {
-            if (p != collector) others.add(p);
+    private AssetTransferManager.PaymentResult processPaymentWithChoice(
+            Player payer,
+            Player receiver,
+            int requiredAmount,
+            String reason
+    ) {
+        return gameLogic.getAssetTransferManager().processPayment(
+                payer,
+                receiver,
+                requiredAmount,
+                AssetTransferManager.PaymentMode.USE_MIXED,
+                (from, to, eligibleAssets, amount) -> choosePaymentAssets(from, to, eligibleAssets, amount, reason)
+        );
+    }
+
+    private List<Card> choosePaymentAssets(
+            Player payer,
+            Player receiver,
+            List<Card> eligibleAssets,
+            int requiredAmount,
+            String reason
+    ) {
+        if (eligibleAssets == null || eligibleAssets.isEmpty()) {
+            return new ArrayList<>();
         }
+
+        List<Card> remaining = new ArrayList<>(eligibleAssets);
+        List<Card> chosen = new ArrayList<>();
+        int paid = 0;
+        int affordable = 0;
+        for (Card c : eligibleAssets) {
+            affordable += c.getValue();
+        }
+
+        while (!remaining.isEmpty()) {
+            if (paid >= requiredAmount) {
+                break;
+            }
+
+            List<String> options = new ArrayList<>();
+            for (Card c : remaining) {
+                options.add(formatPaymentOption(c));
+            }
+
+            String prompt = payer.getName() + " pays " + receiver.getName()
+                    + " for " + reason + ". Owed: " + requiredAmount + "M, selected: " + paid + "M.";
+
+            int index = chooseOption("Choose Payment Card", prompt, options, true);
+            if (index < 0) {
+                break;
+            }
+            if (index >= remaining.size()) {
+                continue;
+            }
+
+            Card selected = remaining.remove(index);
+            chosen.add(selected);
+            paid += selected.getValue();
+        }
+
+        // If the payer cancels early but still cannot cover the debt, fall back to the full legal set.
+        if (affordable < requiredAmount && paid < affordable) {
+            chosen.clear();
+            chosen.addAll(eligibleAssets);
+        } else if (affordable >= requiredAmount && paid < requiredAmount) {
+            return gameLogic.getAssetTransferManager().selectOptimalPaymentAssets(eligibleAssets, requiredAmount);
+        }
+
+        return chosen;
+    }
+
+    private String formatPaymentOption(Card card) {
+        if (card instanceof PropertyCard) {
+            PropertyCard pc = (PropertyCard) card;
+            return "[Property] " + card.getName() + " (" + pc.getColor() + ") - " + card.getValue() + "M";
+        }
+        return "[Bank] " + card.getName() + " - " + card.getValue() + "M";
+    }
+
+    private boolean handleDebtCollector(Player collector) {
+        GameManager gm = gameLogic.getGameManager();
+        List<Player> others = getOpponents(collector);
 
         if (others.isEmpty()) {
-            gm.notifyAllObservers("Debt Collector: no other players.");
-            return;
+            return finish(gm, "Debt Collector: no other players.");
         }
 
-        // Let the player choose who to charge
-        System.out.println();
-        System.out.println("=== Debt Collector: Choose a player to charge 5M ===");
-        for (int i = 0; i < others.size(); i++) {
-            Player p = others.get(i);
-            System.out.println("  " + (i + 1) + ". " + p.getName() + " (Bank: " + p.getBankArea().total() + "M)");
+        List<String> options = new ArrayList<>();
+        for (Player p : others) {
+            options.add(p.getName() + " (Bank: " + p.getBankArea().total() + "M)");
         }
 
-        int choice = readChoice(1, others.size());
-        Player victim = others.get(choice - 1);
+        int index = chooseOption(
+                "Debt Collector",
+                "Choose one player to charge 5M:",
+                options,
+                true
+        );
 
-        AssetTransferManager.PaymentResult r = gameLogic.getAssetTransferManager()
-                .processPayment(victim, collector, DEBT_COLLECTOR_AMOUNT, AssetTransferManager.PaymentMode.USE_MIXED);
+        if (index < 0) {
+            return cancel(gm, collector.getName() + " cancelled Debt Collector.");
+        }
+
+        Player victim = others.get(index);
+        AssetTransferManager.PaymentResult r = processPaymentWithChoice(
+                victim,
+                collector,
+                DEBT_COLLECTOR_AMOUNT,
+                "Debt Collector"
+        );
         gm.notifyAllObservers(r.getMessage());
+        return true;
     }
 
     /**
      * Sly Deal: Let the player choose which opponent's property to steal.
      * Cannot steal from a complete set.
      */
-    private void handleSlyDealAuto(Player thief, ActionCard played) {
+    private boolean handleSlyDeal(Player thief, ActionCard played) {
         GameManager gm = gameLogic.getGameManager();
 
-        // Collect all stealable properties (not in complete sets) from all opponents
         List<Player> candidateOwners = new ArrayList<>();
         List<PropertyCard> candidateCards = new ArrayList<>();
-
-        for (Player victim : gm.getPlayers()) {
-            if (victim == thief) continue;
-            for (PropertySet set : victim.getPropertyArea().getSets()) {
-                if (set.isComplete()) continue; // Cannot steal from a complete set
-                for (PropertyCard pc : set.getCards()) {
-                    candidateOwners.add(victim);
-                    candidateCards.add(pc);
-                }
+        for (Player victim : getOpponents(thief)) {
+            for (PropertyCard pc : collectNonCompleteCards(victim)) {
+                candidateOwners.add(victim);
+                candidateCards.add(pc);
             }
         }
 
         if (candidateCards.isEmpty()) {
-            gm.notifyAllObservers("Sly Deal: no stealable property available (all sets are complete or empty).");
-            return;
+            return finish(gm, "Sly Deal: no stealable property available (all sets are complete or empty).");
         }
 
-        // Display options to the player
-        System.out.println();
-        System.out.println("=== Sly Deal: Choose a property to steal ===");
+        List<String> options = new ArrayList<>();
         for (int i = 0; i < candidateCards.size(); i++) {
             PropertyCard pc = candidateCards.get(i);
             Player owner = candidateOwners.get(i);
-            System.out.println("  " + (i + 1) + ". " + owner.getName() + "'s [" + pc.getName() + "] (" + pc.getColor() + ")");
-        }
-        System.out.println("  0. Cancel (waste this action)");
-
-        int choice = readChoice(0, candidateCards.size());
-        if (choice == 0) {
-            gm.notifyAllObservers(thief.getName() + " cancelled Sly Deal.");
-            return;
+            options.add(owner.getName() + "'s [" + pc.getName() + "] (" + pc.getColor() + ")");
         }
 
-        Player victim = candidateOwners.get(choice - 1);
-        PropertyCard stolen = candidateCards.get(choice - 1);
+        int index = chooseOption(
+                "Sly Deal",
+                "Choose one property to steal:",
+                options,
+                true
+        );
 
-        // Handle Just Say No defense
+        if (index < 0) {
+            return cancel(gm, thief.getName() + " cancelled Sly Deal.");
+        }
+
+        Player victim = candidateOwners.get(index);
+        PropertyCard stolen = candidateCards.get(index);
+
         if (handleJustSayNo(victim, thief, played)) {
-            return;
+            return true;
         }
 
         victim.getPropertyArea().remove(stolen);
         thief.getPropertyArea().add(stolen);
         gm.notifyAllObservers(thief.getName() + " stole [" + stolen.getName() + "] from " + victim.getName() + " with Sly Deal.");
+        return true;
     }
 
     /**
      * Forced Deal: Player chooses one of their own properties (not from a complete set)
      * and one opponent's property (not from a complete set) to swap.
      */
-    private void handleForcedDealStub(Player player, ActionCard played) {
+    private boolean handleForcedDeal(Player player, ActionCard played) {
         GameManager gm = gameLogic.getGameManager();
 
-        // Step 1: Collect player's own swappable properties (not in complete sets)
-        List<PropertyCard> myCards = new ArrayList<>();
-        for (PropertySet set : player.getPropertyArea().getSets()) {
-            if (set.isComplete()) continue;
-            myCards.addAll(set.getCards());
-        }
+        List<PropertyCard> myCards = collectNonCompleteCards(player);
 
         if (myCards.isEmpty()) {
-            gm.notifyAllObservers("Forced Deal: " + player.getName() + " has no swappable property (all sets complete or empty).");
-            return;
+            return finish(gm, "Forced Deal: " + player.getName() + " has no swappable property (all sets complete or empty).");
         }
 
-        // Step 2: Collect opponent's swappable properties (not in complete sets)
         List<Player> opponentOwners = new ArrayList<>();
         List<PropertyCard> opponentCards = new ArrayList<>();
-        for (Player other : gm.getPlayers()) {
-            if (other == player) continue;
-            for (PropertySet set : other.getPropertyArea().getSets()) {
-                if (set.isComplete()) continue;
-                for (PropertyCard pc : set.getCards()) {
-                    opponentOwners.add(other);
-                    opponentCards.add(pc);
-                }
+        for (Player other : getOpponents(player)) {
+            for (PropertyCard pc : collectNonCompleteCards(other)) {
+                opponentOwners.add(other);
+                opponentCards.add(pc);
             }
         }
 
         if (opponentCards.isEmpty()) {
-            gm.notifyAllObservers("Forced Deal: no opponent has swappable property.");
-            return;
+            return finish(gm, "Forced Deal: no opponent has swappable property.");
         }
 
-        // Step 3: Let player choose their own property to give
-        System.out.println();
-        System.out.println("=== Forced Deal: Choose YOUR property to give away ===");
-        for (int i = 0; i < myCards.size(); i++) {
-            PropertyCard pc = myCards.get(i);
-            System.out.println("  " + (i + 1) + ". [" + pc.getName() + "] (" + pc.getColor() + ")");
+        List<String> myOptions = new ArrayList<>();
+        for (PropertyCard card : myCards) {
+            myOptions.add("[" + card.getName() + "] (" + card.getColor() + ")");
         }
-        System.out.println("  0. Cancel (waste this action)");
-
-        int myChoice = readChoice(0, myCards.size());
-        if (myChoice == 0) {
-            gm.notifyAllObservers(player.getName() + " cancelled Forced Deal.");
-            return;
+        int myIndex = chooseOption(
+                "Forced Deal",
+                "Choose YOUR property to give away:",
+                myOptions,
+                true
+        );
+        if (myIndex < 0) {
+            return cancel(gm, player.getName() + " cancelled Forced Deal.");
         }
-        PropertyCard myCard = myCards.get(myChoice - 1);
+        PropertyCard myCard = myCards.get(myIndex);
 
-        // Step 4: Let player choose opponent's property to take
-        System.out.println();
-        System.out.println("=== Forced Deal: Choose an OPPONENT's property to take ===");
+        List<String> otherOptions = new ArrayList<>();
         for (int i = 0; i < opponentCards.size(); i++) {
             PropertyCard pc = opponentCards.get(i);
             Player owner = opponentOwners.get(i);
-            System.out.println("  " + (i + 1) + ". " + owner.getName() + "'s [" + pc.getName() + "] (" + pc.getColor() + ")");
+            otherOptions.add(owner.getName() + "'s [" + pc.getName() + "] (" + pc.getColor() + ")");
         }
-        System.out.println("  0. Cancel (waste this action)");
-
-        int theirChoice = readChoice(0, opponentCards.size());
-        if (theirChoice == 0) {
-            gm.notifyAllObservers(player.getName() + " cancelled Forced Deal.");
-            return;
+        int theirIndex = chooseOption(
+                "Forced Deal",
+                "Choose an OPPONENT property to take:",
+                otherOptions,
+                true
+        );
+        if (theirIndex < 0) {
+            return cancel(gm, player.getName() + " cancelled Forced Deal.");
         }
-        Player victim = opponentOwners.get(theirChoice - 1);
-        PropertyCard theirCard = opponentCards.get(theirChoice - 1);
 
-        // Step 5: Handle Just Say No defense
+        Player victim = opponentOwners.get(theirIndex);
+        PropertyCard theirCard = opponentCards.get(theirIndex);
+
         if (handleJustSayNo(victim, player, played)) {
-            return;
+            return true;
         }
 
-        // Step 6: Perform the swap
         player.getPropertyArea().remove(myCard);
         victim.getPropertyArea().remove(theirCard);
         player.getPropertyArea().add(theirCard);
@@ -308,59 +478,53 @@ public class ActionHandler {
 
         gm.notifyAllObservers(player.getName() + " swapped [" + myCard.getName() + "] for "
                 + victim.getName() + "'s [" + theirCard.getName() + "] with Forced Deal.");
+        return true;
     }
 
     /**
      * DealBreaker: Let the player choose which opponent's complete set to steal.
      */
-    private void handleDealBreakerAuto(Player thief, ActionCard played) {
+    private boolean handleDealBreaker(Player thief, ActionCard played) {
         GameManager gm = gameLogic.getGameManager();
 
-        // Collect all complete sets from opponents
         List<Player> candidateOwners = new ArrayList<>();
         List<PropertySet> candidateSets = new ArrayList<>();
-
-        for (Player victim : gm.getPlayers()) {
-            if (victim == thief) continue;
-            for (PropertySet set : victim.getPropertyArea().getSets()) {
-                if (set.isComplete()) {
-                    candidateOwners.add(victim);
-                    candidateSets.add(set);
-                }
+        for (Player victim : getOpponents(thief)) {
+            for (PropertySet set : collectCompleteSets(victim)) {
+                candidateOwners.add(victim);
+                candidateSets.add(set);
             }
         }
 
         if (candidateSets.isEmpty()) {
-            gm.notifyAllObservers("Deal Breaker: no opponent has a complete set to steal.");
-            return;
+            return finish(gm, "Deal Breaker: no opponent has a complete set to steal.");
         }
 
-        // Display options
-        System.out.println();
-        System.out.println("=== Deal Breaker: Choose a complete set to steal ===");
+        List<String> options = new ArrayList<>();
         for (int i = 0; i < candidateSets.size(); i++) {
             PropertySet set = candidateSets.get(i);
             Player owner = candidateOwners.get(i);
-            System.out.println("  " + (i + 1) + ". " + owner.getName() + "'s " + set.getColor()
-                    + " set (" + set.getCards().size() + " cards)");
-        }
-        System.out.println("  0. Cancel (waste this action)");
-
-        int choice = readChoice(0, candidateSets.size());
-        if (choice == 0) {
-            gm.notifyAllObservers(thief.getName() + " cancelled Deal Breaker.");
-            return;
+            options.add(owner.getName() + "'s " + set.getColor() + " set (" + set.getCards().size() + " cards)");
         }
 
-        Player victim = candidateOwners.get(choice - 1);
-        PropertySet targetSet = candidateSets.get(choice - 1);
+        int index = chooseOption(
+                "Deal Breaker",
+                "Choose a complete set to steal:",
+                options,
+                true
+        );
 
-        // Handle Just Say No defense
+        if (index < 0) {
+            return cancel(gm, thief.getName() + " cancelled Deal Breaker.");
+        }
+
+        Player victim = candidateOwners.get(index);
+        PropertySet targetSet = candidateSets.get(index);
+
         if (handleJustSayNo(victim, thief, played)) {
-            return;
+            return true;
         }
 
-        // Steal the entire set
         List<PropertyCard> cards = new ArrayList<>(targetSet.getCards());
         for (PropertyCard pc : cards) {
             victim.getPropertyArea().remove(pc);
@@ -368,6 +532,7 @@ public class ActionHandler {
         }
         gm.notifyAllObservers(thief.getName() + " stole a complete " + targetSet.getColor()
                 + " set from " + victim.getName() + " with Deal Breaker.");
+        return true;
     }
 
 
@@ -376,109 +541,250 @@ public class ActionHandler {
      * - Double The Rent: marks the current turn so the next rent is doubled.
      * - Rent card: player chooses a set to collect rent on, and opponent(s) to charge.
      */
-    private void handleDoubleRentOrRentStub(Player player, ActionCard card) {
+    private boolean handleDoubleRentOrRent(Player player, ActionCard card) {
         GameManager gm = gameLogic.getGameManager();
 
-        // If it's a "Double The Rent" card, mark double rent active for this turn
         if ("Double The Rent".equals(card.getName())) {
-            gameLogic.setDoubleRentActive(true);
-            gm.notifyAllObservers(player.getName() + " played Double The Rent! Next rent this turn will be doubled.");
-            return;
+            gameLogic.addPendingDoubleRent();
+            gm.notifyAllObservers(player.getName() + " played Double The Rent! Pending doubles this turn: "
+                    + gameLogic.getPendingDoubleRentCount() + ".");
+            return true;
         }
 
-        // It's a Rent card — player chooses which set to collect rent on
         List<PropertySet> rentableSets = new ArrayList<>();
         for (PropertySet set : player.getPropertyArea().getSets()) {
-            if (!set.getCards().isEmpty()) {
+            if (!set.getCards().isEmpty()
+                    && set.getRent() > 0
+                    && isSetAllowedByRentCard(set, card)) {
                 rentableSets.add(set);
             }
         }
 
         if (rentableSets.isEmpty()) {
-            gm.notifyAllObservers(player.getName() + " played " + card.getName() + " but has no properties to collect rent on.");
-            return;
+            return finish(gm, player.getName() + " played " + card.getName() + " but has no properties to collect rent on.");
         }
 
-        // Let player choose which set to charge rent for
-        System.out.println();
-        System.out.println("=== Rent: Choose which property set to charge rent for ===");
-        for (int i = 0; i < rentableSets.size(); i++) {
-            PropertySet set = rentableSets.get(i);
+        List<String> setOptions = new ArrayList<>();
+        for (PropertySet set : rentableSets) {
             int rentValue = set.getRent();
-            System.out.println("  " + (i + 1) + ". " + set.getColor() + " (" + set.getCards().size()
-                    + "/" + set.getNeed() + ") - Rent: " + rentValue + "M");
+            setOptions.add(set.getColor() + " (" + set.getCards().size() + "/" + set.getNeed() + ") - Rent: " + rentValue + "M");
         }
-        System.out.println("  0. Cancel (waste this action)");
 
-        int setChoice = readChoice(0, rentableSets.size());
-        if (setChoice == 0) {
-            gm.notifyAllObservers(player.getName() + " cancelled Rent.");
-            return;
+        int setIndex = chooseOption(
+                "Rent",
+                "Choose which property set to charge rent for:",
+                setOptions,
+                true
+        );
+
+        if (setIndex < 0) {
+            return cancel(gm, player.getName() + " cancelled Rent.");
         }
-        PropertySet chosenSet = rentableSets.get(setChoice - 1);
+
+        PropertySet chosenSet = rentableSets.get(setIndex);
+        mergeFullWildsIntoSetColor(player, chosenSet.getColor());
+        PropertySet refreshed = player.getPropertyArea().getSet(chosenSet.getColor());
+        if (refreshed != null) {
+            chosenSet = refreshed;
+        }
 
         // Determine if this is an "Any Rent" (charge one player) or standard rent (charge all)
         boolean isAnyRent = card.getName() != null && card.getName().contains("Any");
+        boolean isStandardRent = !isAnyRent;
 
-        // Calculate rent amount (with building bonus and possible double rent)
+        // Calculate base rent first (multiplier will be consumed only when rent is actually charged).
         int baseRent = chosenSet.getRent() + getBuildingBonusForSet(chosenSet);
-        boolean isDoubleRent = gameLogic.isDoubleRentActive();
-        int finalRent = isDoubleRent ? baseRent * 2 : baseRent;
-
-        // Reset double rent flag after use
-        if (isDoubleRent) {
-            gameLogic.setDoubleRentActive(false);
-        }
 
         if (isAnyRent) {
-            // Any Rent: choose one player to charge
-            List<Player> others = new ArrayList<>();
-            for (Player p : gm.getPlayers()) {
-                if (p != player) others.add(p);
-            }
+            List<Player> others = getOpponents(player);
             if (others.isEmpty()) {
-                gm.notifyAllObservers("Rent: no other players.");
-                return;
+                return finish(gm, "Rent: no other players.");
             }
 
-            System.out.println();
-            System.out.println("=== Rent (" + finalRent + "M): Choose a player to charge ===");
-            for (int i = 0; i < others.size(); i++) {
-                Player p = others.get(i);
-                System.out.println("  " + (i + 1) + ". " + p.getName() + " (Bank: " + p.getBankArea().total() + "M)");
+            List<String> targetOptions = new ArrayList<>();
+            for (Player p : others) {
+                targetOptions.add(p.getName() + " (Bank: " + p.getBankArea().total() + "M)");
+            }
+            int previewMultiplier = isStandardRent ? previewRentMultiplier() : 1;
+            int previewRent = baseRent * previewMultiplier;
+
+            int targetIndex = chooseOption(
+                    "Rent",
+                    "Rent amount: " + previewRent + "M. Choose a player to charge:",
+                    targetOptions,
+                    true
+            );
+
+            if (targetIndex < 0) {
+                return cancel(gm, player.getName() + " cancelled Rent.");
             }
 
-            int targetChoice = readChoice(1, others.size());
-            Player target = others.get(targetChoice - 1);
+            Player target = others.get(targetIndex);
+            int rentMultiplier = isStandardRent ? gameLogic.consumeRentMultiplier() : 1;
+            int finalRent = baseRent * rentMultiplier;
+            boolean doubled = rentMultiplier > 1;
 
-            // Handle Just Say No
             if (handleJustSayNo(target, player, card)) {
-                return;
+                return true;
             }
 
             gm.notifyAllObservers(player.getName() + " charges " + target.getName() + " rent of " + finalRent
-                    + "M on " + chosenSet.getColor() + " set." + (isDoubleRent ? " (DOUBLED!)" : ""));
-            AssetTransferManager.PaymentResult r = gameLogic.getAssetTransferManager()
-                    .processPayment(target, player, finalRent, AssetTransferManager.PaymentMode.USE_MIXED);
+                    + "M on " + chosenSet.getColor() + " set." + (doubled ? " (x" + rentMultiplier + ")" : ""));
+            AssetTransferManager.PaymentResult r = processPaymentWithChoice(
+                    target,
+                    player,
+                    finalRent,
+                    "Rent"
+            );
             gm.notifyAllObservers(r.getMessage());
         } else {
-            // Standard Rent: charge ALL other players
+            int rentMultiplier = gameLogic.consumeRentMultiplier();
+            int finalRent = baseRent * rentMultiplier;
+            boolean doubled = rentMultiplier > 1;
+
             gm.notifyAllObservers(player.getName() + " charges ALL players rent of " + finalRent
-                    + "M on " + chosenSet.getColor() + " set." + (isDoubleRent ? " (DOUBLED!)" : ""));
+                    + "M on " + chosenSet.getColor() + " set." + (doubled ? " (x" + rentMultiplier + ")" : ""));
 
-            for (Player target : gm.getPlayers()) {
-                if (target == player) continue;
-
-                // Each target can use Just Say No
+            for (Player target : getOpponents(player)) {
                 if (handleJustSayNo(target, player, card)) {
                     continue;
                 }
 
-                AssetTransferManager.PaymentResult r = gameLogic.getAssetTransferManager()
-                        .processPayment(target, player, finalRent, AssetTransferManager.PaymentMode.USE_MIXED);
+                AssetTransferManager.PaymentResult r = processPaymentWithChoice(
+                        target,
+                        player,
+                        finalRent,
+                        "Rent"
+                );
                 gm.notifyAllObservers(r.getMessage());
             }
         }
+        return true;
+    }
+
+    /** Return every opponent except the current player. */
+    private List<Player> getOpponents(Player current) {
+        List<Player> opponents = new ArrayList<>();
+        GameManager gm = gameLogic.getGameManager();
+        if (current == null || gm == null || gm.getPlayers() == null) {
+            return opponents;
+        }
+        for (Player player : gm.getPlayers()) {
+            if (player != null && player != current) {
+                opponents.add(player);
+            }
+        }
+        return opponents;
+    }
+
+    /** Collect cards that can be targeted because they are not inside complete sets. */
+    private List<PropertyCard> collectNonCompleteCards(Player player) {
+        List<PropertyCard> cards = new ArrayList<>();
+        if (player == null) {
+            return cards;
+        }
+        for (PropertySet set : player.getPropertyArea().getSets()) {
+            if (!set.isComplete()) {
+                cards.addAll(set.getCards());
+            }
+        }
+        return cards;
+    }
+
+    /** Collect complete sets for Deal Breaker. */
+    private List<PropertySet> collectCompleteSets(Player player) {
+        List<PropertySet> sets = new ArrayList<>();
+        if (player == null) {
+            return sets;
+        }
+        for (PropertySet set : player.getPropertyArea().getSets()) {
+            if (set.isComplete()) {
+                sets.add(set);
+            }
+        }
+        return sets;
+    }
+
+    /** Log a normal outcome and keep the action as resolved. */
+    private boolean finish(GameManager gm, String message) {
+        gm.notifyAllObservers(message);
+        return true;
+    }
+
+    /** Log a cancelled action so the caller can restore the card to hand. */
+    private boolean cancel(GameManager gm, String message) {
+        gm.notifyAllObservers(message);
+        return false;
+    }
+
+    /** Move full-color wilds into the chosen color before rent is calculated. */
+    private void mergeFullWildsIntoSetColor(Player player, PropertyType targetColor) {
+        if (player == null || targetColor == null || targetColor == PropertyType.RAINBOW) {
+            return;
+        }
+
+        List<PropertyCard> movable = new ArrayList<>();
+        for (PropertySet set : player.getPropertyArea().getSets()) {
+            if (set.getColor() != PropertyType.RAINBOW) {
+                continue;
+            }
+            for (PropertyCard card : set.getCards()) {
+                if (card.isFullColorWild()) {
+                    movable.add(card);
+                }
+            }
+        }
+
+        for (PropertyCard card : movable) {
+            player.getPropertyArea().moveProperty(card, targetColor);
+        }
+    }
+
+    private boolean isSetAllowedByRentCard(PropertySet set, ActionCard rentCard) {
+        if (set == null || rentCard == null) {
+            return false;
+        }
+        if (set.getColor() == PropertyType.RAINBOW) {
+            return false;
+        }
+
+        String name = rentCard.getName();
+        if (name == null) {
+            return false;
+        }
+        if (name.contains("Any")) {
+            return true;
+        }
+
+        Set<PropertyType> allowed = new HashSet<>();
+        if ("Rent Blue/Green".equals(name)) {
+            allowed.add(PropertyType.BLUE);
+            allowed.add(PropertyType.GREEN);
+        } else if ("Rent Red/Yellow".equals(name)) {
+            allowed.add(PropertyType.RED);
+            allowed.add(PropertyType.YELLOW);
+        } else if ("Rent Purple/Orange".equals(name)) {
+            allowed.add(PropertyType.PURPLE);
+            allowed.add(PropertyType.ORANGE);
+        } else if ("Rent Black/LightGreen".equals(name)) {
+            allowed.add(PropertyType.BLACK);
+            allowed.add(PropertyType.LIGHTGREEN);
+        } else if ("Rent Brown/LightBlue".equals(name)) {
+            allowed.add(PropertyType.BROWN);
+            allowed.add(PropertyType.LIGHTBLUE);
+        } else {
+            return false;
+        }
+
+        return allowed.contains(set.getColor());
+    }
+
+    private int previewRentMultiplier() {
+        int multiplier = 1;
+        for (int i = 0; i < gameLogic.getPendingDoubleRentCount(); i++) {
+            multiplier *= 2;
+        }
+        return multiplier;
     }
 
     private int getBuildingBonusForSet(PropertySet set) {
@@ -487,32 +793,119 @@ public class ActionHandler {
             for (Card u : pc.getUpgrades()) {
                 if (u instanceof ActionCard) {
                     ActionType t = ((ActionCard) u).getType();
-                    if (t == ActionType.HOUSE) bonus += 3;
-                    else if (t == ActionType.HOTEL) bonus += 4;
+                    if (t == ActionType.HOUSE) {
+                        bonus += 3;
+                    } else if (t == ActionType.HOTEL) {
+                        bonus += 4;
+                    }
                 }
             }
         }
         return bonus;
     }
+
     /**
-     * Attaches a House or Hotel from the player's hand to the first legal property set.
+     * Attaches a House or Hotel from the player's hand to one legal property set.
      * @return true if the building was attached
      */
     public boolean tryAttachBuilding(Player player, ActionCard building) {
         RuleValidator rules = gameLogic.getRuleValidator();
+        List<PropertySet> legalSets = new ArrayList<>();
         for (PropertySet set : player.getPropertyArea().getSets()) {
             boolean ok = building.getType() == ActionType.HOUSE ? rules.canAddHouse(set) : rules.canAddHotel(set);
             if (ok && !set.getCards().isEmpty()) {
-                PropertyCard host = set.getCards().get(0);
-                host.attachUpgrade(building);
-                gameLogic.getGameManager().notifyAllObservers(player.getName() + " placed "
-                        + building.getName() + " on " + set.getColor() + " set.");
-                return true;
+                legalSets.add(set);
             }
         }
-        gameLogic.getGameManager().notifyAllObservers(player.getName() + " could not place " + building.getName() + " (no valid set).");
-        return false;
+
+        if (legalSets.isEmpty()) {
+            gameLogic.getGameManager().notifyAllObservers(
+                    player.getName() + " could not place [" + building.getName()
+                            + "] because there was no legal property set to attach it to.");
+            return false;
+        }
+
+        PropertySet target = legalSets.get(0);
+        if (legalSets.size() > 1) {
+            List<String> options = new ArrayList<>();
+            for (PropertySet set : legalSets) {
+                options.add(set.getColor() + " (" + set.getCards().size() + "/" + set.getNeed() + ")");
+            }
+
+            int index = chooseOption(
+                    building.getName(),
+                    "Choose a property set for " + building.getName() + ":",
+                    options,
+                    true
+            );
+            if (index < 0 || index >= legalSets.size()) {
+                gameLogic.getGameManager().notifyAllObservers(player.getName() + " cancelled " + building.getName() + ".");
+                return false;
+            }
+            target = legalSets.get(index);
+        }
+
+        PropertyCard host = target.getCards().get(0);
+        host.attachUpgrade(building);
+        gameLogic.getGameManager().notifyAllObservers(player.getName() + " placed "
+                + building.getName() + " on " + target.getColor() + " set.");
+        return true;
     }
+
+    /**
+     * Presents options and returns selected index (0-based), or -1 when cancelled.
+     */
+    private int chooseOption(String title, String prompt, List<String> options, boolean allowCancel) {
+        if (options == null || options.isEmpty()) {
+            return -1;
+        }
+
+        if (!useDialogInput) {
+            System.out.println();
+            System.out.println("=== " + title + " ===");
+            System.out.println(prompt);
+            for (int i = 0; i < options.size(); i++) {
+                System.out.println("  " + (i + 1) + ". " + options.get(i));
+            }
+            if (allowCancel) {
+                System.out.println("  0. Cancel");
+            }
+
+            int choice = readChoice(allowCancel ? 0 : 1, options.size());
+            if (allowCancel && choice == 0) {
+                return -1;
+            }
+            return choice - 1;
+        }
+
+        List<String> dialogOptions = new ArrayList<>(options);
+        if (allowCancel) {
+            dialogOptions.add("Cancel");
+        }
+
+        int choice = JOptionPane.showOptionDialog(
+                null,
+                prompt,
+                title,
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                dialogOptions.toArray(),
+                dialogOptions.get(0)
+        );
+
+        if (choice == JOptionPane.CLOSED_OPTION) {
+            return -1;
+        }
+        if (allowCancel && choice == options.size()) {
+            return -1;
+        }
+        if (choice < 0 || choice >= options.size()) {
+            return -1;
+        }
+        return choice;
+    }
+
     // ============================= INPUT HELPER =============================
     /**
      * Reads a valid integer choice from the player within [min, max] range.
@@ -521,7 +914,9 @@ public class ActionHandler {
         while (true) {
             System.out.print("Enter choice (" + min + "-" + max + "): ");
             String line = scanner.nextLine();
-            if (line == null) line = "";
+            if (line == null) {
+                line = "";
+            }
             line = line.trim();
             try {
                 int val = Integer.parseInt(line);
@@ -534,4 +929,3 @@ public class ActionHandler {
         }
     }
 }
-

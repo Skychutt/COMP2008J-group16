@@ -43,6 +43,21 @@ public class Hand {
     }
 
     /**
+     * Insert a card back into a specific position in hand.
+     * Used when a played card is cancelled so the original order stays unchanged.
+     */
+    public void insertAt(int index, Card c) {
+        if (c == null) {
+            return;
+        }
+        if (index < 0 || index > cards.size()) {
+            cards.add(c);
+            return;
+        }
+        cards.add(index, c);
+    }
+
+    /**
      * Check if the hand size is within the specified limit.
      * Used to enforce the 7-card hand limit at end of turn.
      * @param limit the maximum allowed hand size

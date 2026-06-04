@@ -14,7 +14,7 @@ import java.util.Stack;
 /**
  * Singleton class representing the game's card deck.
  * Manages the draw pile and discard pile for the Monopoly Deal game.
- * Initializes all 110 cards on construction and provides shuffle, draw, and discard operations.
+ * Initializes all playable cards on construction and provides shuffle, draw, and discard operations.
  * Only one Deck instance exists per game (Singleton pattern).
  */
 public class Deck {
@@ -53,9 +53,9 @@ public class Deck {
     }
 
     /**
-     * Initialize all 110 cards in the deck.
-     * Cards are divided into: Money (20), Property (28), Wild Property (11),
-     * Rent (13), and Action (38) cards.
+     * Initialize all playable cards in the deck.
+     * Composition follows the official card list (106 playable cards):
+     * Money (20), Property (28), Wild Property (11), Rent (13), Action (34).
      */
     private void initializeCards() {
         // ==================== Money Cards (20 cards) ====================
@@ -123,24 +123,24 @@ public class Deck {
         // ==================== Action Cards (34 cards) ====================
         // Pass Go x 10
         for (int i = 0; i < 10; i++) drawPile.push(factory.createAction(ActionType.GO_PASS));
-        // It's My Birthday x 4
-        for (int i = 0; i < 4; i++) drawPile.push(factory.createAction(ActionType.BIRTHDAY));
-        // Debt Collector x 4
-        for (int i = 0; i < 4; i++) drawPile.push(factory.createAction(ActionType.DEBT_DEAL));
+        // It's My Birthday x 3
+        for (int i = 0; i < 3; i++) drawPile.push(factory.createAction(ActionType.BIRTHDAY));
+        // Debt Collector x 3
+        for (int i = 0; i < 3; i++) drawPile.push(factory.createAction(ActionType.DEBT_DEAL));
         // Just Say No x 3
         for (int i = 0; i < 3; i++) drawPile.push(factory.createAction(ActionType.JUST_SAY_NO));
         // Sly Deal x 3
         for (int i = 0; i < 3; i++) drawPile.push(factory.createAction(ActionType.SLY_DEAL));
-        // Forced Deal x 4
-        for (int i = 0; i < 4; i++) drawPile.push(factory.createAction(ActionType.FORCED_DEAL));
+        // Forced Deal x 3
+        for (int i = 0; i < 3; i++) drawPile.push(factory.createAction(ActionType.FORCED_DEAL));
         // Deal Breaker x 2
         for (int i = 0; i < 2; i++) drawPile.push(factory.createAction(ActionType.DEAL_BREAKER));
         // Double The Rent x 2
         for (int i = 0; i < 2; i++) drawPile.push(factory.createAction(ActionType.DOUBLE_RENT));
         // House x 3
         for (int i = 0; i < 3; i++) drawPile.push(factory.createAction(ActionType.HOUSE));
-        // Hotel x 3
-        for (int i = 0; i < 3; i++) drawPile.push(factory.createAction(ActionType.HOTEL));
+        // Hotel x 2
+        for (int i = 0; i < 2; i++) drawPile.push(factory.createAction(ActionType.HOTEL));
     }
 
     /** Randomly shuffle all cards in the draw pile. */
@@ -178,6 +178,17 @@ public class Deck {
      */
     public void addToDiscard(Card c) {
         discard.push(c);
+    }
+
+    /**
+     * Put a card at the bottom of draw pile.
+     * Used for end-turn hand-limit discards per official rule.
+     */
+    public void addToDrawPileBottom(Card c) {
+        if (c == null) {
+            return;
+        }
+        drawPile.insertElementAt(c, 0);
     }
 
     /**
