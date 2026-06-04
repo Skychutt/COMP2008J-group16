@@ -183,7 +183,9 @@ public class AssetTransferManager {
         }
         for (PropertySet set : player.getPropertyArea().getSets()) {
             for (PropertyCard pc : set.getCards()) {
-                total += pc.getValue();
+                if (pc.canBeUsedAsPayment()) {
+                    total += pc.getValue();
+                }
             }
         }
         return total >= requiredAmount;
