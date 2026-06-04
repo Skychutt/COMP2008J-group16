@@ -24,6 +24,8 @@ public class Deck {
     private Stack<Card> drawPile;           // The main draw pile players draw from
     private Stack<Card> discard;            // The discard pile for used/excess cards
     private StandardCardFactory factory;    // Factory used to create card instances
+    private int totalDiscardedCount;        // Cards discarded (discard pile + hand-limit to draw bottom)
+    private Card lastDiscardedCard;         // Most recently discarded card (for UI preview)
 
     /**
      * Private constructor - initializes empty piles, creates the factory,
@@ -177,7 +179,11 @@ public class Deck {
      * @param c the card to discard
      */
     public void addToDiscard(Card c) {
+        if (c == null) {
+            return;
+        }
         discard.push(c);
+        recordDiscard(c);
     }
 
     /**
@@ -189,6 +195,12 @@ public class Deck {
             return;
         }
         drawPile.insertElementAt(c, 0);
+        recordDiscard(c);
+    }
+
+    private void recordDiscard(Card c) {
+        totalDiscardedCount++;
+        lastDiscardedCard = c;
     }
 
     /**
@@ -214,6 +226,21 @@ public class Deck {
     /** @return the number of cards in the discard pile */
     public int discardSize() {
         return discard.size();
+    }
+
+    /** Total cards discarded this game (actions to discard pile + hand-limit discards). */
+    public int getTotalDiscardedCount() {
+        return totalDiscardedCount;
+    }
+
+    /**
+     * Top of the discard pile, or the last hand-limit discard if the pile is empty.
+     */
+    public Card getVisibleDiscardTop() {
+        if (!discard.isEmpty()) {
+            return discard.peek();
+        }
+        return lastDiscardedCard;
     }
 
     /** @return the draw pile stack */

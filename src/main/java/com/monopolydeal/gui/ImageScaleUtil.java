@@ -1,5 +1,6 @@
 package com.monopolydeal.gui;
 
+import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
@@ -33,17 +34,27 @@ public final class ImageScaleUtil {
         }
         int targetW = Math.max(1, (int) Math.round(srcW * scale));
         int targetH = Math.max(1, (int) Math.round(srcH * scale));
-        return scaleExact(src, targetW, targetH);
+        return scaleExact(src, targetW, targetH, true);
     }
 
     public static BufferedImage scaleExact(Image source, int targetWidth, int targetHeight) {
+        return scaleExact(source, targetWidth, targetHeight, false);
+    }
+
+    private static BufferedImage scaleExact(Image source, int targetWidth, int targetHeight, boolean transparent) {
         if (source == null || targetWidth <= 0 || targetHeight <= 0) {
             return null;
         }
         BufferedImage src = toBufferedImage(source);
-        BufferedImage dest = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+        int type = transparent || hasAlpha(src) ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
+        BufferedImage dest = new BufferedImage(targetWidth, targetHeight, type);
         Graphics2D g2 = dest.createGraphics();
         enableQuality(g2);
+        if (type == BufferedImage.TYPE_INT_ARGB) {
+            g2.setComposite(AlphaComposite.Clear);
+            g2.fillRect(0, 0, targetWidth, targetHeight);
+            g2.setComposite(AlphaComposite.SrcOver);
+        }
         g2.drawImage(src, 0, 0, targetWidth, targetHeight, null);
         g2.dispose();
         return dest;
@@ -51,7 +62,10 @@ public final class ImageScaleUtil {
 
     public static BufferedImage toBufferedImage(Image image) {
         if (image instanceof BufferedImage) {
-            return (BufferedImage) image;
+            BufferedImage buffered = (BufferedImage) image;
+            if (hasAlpha(buffered)) {
+                return buffered;
+            }
         }
         int w = image.getWidth(null);
         int h = image.getHeight(null);
@@ -59,12 +73,41 @@ public final class ImageScaleUtil {
             w = 1;
             h = 1;
         }
-        BufferedImage buffered = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        boolean argb = image instanceof BufferedImage && hasAlpha((BufferedImage) image);
+        BufferedImage buffered = new BufferedImage(w, h, argb ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = buffered.createGraphics();
         enableQuality(g2);
+        if (argb) {
+            g2.setComposite(AlphaComposite.Clear);
+            g2.fillRect(0, 0, w, h);
+            g2.setComposite(AlphaComposite.SrcOver);
+        }
         g2.drawImage(image, 0, 0, null);
         g2.dispose();
         return buffered;
+    }
+
+    private static boolean hasAlpha(BufferedImage image) {
+        return image != null && image.getColorModel().hasAlpha();
+    }
+
+    /** Preferred size to show the image at max bounds without stretching the layout box. */
+    public static java.awt.Dimension sizeToFit(Image image, int maxWidth, int maxHeight) {
+        if (image == null || maxWidth <= 0 || maxHeight <= 0) {
+            return new java.awt.Dimension(maxWidth, maxHeight);
+        }
+        int w = image.getWidth(null);
+        int h = image.getHeight(null);
+        if (w <= 0 || h <= 0) {
+            return new java.awt.Dimension(maxWidth, maxHeight);
+        }
+        double scale = Math.min((double) maxWidth / w, (double) maxHeight / h);
+        if (scale > 1.0) {
+            scale = 1.0;
+        }
+        return new java.awt.Dimension(
+                Math.max(1, (int) Math.round(w * scale)),
+                Math.max(1, (int) Math.round(h * scale)));
     }
 
     public static void enableQuality(Graphics2D g2) {

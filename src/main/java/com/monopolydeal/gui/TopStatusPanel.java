@@ -33,10 +33,10 @@ public class TopStatusPanel extends JPanel {
 
     private final JLabel lblCurrentPlayer;
     private final JLabel lblActions;
-    private final JLabel lblDrawPile;
-    private final JLabel lblDiscardPile;
     private final JLabel lblDrawTop;
+    private final JLabel lblDrawCount;
     private final JLabel lblDiscardTop;
+    private final JLabel lblDiscardCount;
     private final JLabel lblDiscardHint;
     private final JLabel lblRecentEvent;
     private final JPanel dropZone;
@@ -69,19 +69,9 @@ public class TopStatusPanel extends JPanel {
         lblActions = new JLabel("Actions: 0 / 3");
         lblActions.setFont(UITheme.FONT_TITLE);
         lblActions.setForeground(UITheme.ACCENT_DARK);
-        lblDrawPile = new JLabel("Draw Pile: 0");
-        lblDrawPile.setFont(UITheme.FONT_SUBTITLE);
-        lblDrawPile.setForeground(UITheme.TEXT_SUB);
-        lblDiscardPile = new JLabel("Discard Pile: 0");
-        lblDiscardPile.setFont(UITheme.FONT_SUBTITLE);
-        lblDiscardPile.setForeground(UITheme.TEXT_SUB);
-
         rowStatus.add(lblCurrentPlayer);
         rowStatus.add(new JLabel("|"));
         rowStatus.add(lblActions);
-        rowStatus.add(new JLabel("|"));
-        rowStatus.add(lblDrawPile);
-        rowStatus.add(lblDiscardPile);
         hub.add(rowStatus, BorderLayout.NORTH);
 
         JPanel middle = new JPanel(new BorderLayout(12, 10));
@@ -90,10 +80,12 @@ public class TopStatusPanel extends JPanel {
 
         JPanel leftDeck = buildDeckSlot("Draw Pile");
         lblDrawTop = (JLabel) leftDeck.getClientProperty("card");
+        lblDrawCount = (JLabel) leftDeck.getClientProperty("count");
         middle.add(leftDeck, BorderLayout.WEST);
 
         JPanel rightDiscard = buildDeckSlot("Discard Top");
         lblDiscardTop = (JLabel) rightDiscard.getClientProperty("card");
+        lblDiscardCount = (JLabel) rightDiscard.getClientProperty("count");
         middle.add(rightDiscard, BorderLayout.EAST);
 
         JPanel centerPlay = new JPanel();
@@ -144,10 +136,18 @@ public class TopStatusPanel extends JPanel {
         image.setAlignmentX(CENTER_ALIGNMENT);
         image.setBorder(BorderFactory.createLineBorder(UITheme.BORDER, 1, true));
 
+        JLabel lblCount = new JLabel(" ");
+        lblCount.setFont(UITheme.FONT_SUBTITLE);
+        lblCount.setForeground(UITheme.TEXT_MAIN);
+        lblCount.setAlignmentX(CENTER_ALIGNMENT);
+
         slot.putClientProperty("card", image);
+        slot.putClientProperty("count", lblCount);
         slot.add(lblTitle);
         slot.add(Box.createVerticalStrut(5));
         slot.add(image);
+        slot.add(Box.createVerticalStrut(6));
+        slot.add(lblCount);
         return slot;
     }
 
@@ -168,9 +168,6 @@ public class TopStatusPanel extends JPanel {
         Deck deck = Deck.getInstance();
         lblCurrentPlayer.setText("Current Player: " + currentPlayer.getName());
         lblActions.setText("Actions: " + currentPlayer.getActions() + " / 3");
-        lblDrawPile.setText("Draw Pile: " + deck.drawPileSize());
-        lblDiscardPile.setText("Discard Pile: " + deck.discardSize());
-
         updateDeckPreviews(deck, resolver);
         refreshDropZoneState(false);
         setRecentEventText(latestEvent);
@@ -180,8 +177,8 @@ public class TopStatusPanel extends JPanel {
         // No active turn yet: keep the table neutral and show only the latest message.
         lblCurrentPlayer.setText("Current Player: -");
         lblActions.setText("Actions: 0 / 3");
-        lblDrawPile.setText("Draw Pile: 0");
-        lblDiscardPile.setText("Discard Pile: 0");
+        lblDrawCount.setText("Remaining: 0");
+        lblDiscardCount.setText("Total discarded: 0");
         lblDrawTop.setIcon(null);
         lblDiscardTop.setIcon(null);
         refreshDropZoneState(false);
@@ -189,19 +186,26 @@ public class TopStatusPanel extends JPanel {
     }
 
     private void updateDeckPreviews(Deck deck, CardImageResolver resolver) {
-        // The draw pile always shows the card back; the discard pile shows its real top card when available.
+        int remaining = deck.drawPileSize();
         lblDrawTop.setIcon(resolver.getFallbackIcon(76, 118));
-        lblDrawTop.setToolTipText("Draw Pile");
+        lblDrawTop.setToolTipText("Draw pile — " + remaining + " card(s) left");
+        lblDrawCount.setText("Remaining: " + remaining);
 
-        Card discardTop = deck.getDiscard().isEmpty() ? null : deck.getDiscard().peek();
+        int totalDiscarded = deck.getTotalDiscardedCount();
+        lblDiscardCount.setText("Total discarded: " + totalDiscarded);
+
+        Card discardTop = deck.getVisibleDiscardTop();
         if (discardTop == null) {
             lblDiscardTop.setIcon(resolver.getFallbackIcon(76, 118));
-            lblDiscardTop.setToolTipText("Discard pile is empty");
+            lblDiscardTop.setToolTipText("No cards discarded yet");
             return;
         }
 
         lblDiscardTop.setIcon(resolver.getCardIcon(discardTop, 76, 118));
-        lblDiscardTop.setToolTipText(discardTop.getName());
+        String pileNote = deck.discardSize() > 0
+                ? "Top of discard pile"
+                : "Last discarded (placed under draw pile)";
+        lblDiscardTop.setToolTipText(discardTop.getName() + " — " + pileNote);
     }
 
     /**
