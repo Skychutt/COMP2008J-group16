@@ -1,28 +1,26 @@
 package com.monopolydeal.gui;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Local game lobby on top of the main menu background: player count dropdown and name fields.
+ * Local game lobby: player-count dropdown + name fields.
  */
-public class LocalGameSetupPanel extends JPanel {
+public class LocalGameSetupPanel extends VBox {
 
     public interface SetupListener {
         void onBack();
-
         void onStart(int playerCount, List<String> playerNames);
     }
 
@@ -31,122 +29,123 @@ public class LocalGameSetupPanel extends JPanel {
     };
 
     private final SetupListener listener;
-    private final JComboBox<String> playerCountCombo;
-    private final JPanel namesContainer;
-    private final List<JTextField> nameFields;
+    private final ComboBox<String> playerCountCombo;
+    private final GridPane namesGrid;
+    private final List<TextField> nameFields = new ArrayList<>();
 
     public LocalGameSetupPanel(SetupListener listener) {
         this.listener = listener;
-        this.nameFields = new ArrayList<JTextField>();
 
-        setOpaque(true);
-        setBackground(new Color(255, 255, 255, 220));
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(UITheme.BORDER, 2, true),
-                BorderFactory.createEmptyBorder(24, 40, 24, 40)
-        ));
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setStyle(
+            "-fx-background-color: rgba(255,255,255,0.863);" +
+            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
+            "-fx-border-width: 2px; -fx-border-radius: 6px; -fx-background-radius: 6px;"
+        );
+        setPadding(new Insets(24, 40, 24, 40));
+        setSpacing(0);
+        setAlignment(Pos.TOP_CENTER);
 
-        JLabel title = new JLabel("Local Game Setup");
+        // Title
+        Label title = new Label("Local Game Setup");
         title.setFont(UITheme.FONT_MENU_SUBTITLE);
-        title.setForeground(Color.BLACK);
-        title.setAlignmentX(CENTER_ALIGNMENT);
-        add(title);
-        add(Box.createVerticalStrut(16));
+        title.setTextFill(Color.BLACK);
+        getChildren().add(title);
+        getChildren().add(spacer(16));
 
-        JPanel countRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
-        countRow.setOpaque(false);
-        JLabel countLabel = new JLabel("Number of players:");
+        // Player count row
+        HBox countRow = new HBox(12);
+        countRow.setAlignment(Pos.CENTER);
+        Label countLabel = new Label("Number of players:");
         countLabel.setFont(UITheme.FONT_BODY);
-        countLabel.setForeground(Color.BLACK);
-        countRow.add(countLabel);
+        countLabel.setTextFill(Color.BLACK);
+        playerCountCombo = new ComboBox<>();
+        playerCountCombo.getItems().addAll(PLAYER_COUNT_OPTIONS);
+        playerCountCombo.setStyle("-fx-font-size: 12px;");
+        playerCountCombo.setPrefWidth(160);
+        playerCountCombo.getSelectionModel().select(1); // default: 3 players
+        countRow.getChildren().addAll(countLabel, playerCountCombo);
+        getChildren().add(countRow);
+        getChildren().add(spacer(14));
 
-        playerCountCombo = new JComboBox<String>(PLAYER_COUNT_OPTIONS);
-        playerCountCombo.setFont(UITheme.FONT_BODY);
-        playerCountCombo.setPreferredSize(new Dimension(160, 28));
-        playerCountCombo.setSelectedIndex(1);
-        countRow.add(playerCountCombo);
-        add(countRow);
-        add(Box.createVerticalStrut(14));
-
-        JLabel namesLabel = new JLabel("Player names:");
+        // Names label
+        Label namesLabel = new Label("Player names:");
         namesLabel.setFont(UITheme.FONT_BODY);
-        namesLabel.setForeground(Color.BLACK);
-        namesLabel.setAlignmentX(CENTER_ALIGNMENT);
-        add(namesLabel);
-        add(Box.createVerticalStrut(8));
+        namesLabel.setTextFill(Color.BLACK);
+        getChildren().add(namesLabel);
+        getChildren().add(spacer(8));
 
-        namesContainer = new JPanel();
-        namesContainer.setOpaque(false);
-        namesContainer.setLayout(new GridLayout(0, 1, 0, 8));
-        namesContainer.setAlignmentX(CENTER_ALIGNMENT);
-        namesContainer.setMaximumSize(new Dimension(320, 220));
-        add(namesContainer);
-        add(Box.createVerticalStrut(20));
+        // Names grid
+        namesGrid = new GridPane();
+        namesGrid.setHgap(8);
+        namesGrid.setVgap(8);
+        namesGrid.setAlignment(Pos.CENTER);
+        getChildren().add(namesGrid);
+        getChildren().add(spacer(20));
 
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 0));
-        actions.setOpaque(false);
-        JButton back = new JButton("Back");
-        JButton start = new JButton("Start Game");
+        // Action buttons
+        Button back  = new Button("Back");
+        Button start = new Button("Start Game");
         UITheme.styleMenuButton(back);
         UITheme.styleMenuButton(start);
-        back.addActionListener(e -> listener.onBack());
-        start.addActionListener(e -> onStartClicked());
-        actions.add(back);
-        actions.add(start);
-        add(actions);
+        back.setOnAction(e -> listener.onBack());
+        start.setOnAction(e -> onStartClicked());
 
-        playerCountCombo.addActionListener(e -> rebuildNameFields());
+        HBox actions = new HBox(16, back, start);
+        actions.setAlignment(Pos.CENTER);
+        getChildren().add(actions);
+
+        // Rebuild name fields whenever the combo changes
+        playerCountCombo.setOnAction(e -> rebuildNameFields());
         rebuildNameFields();
     }
 
     public void resetToDefaults() {
-        playerCountCombo.setSelectedIndex(1);
+        playerCountCombo.getSelectionModel().select(1);
         rebuildNameFields();
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+
     private int getSelectedPlayerCount() {
-        return playerCountCombo.getSelectedIndex() + 2;
+        return playerCountCombo.getSelectionModel().getSelectedIndex() + 2;
     }
 
     private void rebuildNameFields() {
         int count = getSelectedPlayerCount();
-        namesContainer.removeAll();
+        namesGrid.getChildren().clear();
         nameFields.clear();
 
         for (int i = 0; i < count; i++) {
-            JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-            row.setOpaque(false);
-            JLabel label = new JLabel("Player " + (i + 1) + ":");
-            label.setFont(UITheme.FONT_BODY);
-            label.setForeground(Color.BLACK);
-            label.setPreferredSize(new Dimension(72, 24));
+            Label lbl = new Label("Player " + (i + 1) + ":");
+            lbl.setFont(UITheme.FONT_BODY);
+            lbl.setTextFill(Color.BLACK);
+            lbl.setMinWidth(72);
 
-            JTextField field = new JTextField("Player " + (i + 1), 18);
+            TextField field = new TextField("Player " + (i + 1));
             field.setFont(UITheme.FONT_BODY);
-            field.setForeground(Color.BLACK);
+            field.setPrefWidth(200);
             nameFields.add(field);
 
-            row.add(label);
-            row.add(field);
-            namesContainer.add(row);
+            namesGrid.add(lbl,   0, i);
+            namesGrid.add(field, 1, i);
         }
-
-        namesContainer.revalidate();
-        namesContainer.repaint();
     }
 
     private void onStartClicked() {
         int count = getSelectedPlayerCount();
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         for (int i = 0; i < nameFields.size(); i++) {
-            JTextField field = nameFields.get(i);
-            String text = field.getText();
-            if (text == null || text.trim().length() == 0) {
-                text = "Player " + (i + 1);
-            }
+            String text = nameFields.get(i).getText();
+            if (text == null || text.trim().isEmpty()) text = "Player " + (i + 1);
             names.add(text.trim());
         }
         listener.onStart(count, names);
+    }
+
+    private static javafx.scene.Node spacer(double height) {
+        javafx.scene.layout.Region r = new javafx.scene.layout.Region();
+        r.setPrefHeight(height);
+        r.setMinHeight(height);
+        return r;
     }
 }

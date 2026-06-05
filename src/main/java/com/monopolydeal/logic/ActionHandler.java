@@ -10,10 +10,11 @@ import com.monopolydeal.model.card.ActionCard;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import javax.swing.JOptionPane;
+import javafx.scene.control.ChoiceDialog;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -894,27 +895,21 @@ public class ActionHandler {
             dialogOptions.add("Cancel");
         }
 
-        int choice = JOptionPane.showOptionDialog(
-                null,
-                prompt,
-                title,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                dialogOptions.toArray(),
-                dialogOptions.get(0)
-        );
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogOptions.get(0), dialogOptions);
+        dialog.setTitle(title);
+        dialog.setHeaderText(null);
+        dialog.setContentText(prompt);
 
-        if (choice == JOptionPane.CLOSED_OPTION) {
+        Optional<String> result = dialog.showAndWait();
+        if (!result.isPresent()) {
             return -1;
         }
-        if (allowCancel && choice == options.size()) {
+        String chosen = result.get();
+        if (allowCancel && "Cancel".equals(chosen)) {
             return -1;
         }
-        if (choice < 0 || choice >= options.size()) {
-            return -1;
-        }
-        return choice;
+        int idx = options.indexOf(chosen);
+        return idx < 0 ? -1 : idx;
     }
 
     // ============================= INPUT HELPER =============================

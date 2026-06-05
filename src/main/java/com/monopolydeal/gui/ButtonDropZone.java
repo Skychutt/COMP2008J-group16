@@ -1,106 +1,76 @@
 package com.monopolydeal.gui;
 
-import javax.imageio.ImageIO;
-import javax.swing.JPanel;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
 /**
- * Drop target panel that paints a button image from {@code Card_Library/Button-graph/}.
+ * JavaFX drop-target panel that paints a button image from {@code Card_Library/Button_graph/}.
+ * Drag-and-drop event handlers (setOnDragOver / setOnDragDropped) are attached externally
+ * by {@link PlayerPanel}.
  */
-public class ButtonDropZone extends JPanel {
+public class ButtonDropZone extends StackPane {
 
-    private static final String BUTTON_PREFIX = "Card_Library/Button_graph/";
+    private final ImageView imageView;
+    private final javafx.scene.shape.Rectangle highlightRect;
+    private final Label hoverLabel;
 
-    private final Image background;
-    private boolean highlight;
-    private String hoverText;
-    private int imageOffsetY;
+    private boolean highlight = false;
 
     public ButtonDropZone(String imageFileName, int width, int height) {
-        setOpaque(false);
-        setLayout(null);
-        Dimension size = new Dimension(width, height);
-        setPreferredSize(size);
-        setMinimumSize(size);
-        setMaximumSize(size);
-        background = loadButtonImage(imageFileName);
+        setPrefSize(width, height);
+        setMinSize(width, height);
+        setMaxSize(width, height);
+
+        Image img = ImageActionButton.loadButtonImage(imageFileName);
+        imageView = new ImageView(img);
+        imageView.setFitWidth(width);
+        imageView.setFitHeight(height);
+        imageView.setPreserveRatio(true);
+
+        // Semi-transparent yellow overlay shown when a dragged card hovers over this zone
+        highlightRect = new javafx.scene.shape.Rectangle(width, height,
+                Color.rgb(255, 255, 180, 0.35));
+        highlightRect.setVisible(false);
+
+        // Hover text label
+        hoverLabel = new Label();
+        hoverLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        hoverLabel.setTextFill(Color.rgb(255, 248, 210));
+        hoverLabel.setStyle(
+            "-fx-background-color: rgba(0,0,0,0.63);" +
+            "-fx-padding: 3 8 3 8;" +
+            "-fx-background-radius: 3px;"
+        );
+        hoverLabel.setVisible(false);
+
+        getChildren().addAll(imageView, highlightRect, hoverLabel);
+        StackPane.setAlignment(hoverLabel, Pos.CENTER);
+        setStyle("-fx-background-color: transparent;");
     }
 
-    /** Shifts the painted image downward within the drop zone (pixels). */
-    public void setImageOffsetY(int imageOffsetY) {
-        this.imageOffsetY = Math.max(0, imageOffsetY);
-        repaint();
+    /** Shifts the image downward within the drop zone (positive = down). */
+    public void setImageOffsetY(int offsetY) {
+        imageView.setTranslateY(Math.max(0, offsetY));
     }
 
     public void setHighlight(boolean highlight) {
-        if (this.highlight != highlight) {
-            this.highlight = highlight;
-            repaint();
-        }
+        if (this.highlight == highlight) return;
+        this.highlight = highlight;
+        highlightRect.setVisible(highlight);
     }
 
-    public void setHoverText(String hoverText) {
-        String next = hoverText == null || hoverText.isBlank() ? null : hoverText;
-        if ((this.hoverText == null && next == null)
-                || (this.hoverText != null && this.hoverText.equals(next))) {
-            return;
-        }
-        this.hoverText = next;
-        repaint();
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        ImageScaleUtil.enableQuality(g2);
-
-        if (background != null && getWidth() > 0 && getHeight() > 0) {
-            int padTop = imageOffsetY;
-            int padBottom = 4;
-            int availH = Math.max(1, getHeight() - padTop - padBottom);
-            BufferedImage scaled = ImageScaleUtil.scaleToFit(background, getWidth(), availH);
-            int x = (getWidth() - scaled.getWidth()) / 2;
-            int y = padTop + (availH - scaled.getHeight()) / 2;
-            g2.drawImage(scaled, x, y, null);
-            if (highlight) {
-                g2.setColor(new Color(255, 255, 180, 90));
-                g2.fillRect(0, 0, getWidth(), getHeight());
-            }
+    public void setHoverText(String text) {
+        if (text == null || text.isBlank()) {
+            hoverLabel.setVisible(false);
         } else {
-            g2.setColor(UITheme.BANK_ZONE);
-            g2.fillRect(0, 0, getWidth(), getHeight());
+            hoverLabel.setText(text);
+            hoverLabel.setVisible(true);
         }
-
-        if (highlight && hoverText != null) {
-            Font font = UITheme.FONT_SUBTITLE.deriveFont(Font.BOLD, 13f);
-            g2.setFont(font);
-            int textW = g2.getFontMetrics().stringWidth(hoverText);
-            int textX = Math.max(4, (getWidth() - textW) / 2);
-            int textY = getHeight() / 2 + 5;
-            g2.setColor(new Color(0, 0, 0, 160));
-            g2.drawString(hoverText, textX + 1, textY + 1);
-            g2.setColor(new Color(255, 248, 210));
-            g2.drawString(hoverText, textX, textY);
-        }
-        g2.dispose();
-    }
-
-    private static Image loadButtonImage(String fileName) {
-        String path = BUTTON_PREFIX + fileName;
-        try (InputStream in = ButtonDropZone.class.getClassLoader().getResourceAsStream(path)) {
-            if (in != null) {
-                return ImageIO.read(in);
-            }
-        } catch (IOException ignored) {
-        }
-        return null;
     }
 }
