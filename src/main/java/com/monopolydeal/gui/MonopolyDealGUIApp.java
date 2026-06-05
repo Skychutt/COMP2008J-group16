@@ -4,44 +4,30 @@ import com.monopolydeal.logic.GameLogic;
 import com.monopolydeal.model.Deck;
 import com.monopolydeal.model.GameManager;
 
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
-import javafx.stage.Stage;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.List;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 /**
- * JavaFX application entry point. Launches the home screen on the primary Stage.
+ * GUI entry point: home screen first, then local hot-seat game session.
  */
-public class MonopolyDealGUIApp extends Application {
-
-    @Override
-    public void start(Stage primaryStage) {
-        // Prevent JavaFX from auto-exiting when the home stage is temporarily hidden
-        // while the game stage is being created.
-        Platform.setImplicitExit(false);
-        MainMenuFrame.createAndShow(primaryStage);
-    }
+public class MonopolyDealGUIApp {
 
     public static void main(String[] args) {
-        launch(args);
+        SwingUtilities.invokeLater(() -> {
+            applySystemLookAndFeel();
+            MainMenuFrame.createAndShow();
+        });
     }
 
     /**
-     * Starts a local hot-seat game after setup is complete.
-     *
-     * @param homeFrame    the home-screen wrapper (its {@code showHomeAgain()} is called on exit)
-     * @param playerCount  number of players (2–5)
-     * @param playerNames  player display names
+     * Starts local hot-seat game after setup on the main menu (names already chosen).
      */
-    public static void startLocalGame(MainMenuFrame homeFrame,
-                                      int playerCount,
-                                      List<String> playerNames) {
+    public static void startLocalGame(JFrame homeFrame, int playerCount, java.util.List<String> playerNames) {
         if (playerCount < 2 || playerCount > 5) {
-            homeFrame.showHomeAgain();
+            if (homeFrame != null) {
+                homeFrame.setVisible(true);
+            }
             return;
         }
 
@@ -54,31 +40,15 @@ public class MonopolyDealGUIApp extends Application {
         GameLogic logic = new GameLogic(gameManager);
         logic.getActionHandler().setUseDialogInput(true);
 
-        Stage gameStage = new Stage();
-        Runnable homeCallback = homeFrame::showHomeAgain;
+        GameFrame frame = new GameFrame(gameManager, logic, homeFrame);
+        frame.setVisible(true);
+        logic.startGame();
+    }
 
+    private static void applySystemLookAndFeel() {
         try {
-            GameFrame gameFrame = new GameFrame(gameManager, logic, gameStage, homeCallback);
-            // Show the game stage BEFORE hiding home — keeps window count > 0 at all times,
-            // preventing JavaFX implicit-exit from firing when the home stage is hidden.
-            gameFrame.show();
-            homeFrame.getStage().hide();
-            logic.startGame();
-        } catch (Exception e) {
-            e.printStackTrace();
-            gameStage.close();
-            homeFrame.getStage().show();
-            homeFrame.getStage().toFront();
-            StringWriter sw = new StringWriter();
-            e.printStackTrace(new PrintWriter(sw));
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Failed to start game");
-            alert.setHeaderText(e.getClass().getSimpleName() + ": " + e.getMessage());
-            alert.setContentText(sw.toString().length() > 800
-                    ? sw.toString().substring(0, 800) + "..."
-                    : sw.toString());
-            alert.initOwner(homeFrame.getStage());
-            alert.showAndWait();
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {
         }
     }
 }

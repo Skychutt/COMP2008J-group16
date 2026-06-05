@@ -1,23 +1,30 @@
 package com.monopolydeal.gui;
 
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.stage.Stage;
-
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.util.List;
 
 /**
- * Home screen wrapper. Owns the primary {@link Stage} and shows it with the main-menu scene.
+ * Application home screen shown on launch.
  */
-public class MainMenuFrame {
+public class MainMenuFrame extends JFrame {
 
-    private final Stage stage;
     private final MainMenuPanel menuPanel;
 
-    public MainMenuFrame(Stage stage) {
-        this.stage = stage;
+    public MainMenuFrame() {
+        setTitle("Monopoly Deal");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        MainMenuFrame self = this;
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        int width = Math.min(1280, Math.max(960, screen.width - 80));
+        int height = Math.min(720, Math.max(600, screen.height - 100));
+        setSize(width, height);
+        setMinimumSize(new Dimension(900, 560));
+        setLocationRelativeTo(null);
 
         menuPanel = new MainMenuPanel(new LocalGameSetupPanel.SetupListener() {
             @Override
@@ -27,64 +34,79 @@ public class MainMenuFrame {
 
             @Override
             public void onStart(int playerCount, List<String> playerNames) {
-                MonopolyDealGUIApp.startLocalGame(self, playerCount, playerNames);
+                setVisible(false);
+                MonopolyDealGUIApp.startLocalGame(MainMenuFrame.this, playerCount, playerNames);
             }
         });
 
-        wireButtons();
+        setLayout(new BorderLayout());
+        add(menuPanel, BorderLayout.CENTER);
 
-        Scene scene = new Scene(menuPanel, 1280, 720);
-        stage.setTitle("Monopoly Deal");
-        stage.setScene(scene);
-        stage.setMinWidth(900);
-        stage.setMinHeight(560);
-        stage.setOnCloseRequest(e -> System.exit(0));
+        wireButtons();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-
     private void wireButtons() {
-        if (menuPanel.getButtonLocalGame() != null) {
-            menuPanel.getButtonLocalGame().setOnAction(e -> menuPanel.showLocalSetup());
+        JButton localGame = menuPanel.getButtonByText("Local Game");
+        JButton singlePlayer = menuPanel.getButtonByText("Single Player");
+        JButton online = menuPanel.getButtonByText("Online Multiplayer");
+        JButton rules = menuPanel.getButtonByText("Game Rules");
+
+        if (localGame != null) {
+            localGame.addActionListener(e -> menuPanel.showLocalSetup());
         }
-        if (menuPanel.getButtonSinglePlayer() != null) {
-            menuPanel.getButtonSinglePlayer().setOnAction(e -> showComingSoon("Single Player"));
+        if (singlePlayer != null) {
+            singlePlayer.addActionListener(e -> showComingSoon("Single Player"));
         }
-        if (menuPanel.getButtonOnline() != null) {
-            menuPanel.getButtonOnline().setOnAction(e -> showComingSoon("Online Multiplayer"));
+        if (online != null) {
+            online.addActionListener(e -> menuPanel.showLanSetup(new LanSetupPanel.LanSetupListener() {
+                @Override
+                public void onBack() {
+                    menuPanel.showMainMenu();
+                }
+
+                @Override
+                public void onHost(int playerCount, java.util.List<String> playerNames, int port) {
+                    // Create a server and open the waiting hall
+                    com.monopolydeal.network.GameServer server =
+                            new com.monopolydeal.network.GameServer(port, playerCount, playerNames);
+                    NetworkLobbyFrame lobby = new NetworkLobbyFrame(server, playerNames, MainMenuFrame.this);
+                    setVisible(false);
+                    lobby.setVisible(true);
+                }
+
+                @Override
+                public void onJoin(String host, int port) {
+                    setVisible(false);
+                    com.monopolydeal.gui.NetworkGameFrame.openAsClient(host, port, MainMenuFrame.this);
+                }
+            }));
         }
-        if (menuPanel.getButtonRules() != null) {
-            menuPanel.getButtonRules().setOnAction(e -> GameRulesDialog.show(stage));
+        if (rules != null) {
+            rules.addActionListener(e -> GameRulesDialog.show(this));
         }
     }
 
     private void showComingSoon(String modeName) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(modeName);
-        alert.setHeaderText(null);
-        alert.setContentText(modeName + " is not available yet.\nPlease use Local Game for now.");
-        alert.initOwner(stage);
-        alert.showAndWait();
+        JOptionPane.showMessageDialog(
+                this,
+                modeName + " is not available yet.\nPlease use Local Game for now.",
+                modeName,
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public Stage getStage() { return stage; }
-
-    public void show() {
-        stage.show();
-    }
-
-    /** Called when a game session ends so the player returns to the home screen. */
+    /**
+     * Called when a local session ends so the player returns to the home screen.
+     */
     public void showHomeAgain() {
         menuPanel.showMainMenu();
-        stage.show();
-        stage.toFront();
+        setVisible(true);
+        toFront();
     }
 
-    public static MainMenuFrame createAndShow(Stage stage) {
-        MainMenuFrame frame = new MainMenuFrame(stage);
-        frame.show();
+    public static MainMenuFrame createAndShow() {
+        MainMenuFrame frame = new MainMenuFrame();
+        frame.setVisible(true);
         return frame;
     }
 }

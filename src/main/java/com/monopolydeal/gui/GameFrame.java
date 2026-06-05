@@ -1,29 +1,26 @@
 package com.monopolydeal.gui;
 
-import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.interfaces.IGameObserver;
 import com.monopolydeal.logic.GameLogic;
 import com.monopolydeal.model.GameManager;
 import com.monopolydeal.model.Player;
 import com.monopolydeal.model.card.Card;
+import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.model.card.PropertyCard;
 
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 
 /**
- * Main game window. Wraps a JavaFX {@link Stage} and implements {@link IGameObserver}.
- * Replaces the Swing {@code GameFrame extends JFrame}.
+ * Main game window styled as a large table.
  */
-public class GameFrame implements IGameObserver {
+public class GameFrame extends JFrame implements IGameObserver {
 
-    private final Stage stage;
     private final GameManager gameManager;
     private final GameLogic gameLogic;
-    private final Runnable homeCallback;
 
     private final CardImageResolver imageResolver;
     private final TopStatusPanel topStatusPanel;
@@ -31,61 +28,69 @@ public class GameFrame implements IGameObserver {
     private final OpponentsPanel opponentsPanel;
     private final ControlPanel controlPanel;
 
-    private boolean gameOverDialogShown = false;
-    private String latestEvent = "Welcome to Monopoly Deal.";
-    private boolean discardMode = false;
-    private int discardRemaining = 0;
+    private final JFrame homeFrame;
 
-    public GameFrame(GameManager gameManager, GameLogic gameLogic,
-                     Stage stage, Runnable homeCallback) {
-        this.gameManager  = gameManager;
-        this.gameLogic    = gameLogic;
-        this.stage        = stage;
-        this.homeCallback = homeCallback;
+    private boolean gameOverDialogShown;
+    private String latestEvent;
+    private boolean discardMode;
+    private int discardRemaining;
+
+    public GameFrame(GameManager gameManager, GameLogic gameLogic, JFrame homeFrame) {
+        this.gameManager = gameManager;
+        this.gameLogic = gameLogic;
+        this.homeFrame = homeFrame;
         this.imageResolver = new CardImageResolver();
+        this.latestEvent = "Welcome to Monopoly Deal.";
+        this.discardMode = false;
+        this.discardRemaining = 0;
 
-        // ── Build the component tree ──
+        setTitle("Monopoly Deal");
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        int width = Math.min(1400, Math.max(1180, screen.width - 40));
+        int height = Math.min(920, Math.max(680, screen.height - 80));
+        setSize(width, height);
+        setMinimumSize(new Dimension(1180, 680));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
         TableSurfacePanel table = new TableSurfacePanel();
-        table.getContentPane().setPadding(new Insets(20, 24, 20, 24));
+        table.setLayout(new BorderLayout(14, 14));
+        table.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        setContentPane(table);
 
         topStatusPanel = new TopStatusPanel();
-        playerPanel    = new PlayerPanel(this);
+        playerPanel = new PlayerPanel(this);
         opponentsPanel = new OpponentsPanel(this);
-        controlPanel   = new ControlPanel(this);
+        controlPanel = new ControlPanel(this);
 
         topStatusPanel.setCardDropHandler(this::handleCenterCardDrop);
         playerPanel.setBankDropHandler(this::bankCardById);
         playerPanel.setPropertyDropHandler(this::placePropertyById);
         playerPanel.setEndTurnHandler(this::endCurrentTurn);
 
-        table.getContentPane().setTop(opponentsPanel);
-        table.getContentPane().setLeft(controlPanel);
-        table.getContentPane().setCenter(topStatusPanel);
-        table.getContentPane().setBottom(playerPanel);
-
-        // ── Stage setup ──
-        javafx.geometry.Rectangle2D screen = Screen.getPrimary().getVisualBounds();
-        double width  = Math.min(1400, Math.max(1180, screen.getWidth()  - 40));
-        double height = Math.min(920,  Math.max(680,  screen.getHeight() - 80));
-
-        Scene scene = new Scene(table, width, height);
-        stage.setTitle("Monopoly Deal");
-        stage.setScene(scene);
-        stage.setMinWidth(1180);
-        stage.setMinHeight(680);
-        stage.setOnCloseRequest(e -> returnToHomeScreen());
+        add(opponentsPanel, BorderLayout.NORTH);
+        add(controlPanel, BorderLayout.WEST);
+        add(topStatusPanel, BorderLayout.CENTER);
+        add(playerPanel, BorderLayout.SOUTH);
 
         gameManager.attach(this);
         refreshUI();
+
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                returnToHomeScreen();
+            }
+        });
     }
 
-    public void show() {
-        stage.show();
+    private void returnToHomeScreen() {
+        if (homeFrame instanceof MainMenuFrame) {
+            ((MainMenuFrame) homeFrame).showHomeAgain();
+        } else if (homeFrame != null) {
+            homeFrame.setVisible(true);
+        }
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // IGameObserver
-    // ─────────────────────────────────────────────────────────────────────────
 
     @Override
     public void onGameUpdate(String event) {
@@ -94,16 +99,13 @@ public class GameFrame implements IGameObserver {
         refreshUI();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // UI refresh
-    // ─────────────────────────────────────────────────────────────────────────
-
     public void refreshUI() {
-        if (gameManager.getPlayers() == null || gameManager.getPlayers().isEmpty()) return;
+        if (gameManager.getPlayers() == null || gameManager.getPlayers().isEmpty()) {
+            return;
+        }
 
         Player current = gameManager.getCurrentPlayer();
-        topStatusPanel.updateTableCenter(current, imageResolver, latestEvent,
-                gameManager.isGameOver(), discardMode, discardRemaining);
+        topStatusPanel.updateTableCenter(current, imageResolver, latestEvent, gameManager.isGameOver(), discardMode, discardRemaining);
         playerPanel.updatePlayerView(current, gameManager.isGameOver(), discardMode, discardRemaining);
         opponentsPanel.updateOpponents(gameManager.getPlayers(), current);
         controlPanel.updateTurnStatus(current);
@@ -111,22 +113,15 @@ public class GameFrame implements IGameObserver {
 
         if (gameManager.isGameOver() && !gameOverDialogShown) {
             gameOverDialogShown = true;
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Game Over");
-            alert.setHeaderText(null);
-            alert.setContentText("Game over! Check the log for the winner.");
-            alert.initOwner(stage);
-            alert.showAndWait();
+            JOptionPane.showMessageDialog(this, "Game over! Check the log for the winner.", "Game Over", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Card actions
-    // ─────────────────────────────────────────────────────────────────────────
-
     public void playCard(Card card) {
         Player current = gameManager.getCurrentPlayer();
-        if (current == null || card == null || gameManager.isGameOver() || discardMode) return;
+        if (current == null || card == null || gameManager.isGameOver() || discardMode) {
+            return;
+        }
 
         String reason = gameLogic.getRuleValidator().explainPlayCardFailure(current, card);
         if (reason != null) {
@@ -135,10 +130,12 @@ public class GameFrame implements IGameObserver {
         }
 
         if (card instanceof PropertyCard) {
-            PropertyCard pc = (PropertyCard) card;
-            PropertyType chosen = resolvePlacementColor(pc);
-            if (pc.needsColorChoiceOnPlacement() && chosen == null) return;
-            gameLogic.placeProperty(current, pc, chosen);
+            PropertyCard propertyCard = (PropertyCard) card;
+            PropertyType chosen = resolvePlacementColor(propertyCard);
+            if (propertyCard.needsColorChoiceOnPlacement() && chosen == null) {
+                return;
+            }
+            gameLogic.placeProperty(current, propertyCard, chosen);
         } else {
             gameLogic.playCard(current, card);
         }
@@ -147,47 +144,73 @@ public class GameFrame implements IGameObserver {
 
     public void playCardById(int cardId) {
         Player current = gameManager.getCurrentPlayer();
-        if (current == null || discardMode) return;
+        if (current == null || discardMode) {
+            return;
+        }
         Card card = current.getHand().findCard(cardId);
-        if (card == null) return;
+        if (card == null) {
+            return;
+        }
         playCard(card);
     }
 
+    /**
+     * Places a property card from hand via the property drop zone (same rules as center play).
+     */
     public void placePropertyById(int cardId) {
         Player current = gameManager.getCurrentPlayer();
-        if (current == null || gameManager.isGameOver() || discardMode) return;
+        if (current == null || gameManager.isGameOver() || discardMode) {
+            return;
+        }
 
         Card card = current.getHand().findCard(cardId);
-        if (card == null) { reportProblem("Property Failed", "This card is no longer in your hand."); return; }
+        if (card == null) {
+            reportProblem("Property Failed", "This card is no longer in your hand.");
+            return;
+        }
+
         if (!(card instanceof PropertyCard)) {
             reportProblem("Property Failed", "Only property cards can be placed in the property area.");
             return;
         }
 
-        PropertyCard pc = (PropertyCard) card;
-        PropertyType chosen = resolvePlacementColor(pc);
-        if (pc.needsColorChoiceOnPlacement() && chosen == null) return;
+        PropertyCard propertyCard = (PropertyCard) card;
+        PropertyType chosen = resolvePlacementColor(propertyCard);
+        if (propertyCard.needsColorChoiceOnPlacement() && chosen == null) {
+            return;
+        }
 
-        String reason = gameLogic.getRuleValidator().explainPlayCardFailure(current, pc);
-        if (reason != null) { reportProblem("Property Failed", reason); return; }
+        String reason = gameLogic.getRuleValidator().explainPlayCardFailure(current, propertyCard);
+        if (reason != null) {
+            reportProblem("Property Failed", reason);
+            return;
+        }
 
-        gameLogic.placeProperty(current, pc, chosen);
+        gameLogic.placeProperty(current, propertyCard, chosen);
         refreshUI();
     }
 
     public void bankCardById(int cardId) {
         Player current = gameManager.getCurrentPlayer();
-        if (current == null || gameManager.isGameOver() || discardMode) return;
-
-        Card card = current.getHand().findCard(cardId);
-        if (card == null) { reportProblem("Bank Failed", "This card is no longer in your hand."); return; }
-        if (current.getActions() <= 0) {
-            reportProblem("Bank Failed", "Cannot bank [" + card.getName()
-                    + "] because " + current.getName() + " has no actions left.");
+        if (current == null || gameManager.isGameOver() || discardMode) {
             return;
         }
+
+        Card card = current.getHand().findCard(cardId);
+        if (card == null) {
+            reportProblem("Bank Failed", "This card is no longer in your hand, so it cannot be banked.");
+            return;
+        }
+
+        if (current.getActions() <= 0) {
+            reportProblem("Bank Failed",
+                    "Cannot bank [" + card.getName() + "] because " + current.getName() + " has no actions left.");
+            return;
+        }
+
         if (card instanceof PropertyCard && !((PropertyCard) card).canBankAsMoney()) {
-            reportProblem("Bank Failed", "Cannot bank [" + card.getName() + "] because it has no monetary value.");
+            reportProblem("Bank Failed",
+                    "Cannot bank [" + card.getName() + "] because it has no monetary value.");
             return;
         }
 
@@ -195,65 +218,61 @@ public class GameFrame implements IGameObserver {
         if (success) {
             gameManager.notifyAllObservers(current.getName() + " deposited [" + card.getName() + "] to bank.");
         } else {
-            reportProblem("Bank Failed", "Cannot bank [" + card.getName() + "] — move is no longer legal.");
+            reportProblem("Bank Failed",
+                    "Cannot bank [" + card.getName() + "] because the move is no longer legal. Please try again.");
             return;
         }
         refreshUI();
     }
 
     public void endCurrentTurn() {
-        if (gameManager.isGameOver() || discardMode) return;
+        if (gameManager.isGameOver() || discardMode) {
+            return;
+        }
         Player current = gameManager.getCurrentPlayer();
-        if (current == null) return;
+        if (current == null) {
+            return;
+        }
 
         int needDiscard = gameLogic.getRequiredDiscardCount(current);
         if (needDiscard > 0) {
-            discardMode      = true;
+            discardMode = true;
             discardRemaining = needDiscard;
-            gameManager.notifyAllObservers(current.getName()
-                    + " must discard " + needDiscard + " card(s) before ending the turn.");
+            gameManager.notifyAllObservers(current.getName() + " must discard " + needDiscard + " card(s) before ending the turn.");
             return;
         }
+
         gameLogic.endTurn();
         refreshUI();
     }
 
     public void handleCenterCardDrop(int cardId) {
-        if (discardMode) discardCardById(cardId);
-        else             playCardById(cardId);
+        if (discardMode) {
+            discardCardById(cardId);
+        } else {
+            playCardById(cardId);
+        }
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Accessors (used by child panels)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public GameLogic getGameLogic()         { return gameLogic; }
-    public GameManager getGameManager()     { return gameManager; }
-    public CardImageResolver getImageResolver() { return imageResolver; }
-    public Stage getStage()                 { return stage; }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Private helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void discardCardById(int cardId) {
         Player current = gameManager.getCurrentPlayer();
-        if (current == null || gameManager.isGameOver() || !discardMode) return;
+        if (current == null || gameManager.isGameOver() || !discardMode) {
+            return;
+        }
 
         Card discard = current.getHand().findCard(cardId);
         if (discard == null) {
-            reportProblem("Discard Failed", "This card is no longer in your hand.");
+            reportProblem("Discard Failed", "This card is no longer in your hand, so it cannot be discarded.");
             return;
         }
+
         if (!gameLogic.discardCard(current, cardId)) {
-            reportProblem("Discard Failed",
-                    "Cannot discard [" + discard.getName() + "] — move is no longer legal.");
+            reportProblem("Discard Failed", "Cannot discard [" + discard.getName() + "] because the move is no longer legal.");
             return;
         }
 
         discardRemaining = gameLogic.getRequiredDiscardCount(current);
         String event = current.getName() + " discarded [" + discard.getName() + "].";
-
         if (discardRemaining > 0) {
             event += " " + discardRemaining + " card(s) left to discard.";
             gameManager.notifyAllObservers(event);
@@ -261,29 +280,39 @@ public class GameFrame implements IGameObserver {
         }
 
         event += " Turn will end now.";
-        discardMode      = false;
+        discardMode = false;
         discardRemaining = 0;
         gameManager.notifyAllObservers(event);
         gameLogic.endTurn();
     }
 
+    public GameLogic getGameLogic() {
+        return gameLogic;
+    }
+
+    public GameManager getGameManager() {
+        return gameManager;
+    }
+
+    public CardImageResolver getImageResolver() {
+        return imageResolver;
+    }
+
+    /**
+     * Shows the same problem both in a dialog and in the event log.
+     * Keeping the message in one place makes GUI errors easier to read.
+     */
     private PropertyType resolvePlacementColor(PropertyCard card) {
-        PropertyType chosen = PropertyColorChooser.prompt(null, card);
-        if (card.needsColorChoiceOnPlacement() && chosen == null) return null;
+        PropertyType chosen = PropertyColorChooser.prompt(this, card);
+        if (card.needsColorChoiceOnPlacement() && chosen == null) {
+            return null;
+        }
         return chosen;
     }
 
     private void reportProblem(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.initOwner(stage);
-        alert.showAndWait();
+        JOptionPane.showMessageDialog(this, message, title, JOptionPane.WARNING_MESSAGE);
         gameManager.notifyAllObservers(message);
     }
-
-    private void returnToHomeScreen() {
-        if (homeCallback != null) homeCallback.run();
-    }
 }
+

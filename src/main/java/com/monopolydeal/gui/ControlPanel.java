@@ -5,82 +5,63 @@ import com.monopolydeal.model.PropertySet;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.VBox;
-
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Left sidebar: current player's actions counter, bank total, asset previews, and event log.
+ * Left-bottom info area: self assets + log.
  */
-public class ControlPanel extends VBox {
+public class ControlPanel extends JPanel {
 
     private final GameFrame mainFrame;
-    private final Label lblActionsLeft;
-    private final Label lblBankTotal;
-    private final FlowPane pnlBank;
-    private final FlowPane pnlProperty;
-    private final TextArea txtGameLog;
+    private final JLabel lblActionsLeft;
+    private final JLabel lblBankTotal;
+    private final JPanel pnlBank;
+    private final JPanel pnlProperty;
+    private final JTextArea txtGameLog;
 
     public ControlPanel(GameFrame mainFrame) {
         this.mainFrame = mainFrame;
+        setOpaque(false);
+        setPreferredSize(new Dimension(330, 420));
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        setSpacing(6);
-        setPadding(new Insets(10));
-        setPrefWidth(330);
-        setStyle("-fx-background-color: transparent;");
-
-        // Actions counter
-        lblActionsLeft = new Label("Actions: 0 / 3");
+        lblActionsLeft = new JLabel("Actions: 0 / 3");
         lblActionsLeft.setFont(UITheme.FONT_SUBTITLE);
-        lblActionsLeft.setTextFill(UITheme.ACCENT_DARK);
-        getChildren().add(lblActionsLeft);
+        lblActionsLeft.setForeground(UITheme.ACCENT_DARK);
+        lblActionsLeft.setAlignmentX(LEFT_ALIGNMENT);
+        add(lblActionsLeft);
 
-        // Bank total
-        lblBankTotal = new Label("Bank: 0M");
+        lblBankTotal = new JLabel("Bank: 0M");
         lblBankTotal.setFont(UITheme.FONT_BANK_TOTAL);
-        lblBankTotal.setTextFill(UITheme.TEXT_MAIN);
-        getChildren().add(lblBankTotal);
+        lblBankTotal.setForeground(UITheme.TEXT_MAIN);
+        lblBankTotal.setAlignmentX(LEFT_ALIGNMENT);
+        add(lblBankTotal);
+        add(Box.createVerticalStrut(6));
 
-        // Bank cards section
         pnlBank = createStripPanel();
-        getChildren().add(createSection("Bank Cards", pnlBank, 96));
+        add(createSectionBox("Bank Cards", pnlBank, 96));
+        add(Box.createVerticalStrut(6));
 
-        // Property cards section
         pnlProperty = createStripPanel();
-        getChildren().add(createSection("Property Cards", pnlProperty, 120));
+        add(createSectionBox("Property Cards", pnlProperty, 120));
+        add(Box.createVerticalStrut(6));
 
-        // Game log
-        txtGameLog = new TextArea("[System] Ready.\n");
-        txtGameLog.setEditable(false);
-        txtGameLog.setWrapText(true);
-        txtGameLog.setPrefHeight(200);
-        UITheme.styleLogArea(txtGameLog);
-
-        ScrollPane logScroll = new ScrollPane(txtGameLog);
-        logScroll.setFitToWidth(true);
-        logScroll.setStyle(
-            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
-            "-fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;" +
-            "-fx-background-color: " + UITheme.toCssHex(UITheme.LOG_BG) + ";"
-        );
-
-        VBox logBox = new VBox(2, styledLabel("Recent Log"), logScroll);
-        logBox.setStyle(UITheme.softPanelStyle());
-        getChildren().add(logBox);
+        txtGameLog = new JTextArea(8, 26);
+        configureLogArea(txtGameLog);
+        add(createLogScroll(txtGameLog));
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Update methods
-    // ─────────────────────────────────────────────────────────────────────────
 
     public void updateTurnStatus(Player currentPlayer) {
         lblActionsLeft.setText(currentPlayer == null
@@ -89,87 +70,122 @@ public class ControlPanel extends VBox {
     }
 
     public void updateSelfAssets(Player currentPlayer) {
-        pnlBank.getChildren().clear();
-        pnlProperty.getChildren().clear();
+        pnlBank.removeAll();
+        pnlProperty.removeAll();
 
         if (currentPlayer == null) {
             lblBankTotal.setText("Bank: 0M");
+            pnlBank.revalidate();
+            pnlProperty.revalidate();
+            pnlBank.repaint();
+            pnlProperty.repaint();
             return;
         }
 
         lblBankTotal.setText("Bank: " + currentPlayer.getBankArea().total() + "M");
-        renderCardStrip(pnlBank,     new ArrayList<>(currentPlayer.getBankArea().getMoney()), 40, 60, 8);
-        renderCardStrip(pnlProperty, collectPropertyCards(currentPlayer),                     40, 60, 10);
+
+        renderCardStrip(pnlBank, new ArrayList<>(currentPlayer.getBankArea().getMoney()), 40, 60, 8);
+
+        renderCardStrip(pnlProperty, collectPropertyCards(currentPlayer), 40, 60, 10);
+
+        pnlBank.revalidate();
+        pnlProperty.revalidate();
+        pnlBank.repaint();
+        pnlProperty.repaint();
     }
 
-    public void logEvent(String event) {
-        if (event == null || event.trim().isEmpty()) return;
-        txtGameLog.appendText("[Event] " + event + "\n");
-        trimLogLines(16);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private void renderCardStrip(FlowPane panel, List<Card> cards, int w, int h, int maxShow) {
+    /**
+     * Keep the asset rows compact by showing only a short preview of each pile.
+     */
+    private void renderCardStrip(JPanel panel, List<Card> cards, int width, int height, int maxShow) {
         if (cards.isEmpty()) {
-            Label none = new Label("-");
+            JLabel none = new JLabel("-");
             none.setFont(UITheme.FONT_SMALL);
-            none.setTextFill(UITheme.TEXT_SUB);
-            panel.getChildren().add(none);
+            none.setForeground(UITheme.TEXT_SUB);
+            panel.add(none);
             return;
         }
+
         int count = Math.min(cards.size(), maxShow);
         for (int i = 0; i < count; i++) {
             Card card = cards.get(i);
-            ImageView iv = new ImageView(mainFrame.getImageResolver().getCardIcon(card, w, h));
-            iv.setFitWidth(w);
-            iv.setFitHeight(h);
-            iv.setPreserveRatio(false);
-            Tooltip.install(iv, new Tooltip(card.getName()));
-            panel.getChildren().add(iv);
+            JLabel icon = new JLabel(mainFrame.getImageResolver().getCardIcon(card, width, height));
+            icon.setToolTipText(card.getName());
+            panel.add(icon);
         }
         if (cards.size() > maxShow) {
-            Label more = new Label("+" + (cards.size() - maxShow));
+            JLabel more = new JLabel("+" + (cards.size() - maxShow));
             more.setFont(UITheme.FONT_SMALL);
-            more.setTextFill(UITheme.TEXT_SUB);
-            panel.getChildren().add(more);
+            more.setForeground(UITheme.TEXT_SUB);
+            panel.add(more);
         }
     }
 
-    private static List<Card> collectPropertyCards(Player player) {
+    private JPanel createSectionBox(String title, JPanel content, int height) {
+        JPanel box = new JPanel(new BorderLayout());
+        box.setOpaque(true);
+        box.setBackground(UITheme.PANEL_SOFT_BG);
+        box.setBorder(UITheme.createSectionBorder(title));
+        box.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
+        box.setPreferredSize(new Dimension(310, height));
+        box.setAlignmentX(LEFT_ALIGNMENT);
+        box.add(content, BorderLayout.CENTER);
+        return box;
+    }
+
+    private JPanel createStripPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 3));
+        panel.setOpaque(true);
+        panel.setBackground(UITheme.PANEL_SOFT_BG);
+        return panel;
+    }
+
+    private JScrollPane createLogScroll(JTextArea logArea) {
+        JScrollPane logScroll = new JScrollPane(logArea);
+        logScroll.setOpaque(true);
+        logScroll.getViewport().setOpaque(true);
+        logScroll.setBackground(UITheme.LOG_BG);
+        logScroll.getViewport().setBackground(UITheme.LOG_BG);
+        logScroll.setBorder(UITheme.createSectionBorder("Recent Log"));
+        logScroll.setAlignmentX(LEFT_ALIGNMENT);
+        return logScroll;
+    }
+
+    private void configureLogArea(JTextArea logArea) {
+        logArea.setEditable(false);
+        logArea.setLineWrap(true);
+        logArea.setWrapStyleWord(true);
+        logArea.setOpaque(true);
+        logArea.setBackground(UITheme.LOG_BG);
+        logArea.setForeground(UITheme.LOG_TEXT);
+        logArea.setText("[System] Ready.\n");
+    }
+
+    private List<Card> collectPropertyCards(Player currentPlayer) {
         List<Card> cards = new ArrayList<>();
-        for (PropertySet set : player.getPropertyArea().getSets()) {
-            for (PropertyCard pc : set.getCards()) cards.add(pc);
+        for (PropertySet set : currentPlayer.getPropertyArea().getSets()) {
+            for (PropertyCard card : set.getCards()) {
+                cards.add(card);
+            }
         }
         return cards;
     }
 
-    private static FlowPane createStripPanel() {
-        FlowPane fp = new FlowPane(3, 3);
-        fp.setStyle("-fx-background-color: " + UITheme.toCssRgba(UITheme.PANEL_SOFT_BG) + ";");
-        return fp;
-    }
-
-    private static VBox createSection(String title, javafx.scene.Node content, double prefHeight) {
-        VBox box = new VBox(2, styledLabel(title), content);
-        box.setStyle(UITheme.softPanelStyle());
-        box.setPrefHeight(prefHeight);
-        box.setMaxHeight(prefHeight);
-        return box;
-    }
-
-    private static Label styledLabel(String text) {
-        Label lbl = new Label(text);
-        lbl.setFont(UITheme.FONT_SMALL);
-        lbl.setTextFill(UITheme.TEXT_SUB);
-        return lbl;
+    public void logEvent(String event) {
+        if (event == null || event.trim().isEmpty()) {
+            return;
+        }
+        txtGameLog.append("[Event] " + event + "\n");
+        trimLogLines(16);
+        txtGameLog.setCaretPosition(txtGameLog.getDocument().getLength());
     }
 
     private void trimLogLines(int maxLines) {
         String[] lines = txtGameLog.getText().split("\n");
-        if (lines.length <= maxLines) return;
+        if (lines.length <= maxLines) {
+            return;
+        }
+        // Keep only the newest log lines so the panel stays readable.
         StringBuilder sb = new StringBuilder();
         for (int i = lines.length - maxLines; i < lines.length; i++) {
             sb.append(lines[i]).append('\n');
@@ -177,3 +193,4 @@ public class ControlPanel extends VBox {
         txtGameLog.setText(sb.toString());
     }
 }
+
