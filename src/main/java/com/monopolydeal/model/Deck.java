@@ -113,14 +113,14 @@ public class Deck {
         // ==================== Rent Cards (13 cards) ====================
         // Multi-color rent (wild rent) x 3
         for (int i = 0; i < 3; i++) {
-            drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent (Any Color)", 3, ActionType.DOUBLE_RENT, true));
+            drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent (Any Color)", 3, ActionType.RENT, true));
         }
         // Two-color rent cards x 10 (2 each for 5 pairs)
-        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Blue/Green", 1, ActionType.DOUBLE_RENT, true));
-        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Red/Yellow", 1, ActionType.DOUBLE_RENT, true));
-        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Purple/Orange", 1, ActionType.DOUBLE_RENT, true));
-        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Black/LightGreen", 1, ActionType.DOUBLE_RENT, true));
-        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Brown/LightBlue", 1, ActionType.DOUBLE_RENT, true));
+        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Blue/Green", 1, ActionType.RENT, true));
+        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Red/Yellow", 1, ActionType.RENT, true));
+        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Purple/Orange", 1, ActionType.RENT, true));
+        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Black/LightGreen", 1, ActionType.RENT, true));
+        for (int i = 0; i < 2; i++) drawPile.push(new com.monopolydeal.model.card.ActionCard("Rent Brown/LightBlue", 1, ActionType.RENT, true));
 
         // ==================== Action Cards (34 cards) ====================
         // Pass Go x 10

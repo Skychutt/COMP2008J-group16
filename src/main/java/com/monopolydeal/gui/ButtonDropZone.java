@@ -17,7 +17,7 @@ import java.io.InputStream;
  */
 public class ButtonDropZone extends JPanel {
 
-    private static final String BUTTON_PREFIX = "Card_Library/Button-graph/";
+    private static final String BUTTON_PREFIX = "Card_Library/Button_graph/";
 
     private final Image background;
     private boolean highlight;

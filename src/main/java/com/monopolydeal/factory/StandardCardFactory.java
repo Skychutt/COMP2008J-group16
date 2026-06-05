@@ -33,6 +33,8 @@ public class StandardCardFactory extends CardFactory {
                 return new ActionCard("Deal Breaker", 5, ActionType.DEAL_BREAKER, true);
             case JUST_SAY_NO:
                 return new ActionCard("Just Say No", 4, ActionType.JUST_SAY_NO, false);
+            case RENT:
+                return new ActionCard("Rent (Any Color)", 3, ActionType.RENT, true);
             case DOUBLE_RENT:
                 return new ActionCard("Double The Rent", 1, ActionType.DOUBLE_RENT, false);
             case HOUSE:

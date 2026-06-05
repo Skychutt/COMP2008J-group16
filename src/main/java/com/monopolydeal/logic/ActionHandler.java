@@ -10,11 +10,10 @@ import com.monopolydeal.model.card.ActionCard;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import javafx.scene.control.ChoiceDialog;
+import javax.swing.JOptionPane;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -79,6 +78,8 @@ public class ActionHandler {
             case DEAL_BREAKER:
                 handleDealBreaker(player, card);
                 return true;
+            case RENT:
+                return handleDoubleRentOrRent(player, card);
             case DOUBLE_RENT:
                 return handleDoubleRentOrRent(player, card);
             case JUST_SAY_NO:
@@ -895,21 +896,27 @@ public class ActionHandler {
             dialogOptions.add("Cancel");
         }
 
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogOptions.get(0), dialogOptions);
-        dialog.setTitle(title);
-        dialog.setHeaderText(null);
-        dialog.setContentText(prompt);
+        int choice = JOptionPane.showOptionDialog(
+                null,
+                prompt,
+                title,
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                dialogOptions.toArray(),
+                dialogOptions.get(0)
+        );
 
-        Optional<String> result = dialog.showAndWait();
-        if (!result.isPresent()) {
+        if (choice == JOptionPane.CLOSED_OPTION) {
             return -1;
         }
-        String chosen = result.get();
-        if (allowCancel && "Cancel".equals(chosen)) {
+        if (allowCancel && choice == options.size()) {
             return -1;
         }
-        int idx = options.indexOf(chosen);
-        return idx < 0 ? -1 : idx;
+        if (choice < 0 || choice >= options.size()) {
+            return -1;
+        }
+        return choice;
     }
 
     // ============================= INPUT HELPER =============================

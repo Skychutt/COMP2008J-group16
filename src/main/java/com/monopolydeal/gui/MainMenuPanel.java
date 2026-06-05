@@ -23,14 +23,12 @@ public class MainMenuPanel extends JPanel {
 
     private static final String CARD_MENU = "menu";
     private static final String CARD_SETUP = "setup";
-    private static final String CARD_LAN   = "lan";
 
     private final Image background;
     private final CardLayout cardLayout;
     private final JPanel cardHost;
     private final JPanel menuCard;
     private final LocalGameSetupPanel setupPanel;
-    private LanSetupPanel lanSetupPanel;
 
     public MainMenuPanel(LocalGameSetupPanel.SetupListener setupListener) {
         background = BackgroundUtil.getMainBackground();
@@ -68,19 +66,6 @@ public class MainMenuPanel extends JPanel {
     public void showLocalSetup() {
         setupPanel.resetToDefaults();
         cardLayout.show(cardHost, CARD_SETUP);
-    }
-
-    /**
-     * Display the LAN settings panel
-     */
-    public void showLanSetup(LanSetupPanel.LanSetupListener listener) {
-        if (lanSetupPanel == null) {
-            lanSetupPanel = new LanSetupPanel(listener);
-            cardHost.add(lanSetupPanel, CARD_LAN);
-        } else {
-            lanSetupPanel.resetToDefaults();
-        }
-        cardLayout.show(cardHost, CARD_LAN);
     }
 
     private JPanel buildMenuOverlay() {

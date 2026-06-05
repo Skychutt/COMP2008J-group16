@@ -93,7 +93,8 @@ public class PlayerPanel extends JPanel {
         handWrapper.add(scroll, BorderLayout.CENTER);
         add(handWrapper, BorderLayout.CENTER);
 
-        btnEndTurn = new ImageActionButton("End Turn.png", DROP_ZONE_W, DROP_ZONE_H);
+        btnEndTurn = new ImageActionButton("End Turn.png", DROP_ZONE_W, DROP_ZONE_H, true);
+        btnEndTurn.setImageOffsetX(-1);
         btnEndTurn.setToolTipText("End Turn");
         btnEndTurn.addActionListener(e -> {
             if (gameOver || endTurnHandler == null) {

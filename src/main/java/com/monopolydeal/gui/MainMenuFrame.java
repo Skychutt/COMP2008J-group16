@@ -58,28 +58,7 @@ public class MainMenuFrame extends JFrame {
             singlePlayer.addActionListener(e -> showComingSoon("Single Player"));
         }
         if (online != null) {
-            online.addActionListener(e -> menuPanel.showLanSetup(new LanSetupPanel.LanSetupListener() {
-                @Override
-                public void onBack() {
-                    menuPanel.showMainMenu();
-                }
-
-                @Override
-                public void onHost(int playerCount, java.util.List<String> playerNames, int port) {
-                    // Create a server and open the waiting hall
-                    com.monopolydeal.network.GameServer server =
-                            new com.monopolydeal.network.GameServer(port, playerCount, playerNames);
-                    NetworkLobbyFrame lobby = new NetworkLobbyFrame(server, playerNames, MainMenuFrame.this);
-                    setVisible(false);
-                    lobby.setVisible(true);
-                }
-
-                @Override
-                public void onJoin(String host, int port) {
-                    setVisible(false);
-                    com.monopolydeal.gui.NetworkGameFrame.openAsClient(host, port, MainMenuFrame.this);
-                }
-            }));
+            online.addActionListener(e -> showComingSoon("Online Multiplayer"));
         }
         if (rules != null) {
             rules.addActionListener(e -> GameRulesDialog.show(this));

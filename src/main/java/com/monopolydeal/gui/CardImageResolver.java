@@ -86,26 +86,6 @@ public class CardImageResolver {
         return new ImageIcon();
     }
 
-    /**
-     * Search for images using card name strings
-     *
-     * @return If the matched ImageIcon cannot be found, return a fallback image
-     */
-    public ImageIcon getIconByName(String cardName, int width, int height) {
-        if (cardName == null || cardName.isEmpty()) {
-            return getFallbackIcon(width, height);
-        }
-        String relativePath = normalizedNameToFile.get(normalize(cardName));
-        if (relativePath == null) {
-            relativePath = findBestFuzzyMatch(normalize(cardName));
-        }
-        ImageIcon icon = loadIcon(relativePath, width, height, false, "|byName");
-        if (icon != null) {
-            return icon;
-        }
-        return getFallbackIcon(width, height);
-    }
-
     private String resolveFileName(Card card) {
         String exact = null;
 
