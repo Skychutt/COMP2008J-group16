@@ -3,8 +3,7 @@ package com.monopolydeal.gui;
 import com.monopolydeal.model.Deck;
 import com.monopolydeal.model.Player;
 import com.monopolydeal.model.card.Card;
-
-import javafx.geometry.Insets;
+import com.monopolydeal.network.GameStateParser;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -139,6 +138,57 @@ public class TopStatusPanel extends BorderPane {
 
     public void setCardDropHandler(IntConsumer handler) {
         this.cardDropHandler = handler;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LAN network mode helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Display waiting prompt
+     */
+    public void showWaitingMessage(String message) {
+        lblCurrentPlayer.setText(message == null ? "Waiting..." : message);
+        lblActions.setText("");
+        lblDrawCount.setText("");
+        lblDiscardCount.setText("");
+        ivDrawTop.setImage(null);
+        ivDiscardTop.setImage(null);
+        refreshDropZoneStyle(false);
+        lblRecentEvent.setText("");
+    }
+
+    /**
+     * Update panel based on network status snapshot
+     */
+    public void updateFromSnapshot(GameStateParser.Snapshot snap,
+                                   CardImageResolver resolver,
+                                   boolean myTurn, boolean discardMode, int discardRemaining) {
+        if (snap == null) return;
+
+        this.gameOver         = snap.gameOver;
+        this.discardMode      = discardMode;
+        this.discardRemaining = discardRemaining;
+
+        String currentName = snap.currentPlayer == null ? "-" : snap.currentPlayer;
+        lblCurrentPlayer.setText("Current Player: " + currentName);
+
+        GameStateParser.PlayerInfo current = null;
+        if (snap.players != null) {
+            for (GameStateParser.PlayerInfo p : snap.players) {
+                if (p.name != null && p.name.equals(snap.currentPlayer)) {
+                    current = p;
+                    break;
+                }
+            }
+        }
+        lblActions.setText("Actions: " + (current != null ? current.actions : 0) + " / 3");
+        lblDrawCount.setText("Remaining: " + snap.deckSize);
+        lblDiscardCount.setText("");
+        ivDrawTop.setImage(resolver.getFallbackIcon(76, 118));
+        ivDiscardTop.setImage(null);
+        refreshDropZoneStyle(false);
+        lblRecentEvent.setText(myTurn ? "Your turn!" : "Waiting for " + currentName + "...");
     }
 
     public void updateTableCenter(Player currentPlayer, CardImageResolver resolver,

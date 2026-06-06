@@ -8,8 +8,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
-import java.util.List;
-
 /**
  * Home screen: background image + menu/setup overlay using a {@link StackPane}.
  */
@@ -17,6 +15,7 @@ public class MainMenuPanel extends StackPane {
 
     private final VBox menuOverlay;
     private final LocalGameSetupPanel setupPanel;
+    private LanSetupPanel lanSetupPanel;
 
     // Buttons stored for external wiring in MainMenuFrame
     private Button btnLocalGame;
@@ -53,6 +52,10 @@ public class MainMenuPanel extends StackPane {
         menuOverlay.setManaged(true);
         setupPanel.setVisible(false);
         setupPanel.setManaged(false);
+        if (lanSetupPanel != null) {
+            lanSetupPanel.setVisible(false);
+            lanSetupPanel.setManaged(false);
+        }
     }
 
     public void showLocalSetup() {
@@ -61,6 +64,37 @@ public class MainMenuPanel extends StackPane {
         menuOverlay.setManaged(false);
         setupPanel.setVisible(true);
         setupPanel.setManaged(true);
+        if (lanSetupPanel != null) {
+            lanSetupPanel.setVisible(false);
+            lanSetupPanel.setManaged(false);
+        }
+    }
+
+    /**
+     * Display LAN online settings interface
+     *
+     */
+    public void showLanSetup(LanSetupPanel.LanSetupListener listener) {
+        // Lazily create LanSetupPanel the first time it's needed
+        if (lanSetupPanel == null) {
+            lanSetupPanel = new LanSetupPanel(listener);
+            StackPane.setAlignment(lanSetupPanel, Pos.CENTER);
+            getChildren().add(lanSetupPanel);
+        } else {
+            // Update listener in case it changed
+            lanSetupPanel = new LanSetupPanel(listener);
+            // Remove old, add new
+            getChildren().removeIf(n -> n instanceof LanSetupPanel);
+            StackPane.setAlignment(lanSetupPanel, Pos.CENTER);
+            getChildren().add(lanSetupPanel);
+        }
+        lanSetupPanel.resetToDefaults();
+        menuOverlay.setVisible(false);
+        menuOverlay.setManaged(false);
+        setupPanel.setVisible(false);
+        setupPanel.setManaged(false);
+        lanSetupPanel.setVisible(true);
+        lanSetupPanel.setManaged(true);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

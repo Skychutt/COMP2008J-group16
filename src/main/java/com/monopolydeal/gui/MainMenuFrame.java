@@ -51,7 +51,27 @@ public class MainMenuFrame {
             menuPanel.getButtonSinglePlayer().setOnAction(e -> showComingSoon("Single Player"));
         }
         if (menuPanel.getButtonOnline() != null) {
-            menuPanel.getButtonOnline().setOnAction(e -> showComingSoon("Online Multiplayer"));
+            menuPanel.getButtonOnline().setOnAction(e ->
+                menuPanel.showLanSetup(new LanSetupPanel.LanSetupListener() {
+                    @Override
+                    public void onBack() {
+                        menuPanel.showMainMenu();
+                    }
+
+                    @Override
+                    public void onHost(int playerCount, List<String> playerNames, int port) {
+                        com.monopolydeal.network.GameServer server =
+                                new com.monopolydeal.network.GameServer(port, playerCount, playerNames);
+                        NetworkLobbyFrame lobby = new NetworkLobbyFrame(server, playerNames, stage);
+                        lobby.show();
+                    }
+
+                    @Override
+                    public void onJoin(String host, int port) {
+                        NetworkGameFrame.openAsClient(host, port, stage);
+                    }
+                })
+            );
         }
         if (menuPanel.getButtonRules() != null) {
             menuPanel.getButtonRules().setOnAction(e -> GameRulesDialog.show(stage));
