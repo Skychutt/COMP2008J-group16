@@ -36,7 +36,6 @@ com\monopolydeal\gui\ImageScaleUtil.class
 com\monopolydeal\gui\NetworkOpponentSeatPane.class
 com\monopolydeal\gui\PlayerPanel.class
 com\monopolydeal\network\GameClient.class
-com\monopolydeal\logic\AssetTransferManager$1.class
 com\monopolydeal\network\GameServer$ServerStatusListener.class
 com\monopolydeal\gui\MainMenuPanel.class
 com\monopolydeal\gui\NetworkLobbyFrame$1.class
@@ -54,7 +53,6 @@ com\monopolydeal\logic\AssetTransferManager$PaymentResult.class
 com\monopolydeal\gui\MainMenuFrame$2.class
 com\monopolydeal\logic\RentCalculator.class
 com\monopolydeal\logic\TurnManager.class
-com\monopolydeal\gui\ImageActionButton$1.class
 com\monopolydeal\model\GameManager.class
 com\monopolydeal\Main.class
 com\monopolydeal\interfaces\ITargetable.class

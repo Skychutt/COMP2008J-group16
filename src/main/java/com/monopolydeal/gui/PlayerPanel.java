@@ -51,6 +51,7 @@ public class PlayerPanel extends BorderPane {
     private boolean gameOver     = false;
     private boolean discardMode  = false;
     private int discardRemaining = 0;
+    private boolean interactive  = true;
 
     private int lastActionsLeft = Integer.MIN_VALUE;
     private boolean lastGameOver;
@@ -118,7 +119,7 @@ public class PlayerPanel extends BorderPane {
         rightDock.setPrefWidth(DROP_ZONE_W + 16);
         setRight(rightDock);
 
-        updateEndTurnButtonStyle(0, false, false);
+        updateEndTurnButtonStyle(0, false, false, true);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -134,12 +135,20 @@ public class PlayerPanel extends BorderPane {
     // ─────────────────────────────────────────────────────────────────────────
 
     public void updatePlayerView(Player current, boolean gameOver, boolean discardMode, int discardRemaining) {
+        updatePlayerView(current, gameOver, discardMode, discardRemaining, true);
+    }
+
+    public void updatePlayerView(Player current, boolean gameOver, boolean discardMode,
+                                 int discardRemaining, boolean interactive) {
         if (current == null) return;
         this.gameOver        = gameOver;
         this.discardMode     = discardMode;
         this.discardRemaining = Math.max(0, discardRemaining);
+        this.interactive     = interactive;
 
-        if (discardMode) {
+        if (!interactive && !discardMode) {
+            lblSeat.setText(current.getName() + " - Waiting for opponent turn...");
+        } else if (discardMode) {
             lblSeat.setText(current.getName()
                     + " - Drag to center to discard " + this.discardRemaining + " card(s)");
         } else {
@@ -149,7 +158,7 @@ public class PlayerPanel extends BorderPane {
 
         refreshDropZoneHighlight(false, false);
         lblActions.setText("Actions: " + current.getActions() + " / 3");
-        updateEndTurnButtonStyle(current.getActions(), gameOver, discardMode);
+        updateEndTurnButtonStyle(current.getActions(), gameOver, discardMode, interactive);
         renderHand(current);
     }
 
@@ -201,7 +210,7 @@ public class PlayerPanel extends BorderPane {
         boolean canBank   = current.getActions() > 0
                 && (!(card instanceof PropertyCard) || ((PropertyCard) card).canBankAsMoney());
         boolean canProp   = card instanceof PropertyCard && canPlay;
-        boolean draggable = discardMode || canPlay || canBank;
+        boolean draggable = interactive && (discardMode || canPlay || canBank);
 
         String tooltipText = card.getName() + " (" + card.getValue() + "M)";
         String borderColor;
@@ -281,7 +290,7 @@ public class PlayerPanel extends BorderPane {
     private void wireDropZones() {
         // ── Bank drop zone ──
         bankDropZone.setOnDragOver(e -> {
-            if (gameOver || discardMode) { e.consume(); return; }
+            if (gameOver || discardMode || !interactive) { e.consume(); return; }
             if (e.getDragboard().hasString()) {
                 Card card = findDraggedCard(e.getDragboard().getString());
                 boolean ok = card != null && canDropOnBank(card);
@@ -297,7 +306,7 @@ public class PlayerPanel extends BorderPane {
         bankDropZone.setOnDragDropped(e -> {
             refreshDropZoneHighlight(false, false);
             boolean success = false;
-            if (!gameOver && !discardMode && e.getDragboard().hasString()) {
+            if (!gameOver && !discardMode && interactive && e.getDragboard().hasString()) {
                 try {
                     int cardId = Integer.parseInt(e.getDragboard().getString().trim());
                     if (bankDropHandler != null) bankDropHandler.accept(cardId);
@@ -310,7 +319,7 @@ public class PlayerPanel extends BorderPane {
 
         // ── Property drop zone ──
         propertyDropZone.setOnDragOver(e -> {
-            if (gameOver || discardMode) { e.consume(); return; }
+            if (gameOver || discardMode || !interactive) { e.consume(); return; }
             if (e.getDragboard().hasString()) {
                 Card card = findDraggedCard(e.getDragboard().getString());
                 boolean ok = card instanceof PropertyCard;
@@ -326,7 +335,7 @@ public class PlayerPanel extends BorderPane {
         propertyDropZone.setOnDragDropped(e -> {
             refreshDropZoneHighlight(false, false);
             boolean success = false;
-            if (!gameOver && !discardMode && e.getDragboard().hasString()) {
+            if (!gameOver && !discardMode && interactive && e.getDragboard().hasString()) {
                 try {
                     int cardId = Integer.parseInt(e.getDragboard().getString().trim());
                     if (propertyDropHandler != null) propertyDropHandler.accept(cardId);
@@ -350,13 +359,14 @@ public class PlayerPanel extends BorderPane {
         propertyDropZone.setHoverText(enabled && prop ? "Move to Property" : null);
     }
 
-    private void updateEndTurnButtonStyle(int actionsLeft, boolean gameOver, boolean discardMode) {
+    private void updateEndTurnButtonStyle(int actionsLeft, boolean gameOver,
+                                          boolean discardMode, boolean interactive) {
         if (actionsLeft == lastActionsLeft
                 && gameOver == lastGameOver
                 && discardMode == lastDiscardMode) {
             return;
         }
-        if (gameOver || discardMode) {
+        if (gameOver || discardMode || !interactive) {
             btnEndTurn.setVisualState(ImageActionButton.VisualState.DISABLED);
         } else if (actionsLeft > 0) {
             btnEndTurn.setVisualState(ImageActionButton.VisualState.WAITING);

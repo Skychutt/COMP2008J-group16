@@ -1,5 +1,6 @@
 package com.monopolydeal.model;
 
+import com.monopolydeal.enums.PlayerType;
 import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.interfaces.IGameObserver;
 import com.monopolydeal.interfaces.ISubject;
@@ -21,6 +22,7 @@ public class Player implements ISubject {
     private BankArea bankArea;                  // Player's bank area for money storage
     private PropertyArea propertyArea;          // Player's property area for property sets
     private List<IGameObserver> observers;      // Registered observers for event notifications
+    private PlayerType playerType = PlayerType.HUMAN;
 
     /** Maximum cards allowed in hand at end of turn. */
     public static final int MAX_HAND_SIZE = 7;
@@ -52,6 +54,26 @@ public class Player implements ISubject {
     /** @return the player's display name */
     public String getName() {
         return name;
+    }
+
+    /** Sets whether this seat is human or AI controlled. */
+    public void setPlayerType(PlayerType type) {
+        this.playerType = type == null ? PlayerType.HUMAN : type;
+    }
+
+    /** @return the control type for this seat */
+    public PlayerType getPlayerType() {
+        return playerType;
+    }
+
+    /** @return true when this seat is controlled by the AI */
+    public boolean isAI() {
+        return playerType == PlayerType.AI;
+    }
+
+    /** @return true when this seat is controlled by a human */
+    public boolean isHuman() {
+        return playerType == PlayerType.HUMAN;
     }
 
     /** @return the number of remaining actions this turn */

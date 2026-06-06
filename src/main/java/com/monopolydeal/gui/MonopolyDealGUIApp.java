@@ -1,8 +1,12 @@
 package com.monopolydeal.gui;
 
+import com.monopolydeal.ai.AIPlayerBrain;
+import com.monopolydeal.enums.PlayerType;
 import com.monopolydeal.logic.GameLogic;
 import com.monopolydeal.model.Deck;
 import com.monopolydeal.model.GameManager;
+
+import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -73,6 +77,61 @@ public class MonopolyDealGUIApp extends Application {
             e.printStackTrace(new PrintWriter(sw));
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Failed to start game");
+            alert.setHeaderText(e.getClass().getSimpleName() + ": " + e.getMessage());
+            alert.setContentText(sw.toString().length() > 800
+                    ? sw.toString().substring(0, 800) + "..."
+                    : sw.toString());
+            alert.initOwner(homeFrame.getStage());
+            alert.showAndWait();
+        }
+    }
+
+    /**
+     * Starts a single-player game against one or more AI opponents.
+     */
+    public static void startAiGame(MainMenuFrame homeFrame,
+                                   String humanName,
+                                   int aiOpponents) {
+        if (aiOpponents < 1 || aiOpponents > 4) {
+            homeFrame.showHomeAgain();
+            return;
+        }
+
+        Deck.reset();
+        GameManager.reset();
+
+        List<GameManager.PlayerSetup> setups = new ArrayList<>();
+        setups.add(new GameManager.PlayerSetup(humanName, PlayerType.HUMAN));
+        for (int i = 1; i <= aiOpponents; i++) {
+            setups.add(new GameManager.PlayerSetup("AI " + i, PlayerType.AI));
+        }
+
+        GameManager gameManager = GameManager.getInstance();
+        gameManager.initGameWithSetups(setups);
+
+        AIPlayerBrain aiBrain = new AIPlayerBrain();
+        GameLogic logic = new GameLogic(gameManager);
+        logic.getActionHandler().setUseDialogInput(true);
+        logic.getActionHandler().setDecisionResolver(aiBrain);
+
+        Stage gameStage = new Stage();
+        Runnable homeCallback = homeFrame::showHomeAgain;
+
+        try {
+            GameFrame gameFrame = new GameFrame(
+                    gameManager, logic, gameStage, homeCallback, true, aiBrain);
+            gameFrame.show();
+            homeFrame.getStage().hide();
+            logic.startGame();
+        } catch (Exception e) {
+            e.printStackTrace();
+            gameStage.close();
+            homeFrame.getStage().show();
+            homeFrame.getStage().toFront();
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Failed to start AI game");
             alert.setHeaderText(e.getClass().getSimpleName() + ": " + e.getMessage());
             alert.setContentText(sw.toString().length() > 800
                     ? sw.toString().substring(0, 800) + "..."

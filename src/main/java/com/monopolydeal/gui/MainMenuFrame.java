@@ -19,17 +19,30 @@ public class MainMenuFrame {
 
         MainMenuFrame self = this;
 
-        menuPanel = new MainMenuPanel(new LocalGameSetupPanel.SetupListener() {
-            @Override
-            public void onBack() {
-                menuPanel.showMainMenu();
-            }
+        menuPanel = new MainMenuPanel(
+                new LocalGameSetupPanel.SetupListener() {
+                    @Override
+                    public void onBack() {
+                        menuPanel.showMainMenu();
+                    }
 
-            @Override
-            public void onStart(int playerCount, List<String> playerNames) {
-                MonopolyDealGUIApp.startLocalGame(self, playerCount, playerNames);
-            }
-        });
+                    @Override
+                    public void onStart(int playerCount, List<String> playerNames) {
+                        MonopolyDealGUIApp.startLocalGame(self, playerCount, playerNames);
+                    }
+                },
+                new SinglePlayerSetupPanel.SetupListener() {
+                    @Override
+                    public void onBack() {
+                        menuPanel.showMainMenu();
+                    }
+
+                    @Override
+                    public void onStart(String playerName, int aiOpponents) {
+                        MonopolyDealGUIApp.startAiGame(self, playerName, aiOpponents);
+                    }
+                }
+        );
 
         wireButtons();
 
@@ -48,7 +61,7 @@ public class MainMenuFrame {
             menuPanel.getButtonLocalGame().setOnAction(e -> menuPanel.showLocalSetup());
         }
         if (menuPanel.getButtonSinglePlayer() != null) {
-            menuPanel.getButtonSinglePlayer().setOnAction(e -> showComingSoon("Single Player"));
+            menuPanel.getButtonSinglePlayer().setOnAction(e -> menuPanel.showSinglePlayerSetup());
         }
         if (menuPanel.getButtonOnline() != null) {
             menuPanel.getButtonOnline().setOnAction(e ->

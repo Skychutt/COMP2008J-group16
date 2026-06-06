@@ -1,3 +1,4 @@
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\ai\AIAction.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\OpponentsPanel.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\AssetTransferManager.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\PlayerPanel.java
@@ -8,6 +9,7 @@ C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\Ca
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\NetworkPlayerPanel.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\Hand.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\BankArea.java
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\DecisionResolver.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\BackgroundUtil.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\interfaces\IUpgradable.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\RentCalculator.java
@@ -18,6 +20,7 @@ C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\Ga
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\TableSurfacePanel.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\MonopolyDealConsole.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\UITheme.java
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\SinglePlayerSetupPanel.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\card\MoneyCard.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\ButtonDropZone.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\OpponentSeatPane.java
@@ -44,11 +47,14 @@ C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\interfac
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\MainMenuPanel.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\RuleValidator.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\interfaces\IGameObserver.java
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\ai\AITurnExecutor.java
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\enums\PlayerType.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\CardImageResolver.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\ControlPanel.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\GameStateParser.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\GameClient.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\GameRulesDialog.java
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\ai\AIPlayerBrain.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\LanSetupPanel.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\MainMenuFrame.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\GameLogic.java
@@ -62,5 +68,6 @@ C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\Prop
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\GameBoardPane.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\PropertySet.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\MonopolyDealGUIApp.java
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\ai\AIActionStrategy.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\ClientHandler.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\NetworkLobbyFrame.java

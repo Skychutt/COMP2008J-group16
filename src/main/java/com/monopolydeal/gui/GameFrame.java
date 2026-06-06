@@ -1,5 +1,7 @@
 package com.monopolydeal.gui;
 
+import com.monopolydeal.ai.AIPlayerBrain;
+import com.monopolydeal.ai.AITurnExecutor;
 import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.interfaces.IGameObserver;
 import com.monopolydeal.logic.GameLogic;
@@ -34,14 +36,35 @@ public class GameFrame implements IGameObserver {
     private String latestEvent = "Welcome to Monopoly Deal.";
     private boolean discardMode = false;
     private int discardRemaining = 0;
+    private final boolean vsAiMode;
+    private final AIPlayerBrain aiBrain;
+    private AITurnExecutor aiExecutor;
 
     public GameFrame(GameManager gameManager, GameLogic gameLogic,
                      Stage stage, Runnable homeCallback) {
+        this(gameManager, gameLogic, stage, homeCallback, false, null);
+    }
+
+    public GameFrame(GameManager gameManager, GameLogic gameLogic,
+                     Stage stage, Runnable homeCallback,
+                     boolean vsAiMode, AIPlayerBrain aiBrain) {
         this.gameManager  = gameManager;
         this.gameLogic    = gameLogic;
         this.stage        = stage;
         this.homeCallback = homeCallback;
+        this.vsAiMode     = vsAiMode;
+        this.aiBrain      = aiBrain;
         this.imageResolver = new CardImageResolver();
+
+        if (vsAiMode && aiBrain != null) {
+            gameLogic.getActionHandler().setDecisionResolver(aiBrain);
+            aiExecutor = new AITurnExecutor(
+                    aiBrain,
+                    gameLogic,
+                    gameLogic.getActionHandler(),
+                    this::refreshUI
+            );
+        }
 
         // ── Build the component tree ──
         topStatusPanel = new TopStatusPanel();
@@ -61,7 +84,7 @@ public class GameFrame implements IGameObserver {
         double height = Math.min(960,  Math.max(700,  screen.getHeight() - 60));
 
         Scene scene = new Scene(board, width, height);
-        stage.setTitle("Monopoly Deal");
+        stage.setTitle(vsAiMode ? "Monopoly Deal - vs AI" : "Monopoly Deal");
         stage.setScene(scene);
         stage.setMinWidth(960);
         stage.setMinHeight(640);
@@ -94,12 +117,18 @@ public class GameFrame implements IGameObserver {
         if (gameManager.getPlayers() == null || gameManager.getPlayers().isEmpty()) return;
 
         Player current = gameManager.getCurrentPlayer();
+        Player viewPlayer = getViewPlayer();
+        boolean canControl = canControlCurrentPlayer();
+
         topStatusPanel.updateTableCenter(current, imageResolver, latestEvent,
                 gameManager.isGameOver(), discardMode, discardRemaining);
-        playerPanel.updatePlayerView(current, gameManager.isGameOver(), discardMode, discardRemaining);
+        playerPanel.updatePlayerView(viewPlayer, gameManager.isGameOver(),
+                discardMode, discardRemaining, canControl);
         board.updateOpponents(gameManager.getPlayers(), current, imageResolver);
         controlPanel.updateTurnStatus(current);
-        controlPanel.updateSelfAssets(current);
+        controlPanel.updateSelfAssets(viewPlayer);
+
+        scheduleAiIfNeeded();
 
         if (gameManager.isGameOver() && !gameOverDialogShown) {
             gameOverDialogShown = true;
@@ -119,6 +148,7 @@ public class GameFrame implements IGameObserver {
     public void playCard(Card card) {
         Player current = gameManager.getCurrentPlayer();
         if (current == null || card == null || gameManager.isGameOver() || discardMode) return;
+        if (!canControlCurrentPlayer()) return;
 
         String reason = gameLogic.getRuleValidator().explainPlayCardFailure(current, card);
         if (reason != null) {
@@ -139,7 +169,7 @@ public class GameFrame implements IGameObserver {
 
     public void playCardById(int cardId) {
         Player current = gameManager.getCurrentPlayer();
-        if (current == null || discardMode) return;
+        if (current == null || discardMode || !canControlCurrentPlayer()) return;
         Card card = current.getHand().findCard(cardId);
         if (card == null) return;
         playCard(card);
@@ -147,7 +177,7 @@ public class GameFrame implements IGameObserver {
 
     public void placePropertyById(int cardId) {
         Player current = gameManager.getCurrentPlayer();
-        if (current == null || gameManager.isGameOver() || discardMode) return;
+        if (current == null || gameManager.isGameOver() || discardMode || !canControlCurrentPlayer()) return;
 
         Card card = current.getHand().findCard(cardId);
         if (card == null) { reportProblem("Property Failed", "This card is no longer in your hand."); return; }
@@ -169,7 +199,7 @@ public class GameFrame implements IGameObserver {
 
     public void bankCardById(int cardId) {
         Player current = gameManager.getCurrentPlayer();
-        if (current == null || gameManager.isGameOver() || discardMode) return;
+        if (current == null || gameManager.isGameOver() || discardMode || !canControlCurrentPlayer()) return;
 
         Card card = current.getHand().findCard(cardId);
         if (card == null) { reportProblem("Bank Failed", "This card is no longer in your hand."); return; }
@@ -196,7 +226,7 @@ public class GameFrame implements IGameObserver {
     public void endCurrentTurn() {
         if (gameManager.isGameOver() || discardMode) return;
         Player current = gameManager.getCurrentPlayer();
-        if (current == null) return;
+        if (current == null || !canControlCurrentPlayer()) return;
 
         int needDiscard = gameLogic.getRequiredDiscardCount(current);
         if (needDiscard > 0) {
@@ -260,9 +290,46 @@ public class GameFrame implements IGameObserver {
     }
 
     private PropertyType resolvePlacementColor(PropertyCard card) {
-        PropertyType chosen = PropertyColorChooser.prompt(null, card);
+        Player current = gameManager.getCurrentPlayer();
+        PropertyType chosen;
+        if (current != null && current.isAI() && aiBrain != null) {
+            chosen = aiBrain.choosePropertyColor(current, card);
+        } else {
+            chosen = PropertyColorChooser.prompt(null, card);
+        }
         if (card.needsColorChoiceOnPlacement() && chosen == null) return null;
         return chosen;
+    }
+
+    private Player getViewPlayer() {
+        Player current = gameManager.getCurrentPlayer();
+        if (!vsAiMode || current == null || current.isHuman()) {
+            return current;
+        }
+        for (Player player : gameManager.getPlayers()) {
+            if (player.isHuman()) {
+                return player;
+            }
+        }
+        return current;
+    }
+
+    private boolean canControlCurrentPlayer() {
+        if (gameManager.isGameOver()) {
+            return false;
+        }
+        Player current = gameManager.getCurrentPlayer();
+        return current != null && current.isHuman();
+    }
+
+    private void scheduleAiIfNeeded() {
+        if (!vsAiMode || aiExecutor == null || gameManager.isGameOver()) {
+            return;
+        }
+        Player current = gameManager.getCurrentPlayer();
+        if (current != null && current.isAI()) {
+            aiExecutor.startTurn(current);
+        }
     }
 
     private void reportProblem(String title, String message) {
@@ -276,6 +343,9 @@ public class GameFrame implements IGameObserver {
     }
 
     private void returnToHomeScreen() {
+        if (aiExecutor != null) {
+            aiExecutor.stop();
+        }
         if (homeCallback != null) homeCallback.run();
     }
 }

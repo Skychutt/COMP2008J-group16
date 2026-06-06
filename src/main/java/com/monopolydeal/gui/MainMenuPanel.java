@@ -15,6 +15,7 @@ public class MainMenuPanel extends StackPane {
 
     private final VBox menuOverlay;
     private final LocalGameSetupPanel setupPanel;
+    private final SinglePlayerSetupPanel singlePlayerSetupPanel;
     private LanSetupPanel lanSetupPanel;
 
     // Buttons stored for external wiring in MainMenuFrame
@@ -23,7 +24,8 @@ public class MainMenuPanel extends StackPane {
     private Button btnOnline;
     private Button btnRules;
 
-    public MainMenuPanel(LocalGameSetupPanel.SetupListener setupListener) {
+    public MainMenuPanel(LocalGameSetupPanel.SetupListener setupListener,
+                         SinglePlayerSetupPanel.SetupListener singlePlayerListener) {
         // Background image fills the pane using CSS cover
         BackgroundUtil.applyCoverBackground(this, BackgroundUtil.getMainBackground());
         if (BackgroundUtil.getMainBackground() == null) {
@@ -34,11 +36,16 @@ public class MainMenuPanel extends StackPane {
         setupPanel.setVisible(false);
         setupPanel.setManaged(false);
 
+        singlePlayerSetupPanel = new SinglePlayerSetupPanel(singlePlayerListener);
+        singlePlayerSetupPanel.setVisible(false);
+        singlePlayerSetupPanel.setManaged(false);
+
         menuOverlay = buildMenuOverlay();
 
         StackPane.setAlignment(menuOverlay, Pos.CENTER);
         StackPane.setAlignment(setupPanel, Pos.CENTER);
-        getChildren().addAll(menuOverlay, setupPanel);
+        StackPane.setAlignment(singlePlayerSetupPanel, Pos.CENTER);
+        getChildren().addAll(menuOverlay, setupPanel, singlePlayerSetupPanel);
 
         showMainMenu();
     }
@@ -52,6 +59,8 @@ public class MainMenuPanel extends StackPane {
         menuOverlay.setManaged(true);
         setupPanel.setVisible(false);
         setupPanel.setManaged(false);
+        singlePlayerSetupPanel.setVisible(false);
+        singlePlayerSetupPanel.setManaged(false);
         if (lanSetupPanel != null) {
             lanSetupPanel.setVisible(false);
             lanSetupPanel.setManaged(false);
@@ -64,6 +73,22 @@ public class MainMenuPanel extends StackPane {
         menuOverlay.setManaged(false);
         setupPanel.setVisible(true);
         setupPanel.setManaged(true);
+        singlePlayerSetupPanel.setVisible(false);
+        singlePlayerSetupPanel.setManaged(false);
+        if (lanSetupPanel != null) {
+            lanSetupPanel.setVisible(false);
+            lanSetupPanel.setManaged(false);
+        }
+    }
+
+    public void showSinglePlayerSetup() {
+        singlePlayerSetupPanel.resetToDefaults();
+        menuOverlay.setVisible(false);
+        menuOverlay.setManaged(false);
+        setupPanel.setVisible(false);
+        setupPanel.setManaged(false);
+        singlePlayerSetupPanel.setVisible(true);
+        singlePlayerSetupPanel.setManaged(true);
         if (lanSetupPanel != null) {
             lanSetupPanel.setVisible(false);
             lanSetupPanel.setManaged(false);
@@ -93,6 +118,8 @@ public class MainMenuPanel extends StackPane {
         menuOverlay.setManaged(false);
         setupPanel.setVisible(false);
         setupPanel.setManaged(false);
+        singlePlayerSetupPanel.setVisible(false);
+        singlePlayerSetupPanel.setManaged(false);
         lanSetupPanel.setVisible(true);
         lanSetupPanel.setManaged(true);
     }

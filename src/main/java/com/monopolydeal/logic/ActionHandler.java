@@ -29,6 +29,8 @@ public class ActionHandler {
     private final GameLogic gameLogic;
     private Scanner scanner;
     private boolean useDialogInput;
+    private DecisionResolver decisionResolver;
+    private Player activeDecisionPlayer;
 
     public ActionHandler(GameLogic gameLogic) {
         this.gameLogic = gameLogic;
@@ -49,6 +51,21 @@ public class ActionHandler {
     /** @return true when dialogs are used for player decisions */
     public boolean isUseDialogInput() {
         return useDialogInput;
+    }
+
+    /** Registers the AI decision resolver used during automated choices. */
+    public void setDecisionResolver(DecisionResolver decisionResolver) {
+        this.decisionResolver = decisionResolver;
+    }
+
+    /** Marks which player is currently making an interactive choice. */
+    public void setActiveDecisionPlayer(Player player) {
+        this.activeDecisionPlayer = player;
+    }
+
+    /** Clears the active decision player after an AI action completes. */
+    public void clearActiveDecisionPlayer() {
+        this.activeDecisionPlayer = null;
     }
 
     /**
@@ -111,7 +128,14 @@ public class ActionHandler {
                 break;
             }
 
-            if (!askUseJustSayNo(responder, attackCard, blocked, challenger)) {
+            boolean useCounter;
+            if (responder.isAI() && decisionResolver instanceof com.monopolydeal.ai.AIActionStrategy) {
+                useCounter = ((com.monopolydeal.ai.AIActionStrategy) decisionResolver)
+                        .shouldUseJustSayNo(responder);
+            } else {
+                useCounter = askUseJustSayNo(responder, attackCard, blocked, challenger);
+            }
+            if (!useCounter) {
                 break;
             }
 
@@ -202,12 +226,23 @@ public class ActionHandler {
             }
 
             int needDiscard = player.getHand().size() - Player.MAX_HAND_SIZE;
-            int index = chooseOption(
-                    "Discard To 7 Cards",
-                    player.getName() + " must discard " + needDiscard + " more card(s):",
-                    options,
-                    false
-            );
+            int index;
+            if (player.isAI() && decisionResolver != null) {
+                index = decisionResolver.chooseOption(
+                        player,
+                        "Discard To 7 Cards",
+                        player.getName() + " must discard " + needDiscard + " more card(s):",
+                        options,
+                        false
+                );
+            } else {
+                index = chooseOption(
+                        "Discard To 7 Cards",
+                        player.getName() + " must discard " + needDiscard + " more card(s):",
+                        options,
+                        false
+                );
+            }
 
             if (index < 0 || index >= handCards.size()) {
                 index = 0;
@@ -268,6 +303,10 @@ public class ActionHandler {
     ) {
         if (eligibleAssets == null || eligibleAssets.isEmpty()) {
             return new ArrayList<>();
+        }
+        if (payer != null && payer.isAI()) {
+            return gameLogic.getAssetTransferManager()
+                    .selectOptimalPaymentAssets(eligibleAssets, requiredAmount);
         }
 
         List<Card> remaining = new ArrayList<>(eligibleAssets);
@@ -870,6 +909,10 @@ public class ActionHandler {
     private int chooseOption(String title, String prompt, List<String> options, boolean allowCancel) {
         if (options == null || options.isEmpty()) {
             return -1;
+        }
+
+        if (activeDecisionPlayer != null && activeDecisionPlayer.isAI() && decisionResolver != null) {
+            return decisionResolver.chooseOption(activeDecisionPlayer, title, prompt, options, allowCancel);
         }
 
         if (!useDialogInput) {
