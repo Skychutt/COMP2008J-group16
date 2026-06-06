@@ -10,7 +10,6 @@ import com.monopolydeal.model.card.ActionCard;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import javax.swing.JOptionPane;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -896,25 +895,24 @@ public class ActionHandler {
             dialogOptions.add("Cancel");
         }
 
-        int choice = JOptionPane.showOptionDialog(
+        int choice = javax.swing.JOptionPane.showOptionDialog(
                 null,
                 prompt,
                 title,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
+                javax.swing.JOptionPane.DEFAULT_OPTION,
+                javax.swing.JOptionPane.QUESTION_MESSAGE,
                 null,
                 dialogOptions.toArray(),
                 dialogOptions.get(0)
         );
-
-        if (choice == JOptionPane.CLOSED_OPTION) {
+        if (choice == javax.swing.JOptionPane.CLOSED_OPTION) {
             return -1;
         }
         if (allowCancel && choice == options.size()) {
-            return -1;
+            return options.size();
         }
         if (choice < 0 || choice >= options.size()) {
-            return -1;
+            return 0;
         }
         return choice;
     }

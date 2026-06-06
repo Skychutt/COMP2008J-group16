@@ -17,7 +17,7 @@ import java.io.InputStream;
  */
 public class ImageActionButton extends JButton {
 
-    private static final String BUTTON_PREFIX = "Card_Library/Button_graph/";
+    private static final String BUTTON_PREFIX = "Card_Library/Button-graph/";
 
     public enum VisualState {
         ENABLED,
@@ -26,15 +26,9 @@ public class ImageActionButton extends JButton {
     }
 
     private final Image background;
-    private int imageOffsetX;
     private VisualState visualState = VisualState.ENABLED;
 
     public ImageActionButton(String imageFileName, int maxWidth, int maxHeight) {
-        this(imageFileName, maxWidth, maxHeight, false);
-    }
-
-    /** @param fixedSlot if true, use maxWidth x maxHeight slot and center the image (aligns with drop zones). */
-    public ImageActionButton(String imageFileName, int maxWidth, int maxHeight, boolean fixedSlot) {
         super();
         setOpaque(false);
         setContentAreaFilled(false);
@@ -43,17 +37,10 @@ public class ImageActionButton extends JButton {
         setMargin(new Insets(0, 0, 0, 0));
         setBorder(null);
         background = loadButtonImage(imageFileName);
-        Dimension size = fixedSlot
-                ? new Dimension(maxWidth, maxHeight)
-                : ImageScaleUtil.sizeToFit(background, maxWidth, maxHeight);
+        Dimension size = ImageScaleUtil.sizeToFit(background, maxWidth, maxHeight);
         setPreferredSize(size);
         setMinimumSize(size);
         setMaximumSize(size);
-    }
-
-    public void setImageOffsetX(int imageOffsetX) {
-        this.imageOffsetX = imageOffsetX;
-        repaint();
     }
 
     public void setVisualState(VisualState visualState) {
@@ -78,7 +65,7 @@ public class ImageActionButton extends JButton {
             return;
         }
 
-        int x = (getWidth() - scaled.getWidth()) / 2 + imageOffsetX;
+        int x = (getWidth() - scaled.getWidth()) / 2;
         int y = (getHeight() - scaled.getHeight()) / 2;
 
         float alpha = 1.0f;
