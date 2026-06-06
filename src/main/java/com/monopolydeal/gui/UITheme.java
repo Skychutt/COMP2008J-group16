@@ -1,107 +1,150 @@
 package com.monopolydeal.gui;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.border.Border;
-import java.awt.Color;
-import java.awt.Font;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
 /**
- * Small UI theme helper to keep styling consistent and low-coupling.
+ * UI theme constants (colours + fonts) and CSS helper methods for JavaFX components.
  */
 public final class UITheme {
 
-    public static final Color PAGE_BG = new Color(28, 68, 44);
-    public static final Color TABLE_FELT_TOP = new Color(49, 120, 74);
-    public static final Color TABLE_FELT_BOTTOM = new Color(20, 74, 46);
-    public static final Color WOOD_OUTER = new Color(78, 49, 28);
-    public static final Color WOOD_INNER = new Color(118, 78, 49);
-    public static final Color PANEL_BG = new Color(255, 255, 255, 236);
-    public static final Color PANEL_SOFT_BG = new Color(247, 252, 246, 236);
-    public static final Color ACCENT = new Color(238, 190, 82);
-    public static final Color ACCENT_DARK = new Color(186, 131, 33);
-    public static final Color BORDER = new Color(177, 150, 97);
-    public static final Color TEXT_MAIN = new Color(45, 37, 18);
-    public static final Color TEXT_SUB = new Color(87, 72, 45);
-    public static final Color LOG_BG = new Color(20, 28, 36);
-    public static final Color LOG_TEXT = new Color(171, 241, 188);
-    public static final Color DROP_ZONE = new Color(255, 247, 218);
-    public static final Color DROP_ZONE_BORDER = new Color(181, 142, 58);
-    public static final Color DROP_ZONE_ACTIVE = new Color(255, 239, 186);
-    public static final Color BANK_ZONE = new Color(235, 250, 223);
-    public static final Color BANK_ZONE_BORDER = new Color(96, 150, 80);
-    public static final Color BANK_ZONE_ACTIVE = new Color(214, 245, 195);
+    // ─────────────── Colours ───────────────
+    public static final Color PAGE_BG           = Color.rgb(28, 68, 44);
+    public static final Color TABLE_FELT_TOP    = Color.rgb(49, 120, 74);
+    public static final Color TABLE_FELT_BOTTOM = Color.rgb(20, 74, 46);
+    public static final Color WOOD_OUTER        = Color.rgb(78, 49, 28);
+    public static final Color WOOD_INNER        = Color.rgb(118, 78, 49);
+    public static final Color PANEL_BG          = Color.rgb(255, 255, 255, 236 / 255.0);
+    public static final Color PANEL_SOFT_BG     = Color.rgb(247, 252, 246, 236 / 255.0);
+    public static final Color ACCENT            = Color.rgb(238, 190, 82);
+    public static final Color ACCENT_DARK       = Color.rgb(186, 131, 33);
+    public static final Color BORDER            = Color.rgb(177, 150, 97);
+    public static final Color TEXT_MAIN         = Color.rgb(45, 37, 18);
+    public static final Color TEXT_SUB          = Color.rgb(87, 72, 45);
+    public static final Color LOG_BG            = Color.rgb(20, 28, 36);
+    public static final Color LOG_TEXT          = Color.rgb(171, 241, 188);
+    public static final Color DROP_ZONE         = Color.rgb(255, 247, 218);
+    public static final Color DROP_ZONE_BORDER  = Color.rgb(181, 142, 58);
+    public static final Color DROP_ZONE_ACTIVE  = Color.rgb(255, 239, 186);
+    public static final Color BANK_ZONE         = Color.rgb(235, 250, 223);
+    public static final Color BANK_ZONE_BORDER  = Color.rgb(96, 150, 80);
+    public static final Color BANK_ZONE_ACTIVE  = Color.rgb(214, 245, 195);
 
-    public static final Font FONT_MENU_TITLE = new Font("Segoe UI", Font.BOLD, 36);
-    public static final Font FONT_MENU_SUBTITLE = new Font("Segoe UI", Font.PLAIN, 16);
-    public static final Font FONT_MENU_BUTTON = new Font("Segoe UI", Font.BOLD, 15);
-    public static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 16);
-    public static final Font FONT_SUBTITLE = new Font("Segoe UI", Font.BOLD, 13);
-    public static final Font FONT_BODY = new Font("Segoe UI", Font.PLAIN, 12);
-    public static final Font FONT_SMALL = new Font("Segoe UI", Font.PLAIN, 11);
-    public static final Font FONT_BANK_TOTAL = new Font("Segoe UI", Font.BOLD, 22);
+    // ─────────────── Fonts ───────────────
+    public static final Font FONT_MENU_TITLE    = Font.font("Segoe UI", FontWeight.BOLD,   36);
+    public static final Font FONT_MENU_SUBTITLE = Font.font("Segoe UI", FontWeight.NORMAL, 16);
+    public static final Font FONT_MENU_BUTTON   = Font.font("Segoe UI", FontWeight.BOLD,   15);
+    public static final Font FONT_TITLE         = Font.font("Segoe UI", FontWeight.BOLD,   16);
+    public static final Font FONT_SUBTITLE      = Font.font("Segoe UI", FontWeight.BOLD,   13);
+    public static final Font FONT_BODY          = Font.font("Segoe UI", FontWeight.NORMAL, 12);
+    public static final Font FONT_SMALL         = Font.font("Segoe UI", FontWeight.NORMAL, 11);
+    public static final Font FONT_BANK_TOTAL    = Font.font("Segoe UI", FontWeight.BOLD,   22);
 
-    private UITheme() {
+    private UITheme() {}
+
+    // ─────────────── CSS conversion helpers ───────────────
+
+    /** Convert a JavaFX Color to a CSS rgba() string. */
+    public static String toCssRgba(Color c) {
+        return String.format("rgba(%d,%d,%d,%.4f)",
+                (int) Math.round(c.getRed()   * 255),
+                (int) Math.round(c.getGreen() * 255),
+                (int) Math.round(c.getBlue()  * 255),
+                c.getOpacity());
     }
 
-    public static Border createSectionBorder(String title) {
-        return BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(BORDER, 1, true),
-                title
+    /** Convert a JavaFX Color to a 6-digit hex string (ignores alpha). */
+    public static String toCssHex(Color c) {
+        return String.format("#%02x%02x%02x",
+                (int) Math.round(c.getRed()   * 255),
+                (int) Math.round(c.getGreen() * 255),
+                (int) Math.round(c.getBlue()  * 255));
+    }
+
+    // ─────────────── Button styling ───────────────
+
+    private static final String MENU_BTN_NORMAL =
+            "-fx-background-color: rgba(255,255,255,0.94);" +
+            "-fx-text-fill: black;" +
+            "-fx-border-color: #3c3c3c;" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 4px;" +
+            "-fx-background-radius: 4px;" +
+            "-fx-padding: 10 24 10 24;" +
+            "-fx-cursor: hand;" +
+            "-fx-font-size: 15px; -fx-font-weight: bold;";
+
+    private static final String MENU_BTN_HOVER =
+            "-fx-background-color: rgba(238,190,82,0.85);" +
+            "-fx-text-fill: black;" +
+            "-fx-border-color: #3c3c3c;" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 4px;" +
+            "-fx-background-radius: 4px;" +
+            "-fx-padding: 10 24 10 24;" +
+            "-fx-cursor: hand;" +
+            "-fx-font-size: 15px; -fx-font-weight: bold;";
+
+    public static void styleMenuButton(Button btn) {
+        btn.setFont(FONT_MENU_BUTTON);
+        btn.setStyle(MENU_BTN_NORMAL);
+        btn.setOnMouseEntered(e -> btn.setStyle(MENU_BTN_HOVER));
+        btn.setOnMouseExited(e  -> btn.setStyle(MENU_BTN_NORMAL));
+    }
+
+    public static void stylePrimaryButton(Button btn) {
+        btn.setFont(FONT_SUBTITLE);
+        String style =
+            "-fx-background-color: " + toCssHex(ACCENT) + ";" +
+            "-fx-text-fill: white;" +
+            "-fx-background-radius: 4px;" +
+            "-fx-padding: 8 14 8 14;" +
+            "-fx-cursor: hand;";
+        btn.setStyle(style);
+    }
+
+    public static void styleSecondaryButton(Button btn) {
+        btn.setFont(FONT_SUBTITLE);
+        btn.setStyle(
+            "-fx-background-color: " + toCssRgba(PANEL_SOFT_BG) + ";" +
+            "-fx-text-fill: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-color: " + toCssHex(BORDER) + ";" +
+            "-fx-border-width: 1px;" +
+            "-fx-border-radius: 4px;" +
+            "-fx-background-radius: 4px;" +
+            "-fx-padding: 8 14 8 14;" +
+            "-fx-cursor: hand;"
         );
     }
 
-    public static void styleCardPanel(JComponent component, String title) {
-        component.setBackground(PANEL_BG);
-        component.setBorder(createSectionBorder(title));
-    }
-
-    public static void styleSoftPanel(JComponent component, String title) {
-        component.setBackground(PANEL_SOFT_BG);
-        component.setBorder(createSectionBorder(title));
-    }
-
-    public static JScrollPane styleScrollPane(JComponent view) {
-        JScrollPane scroll = new JScrollPane(view);
-        scroll.getViewport().setBackground(PANEL_BG);
-        scroll.setBorder(BorderFactory.createLineBorder(BORDER, 1, true));
-        return scroll;
-    }
-
-    public static void stylePrimaryButton(JButton button) {
-        button.setBackground(ACCENT);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setFont(FONT_SUBTITLE);
-        button.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
-    }
-
-    public static void styleSecondaryButton(JButton button) {
-        button.setBackground(PANEL_SOFT_BG);
-        button.setForeground(ACCENT_DARK);
-        button.setFocusPainted(false);
-        button.setFont(FONT_SUBTITLE);
-        button.setBorder(BorderFactory.createLineBorder(BORDER, 1, true));
-    }
-
-    public static void styleMenuButton(JButton button) {
-        button.setBackground(new Color(255, 255, 255, 240));
-        button.setForeground(Color.BLACK);
-        button.setFocusPainted(false);
-        button.setFont(FONT_MENU_BUTTON);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(60, 60, 60), 2, true),
-                BorderFactory.createEmptyBorder(10, 24, 10, 24)
-        ));
-    }
-
-    public static void styleLogArea(JTextArea logArea) {
+    public static void styleLogArea(TextArea logArea) {
         logArea.setFont(FONT_BODY);
-        logArea.setBackground(LOG_BG);
-        logArea.setForeground(LOG_TEXT);
-        logArea.setCaretColor(LOG_TEXT);
+        logArea.setStyle(
+            "-fx-control-inner-background: " + toCssHex(LOG_BG) + ";" +
+            "-fx-text-fill: " + toCssHex(LOG_TEXT) + ";" +
+            "-fx-background-color: " + toCssHex(LOG_BG) + ";"
+        );
+    }
+
+    /** CSS for a panel with a solid border. */
+    public static String panelBorderStyle() {
+        return "-fx-background-color: " + toCssRgba(PANEL_BG) + ";" +
+               "-fx-border-color: " + toCssHex(BORDER) + ";" +
+               "-fx-border-width: 1px;" +
+               "-fx-border-radius: 4px;" +
+               "-fx-background-radius: 4px;";
+    }
+
+    /** CSS for a softer panel (section containers). */
+    public static String softPanelStyle() {
+        return "-fx-background-color: " + toCssRgba(PANEL_SOFT_BG) + ";" +
+               "-fx-border-color: " + toCssHex(BORDER) + ";" +
+               "-fx-border-width: 1px;" +
+               "-fx-border-radius: 4px;" +
+               "-fx-background-radius: 4px;" +
+               "-fx-padding: 4 6 4 6;";
     }
 }

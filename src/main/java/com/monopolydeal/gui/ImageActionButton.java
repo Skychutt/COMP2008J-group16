@@ -1,96 +1,117 @@
 package com.monopolydeal.gui;
 
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
 import javax.imageio.ImageIO;
-import javax.swing.JButton;
-import java.awt.AlphaComposite;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * JButton that paints a transparent PNG from {@code Card_Library/Button-graph/} with no fill behind it.
+ * JavaFX Button that displays a transparent PNG from {@code Card_Library/Button_graph/}.
+ * Visual states (ENABLED / WAITING / DISABLED) are conveyed through opacity.
  */
-public class ImageActionButton extends JButton {
+public class ImageActionButton extends Button {
 
-    private static final String BUTTON_PREFIX = "Card_Library/Button-graph/";
+    private static final String BUTTON_PREFIX = "Card_Library/Button_graph/";
 
-    public enum VisualState {
-        ENABLED,
-        WAITING,
-        DISABLED
-    }
+    public enum VisualState { ENABLED, WAITING, DISABLED }
 
-    private final Image background;
+    private final ImageView imageView;
     private VisualState visualState = VisualState.ENABLED;
 
     public ImageActionButton(String imageFileName, int maxWidth, int maxHeight) {
+        this(imageFileName, maxWidth, maxHeight, false);
+    }
+
+    /**
+     * @param fixedSlot when true the button occupies exactly maxWidth × maxHeight and
+     *                  the image is scaled to fit inside; when false the button is sized
+     *                  to the image's natural fit within the given max bounds.
+     */
+    public ImageActionButton(String imageFileName, int maxWidth, int maxHeight, boolean fixedSlot) {
         super();
-        setOpaque(false);
-        setContentAreaFilled(false);
-        setBorderPainted(false);
-        setFocusPainted(false);
-        setMargin(new Insets(0, 0, 0, 0));
-        setBorder(null);
-        background = loadButtonImage(imageFileName);
-        Dimension size = ImageScaleUtil.sizeToFit(background, maxWidth, maxHeight);
-        setPreferredSize(size);
-        setMinimumSize(size);
-        setMaximumSize(size);
+        Image img = loadButtonImage(imageFileName);
+        imageView = new ImageView(img);
+        imageView.setPreserveRatio(true);
+
+        if (fixedSlot || img == null) {
+            imageView.setFitWidth(maxWidth);
+            imageView.setFitHeight(maxHeight);
+            setPrefSize(maxWidth, maxHeight);
+            setMinSize(maxWidth, maxHeight);
+            setMaxSize(maxWidth, maxHeight);
+        } else {
+            // Scale to fit within maxWidth × maxHeight preserving ratio
+            double imgW = img.getWidth();
+            double imgH = img.getHeight();
+            double scale = Math.min(maxWidth / imgW, maxHeight / imgH);
+            if (scale > 1.0) scale = 1.0;
+            int fw = Math.max(1, (int) Math.round(imgW * scale));
+            int fh = Math.max(1, (int) Math.round(imgH * scale));
+            imageView.setFitWidth(fw);
+            imageView.setFitHeight(fh);
+            setPrefSize(fw, fh);
+            setMinSize(fw, fh);
+            setMaxSize(fw, fh);
+        }
+
+        setGraphic(imageView);
+        setStyle("-fx-background-color: transparent; -fx-padding: 0; -fx-border-width: 0; -fx-cursor: hand;");
+        setFocusTraversable(false);
+        applyOpacity();
     }
 
-    public void setVisualState(VisualState visualState) {
-        if (this.visualState != visualState) {
-            this.visualState = visualState;
-            repaint();
+    /** Horizontal pixel shift applied to the image inside the button slot. */
+    public void setImageOffsetX(int offsetX) {
+        imageView.setTranslateX(offsetX);
+    }
+
+    public void setVisualState(VisualState state) {
+        if (this.visualState != state) {
+            this.visualState = state;
+            applyOpacity();
         }
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        if (background == null || getWidth() <= 0 || getHeight() <= 0) {
-            return;
+    private void applyOpacity() {
+        switch (visualState) {
+            case DISABLED:
+                imageView.setOpacity(0.45);
+                setDisable(true);
+                break;
+            case WAITING:
+                imageView.setOpacity(0.82);
+                setDisable(false);
+                break;
+            default:
+                imageView.setOpacity(1.0);
+                setDisable(false);
+                break;
         }
-
-        Graphics2D g2 = (Graphics2D) g.create();
-        ImageScaleUtil.enableQuality(g2);
-
-        BufferedImage scaled = ImageScaleUtil.scaleToFit(background, getWidth(), getHeight());
-        if (scaled == null) {
-            g2.dispose();
-            return;
-        }
-
-        int x = (getWidth() - scaled.getWidth()) / 2;
-        int y = (getHeight() - scaled.getHeight()) / 2;
-
-        float alpha = 1.0f;
-        if (visualState == VisualState.DISABLED) {
-            alpha = 0.45f;
-        } else if (visualState == VisualState.WAITING) {
-            alpha = 0.82f;
-        }
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        g2.drawImage(scaled, x, y, null);
-        g2.dispose();
     }
 
-    @Override
-    public boolean isOpaque() {
-        return false;
-    }
+    // ─────────────────────────────────────────────────────────────────────────
+    // Image loading — classpath first, then project-root fallback
+    // ─────────────────────────────────────────────────────────────────────────
 
-    private static Image loadButtonImage(String fileName) {
+    static Image loadButtonImage(String fileName) {
         String path = BUTTON_PREFIX + fileName;
         try (InputStream in = ImageActionButton.class.getClassLoader().getResourceAsStream(path)) {
             if (in != null) {
-                return ImageIO.read(in);
+                BufferedImage bi = ImageIO.read(in);
+                if (bi != null) return ImageScaleUtil.toFXImage(bi);
             }
-        } catch (IOException ignored) {
+        } catch (IOException ignored) {}
+
+        java.nio.file.Path local = java.nio.file.Paths.get(path);
+        if (java.nio.file.Files.exists(local)) {
+            try (InputStream in = new java.io.FileInputStream(local.toFile())) {
+                BufferedImage bi = ImageIO.read(in);
+                if (bi != null) return ImageScaleUtil.toFXImage(bi);
+            } catch (IOException ignored) {}
         }
         return null;
     }

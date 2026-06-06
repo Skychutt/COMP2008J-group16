@@ -1,14 +1,18 @@
 package com.monopolydeal.gui;
 
-import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
+import javafx.scene.image.Image;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
+import javafx.scene.layout.Region;
+
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Loads and paints the main menu background image from classpath resources.
+ * Loads the main-menu background image and provides JavaFX Background helpers.
  */
 public final class BackgroundUtil {
 
@@ -16,48 +20,42 @@ public final class BackgroundUtil {
 
     private static final Image MAIN_BACKGROUND = loadImage(MAIN_BACKGROUND_PATH);
 
-    private BackgroundUtil() {
-    }
+    private BackgroundUtil() {}
 
     public static Image getMainBackground() {
         return MAIN_BACKGROUND;
     }
 
+    /**
+     * Load a JavaFX Image from an absolute classpath path (leading slash).
+     */
     public static Image loadImage(String classpathPath) {
         try (InputStream in = BackgroundUtil.class.getResourceAsStream(classpathPath)) {
-            if (in == null) {
-                return null;
+            if (in != null) {
+                return new Image(in);
             }
-            return ImageIO.read(in);
         } catch (IOException ignored) {
-            return null;
         }
+        return null;
     }
 
     /**
-     * Draws the image scaled to cover the target area (center crop).
+     * Apply a cover-style background (CSS background-size: cover equivalent) to a Region.
+     * The image scales to fill the region while preserving aspect ratio.
      */
-    public static void paintCover(Graphics2D g2, Image image, int panelW, int panelH) {
-        if (image == null || panelW <= 0 || panelH <= 0) {
+    public static void applyCoverBackground(Region region, Image image) {
+        if (image == null) {
+            region.setBackground(Background.EMPTY);
             return;
         }
-        int imgW = image.getWidth(null);
-        int imgH = image.getHeight(null);
-        if (imgW <= 0 || imgH <= 0) {
-            return;
-        }
-
-        double scale = Math.max((double) panelW / imgW, (double) panelH / imgH);
-        int drawW = (int) Math.round(imgW * scale);
-        int drawH = (int) Math.round(imgH * scale);
-        int x = (panelW - drawW) / 2;
-        int y = (panelH - drawH) / 2;
-
-        g2.drawImage(image, x, y, drawW, drawH, null);
-    }
-
-    public static void enableQuality(Graphics2D g2) {
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        BackgroundImage bg = new BackgroundImage(
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                // cover = scale to fill, cropping if needed
+                new BackgroundSize(100, 100, true, true, false, true)
+        );
+        region.setBackground(new Background(bg));
     }
 }
