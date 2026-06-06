@@ -24,10 +24,8 @@ public class NetworkControlPanel extends VBox {
 
     public NetworkControlPanel(NetworkGameFrame frame) {
         this.frame = frame;
-        setSpacing(8);
-        setPadding(new Insets(10));
-        setMinWidth(220);
-        setMaxWidth(280);
+        setSpacing(6);
+        setPadding(new Insets(8, 6, 6, 6));
         setStyle("-fx-background-color: transparent;");
 
         lblActions = new Label("Actions: 0 / 3");

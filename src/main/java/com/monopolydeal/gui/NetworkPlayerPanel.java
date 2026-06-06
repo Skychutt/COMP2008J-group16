@@ -88,24 +88,35 @@ public class NetworkPlayerPanel extends BorderPane {
         setRight(rightDock);
     }
 
-    private VBox buildRightDock() {
-        VBox dock = new VBox(8);
-        dock.setAlignment(Pos.TOP_CENTER);
-        dock.setMinWidth(150);
-        dock.setPadding(new Insets(0, 0, 4, 8));
+    private static final int DROP_ZONE_W = 170;
+    private static final int DROP_ZONE_H = 70;
 
-        // Bank drop zone
-        Label bankZone = makeDropZoneLabel("Bank Card Here");
+    private VBox buildRightDock() {
+        VBox dock = new VBox(6);
+        dock.setAlignment(Pos.TOP_CENTER);
+        dock.setPadding(new Insets(0, 0, 4, 8));
+        dock.setPrefWidth(DROP_ZONE_W + 16);
+
+        // Bank drop zone — same ButtonDropZone as local PlayerPanel
+        ButtonDropZone bankZone = new ButtonDropZone("Bank.png", DROP_ZONE_W, DROP_ZONE_H);
+        bankZone.setImageOffsetY(6);
+        Tooltip.install(bankZone, new Tooltip("Drag money or property cards here to bank"));
         bankZone.setOnDragOver(e -> {
             if (myTurn && !discardMode && !gameOver && e.getDragboard().hasString()) {
                 e.acceptTransferModes(TransferMode.COPY);
-                bankZone.setStyle(dropZoneStyle(true));
+                bankZone.setHighlight(true);
+                bankZone.setHoverText("Move to Bank");
             }
             e.consume();
         });
-        bankZone.setOnDragExited(e -> bankZone.setStyle(dropZoneStyle(false)));
+        bankZone.setOnDragExited(e -> {
+            bankZone.setHighlight(false);
+            bankZone.setHoverText(null);
+            e.consume();
+        });
         bankZone.setOnDragDropped(e -> {
-            bankZone.setStyle(dropZoneStyle(false));
+            bankZone.setHighlight(false);
+            bankZone.setHoverText(null);
             if (!myTurn || discardMode || gameOver) { e.setDropCompleted(false); return; }
             try {
                 int id = Integer.parseInt(e.getDragboard().getString().trim());
@@ -115,18 +126,25 @@ public class NetworkPlayerPanel extends BorderPane {
             e.consume();
         });
 
-        // Property drop zone
-        Label propZone = makeDropZoneLabel("Place Property");
+        // Property drop zone — same ButtonDropZone as local PlayerPanel
+        ButtonDropZone propZone = new ButtonDropZone("Property.png", DROP_ZONE_W, DROP_ZONE_H);
+        Tooltip.install(propZone, new Tooltip("Drag property cards here to play"));
         propZone.setOnDragOver(e -> {
             if (myTurn && !discardMode && !gameOver && e.getDragboard().hasString()) {
                 e.acceptTransferModes(TransferMode.COPY);
-                propZone.setStyle(dropZoneStyle(true));
+                propZone.setHighlight(true);
+                propZone.setHoverText("Place Property");
             }
             e.consume();
         });
-        propZone.setOnDragExited(e -> propZone.setStyle(dropZoneStyle(false)));
+        propZone.setOnDragExited(e -> {
+            propZone.setHighlight(false);
+            propZone.setHoverText(null);
+            e.consume();
+        });
         propZone.setOnDragDropped(e -> {
-            propZone.setStyle(dropZoneStyle(false));
+            propZone.setHighlight(false);
+            propZone.setHoverText(null);
             if (!myTurn || discardMode || gameOver) { e.setDropCompleted(false); return; }
             try {
                 int id = Integer.parseInt(e.getDragboard().getString().trim());
@@ -136,14 +154,16 @@ public class NetworkPlayerPanel extends BorderPane {
             e.consume();
         });
 
-        // End turn button (reuses ImageActionButton from main branch)
-        ImageActionButton endTurnBtn = new ImageActionButton("End Turn.png", 148, 80);
-        endTurnBtn.setTooltip(new Tooltip("End your turn"));
+        // End turn button
+        ImageActionButton endTurnBtn = new ImageActionButton("End Turn.png", DROP_ZONE_W, DROP_ZONE_H, true);
+        endTurnBtn.setImageOffsetX(-1);
+        Tooltip.install(endTurnBtn, new Tooltip("End your turn"));
         endTurnBtn.setOnAction(e -> { if (endTurnHandler != null) endTurnHandler.run(); });
-        endTurnBtn.setDisable(true);
+        endTurnBtn.setVisualState(ImageActionButton.VisualState.DISABLED);
 
-        // Store reference for later enable/disable
         dock.getProperties().put("endTurnBtn", endTurnBtn);
+        dock.getProperties().put("bankZone", bankZone);
+        dock.getProperties().put("propZone", propZone);
         dock.getChildren().addAll(bankZone, propZone, endTurnBtn);
         return dock;
     }
@@ -243,24 +263,4 @@ public class NetworkPlayerPanel extends BorderPane {
         return wrapper;
     }
 
-    private static Label makeDropZoneLabel(String text) {
-        Label lbl = new Label(text);
-        lbl.setFont(UITheme.FONT_BODY);
-        lbl.setTextFill(UITheme.TEXT_MAIN);
-        lbl.setMinSize(148, 68);
-        lbl.setAlignment(Pos.CENTER);
-        lbl.setStyle(dropZoneStyle(false));
-        return lbl;
-    }
-
-    private static String dropZoneStyle(boolean hovered) {
-        String border = hovered
-                ? UITheme.toCssHex(UITheme.ACCENT_DARK)
-                : UITheme.toCssHex(UITheme.BORDER);
-        String width  = hovered ? "2px" : "1px";
-        return "-fx-background-color: " + UITheme.toCssHex(UITheme.DROP_ZONE) + ";" +
-                "-fx-border-color: " + border + ";" +
-                "-fx-border-width: " + width + ";" +
-                "-fx-border-radius: 4px; -fx-background-radius: 4px;";
-    }
 }

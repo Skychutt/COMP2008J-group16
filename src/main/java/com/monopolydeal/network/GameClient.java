@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * LAN gaming client
@@ -25,6 +28,7 @@ public class GameClient {
     private PrintWriter out;
     private BufferedReader in;
     private volatile boolean running = false;
+    private ScheduledExecutorService heartbeat;
 
     private volatile int myPlayerIndex = -1;
 
@@ -67,6 +71,7 @@ public class GameClient {
      */
     public void connect() throws IOException {
         socket = new Socket(host, port);
+        socket.setSoTimeout(60_000); // 60 s read timeout — heartbeat keeps it alive
         out = new PrintWriter(socket.getOutputStream(), true);
         in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         running = true;
@@ -75,11 +80,25 @@ public class GameClient {
         Thread receiver = new Thread(this::receiveLoop, "NetworkReceiver");
         receiver.setDaemon(true);
         receiver.start();
+
+        // Heartbeat: send PING every 15 s (modelled after ENG-19 LanGameClient)
+        heartbeat = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "NetworkHeartbeat");
+            t.setDaemon(true);
+            return t;
+        });
+        heartbeat.scheduleAtFixedRate(() -> {
+            if (running) send(new NetworkMessage(NetworkMessage.PING, ""));
+        }, 15, 15, TimeUnit.SECONDS);
     }
 
     /** Disconnect */
     public void disconnect() {
         running = false;
+        if (heartbeat != null) {
+            heartbeat.shutdownNow();
+            heartbeat = null;
+        }
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
@@ -137,6 +156,9 @@ public class GameClient {
             case NetworkMessage.GAME_OVER:
                 messageListener.onGameOver(msg.getData());
                 break;
+
+            case NetworkMessage.PONG:
+                break; // heartbeat acknowledged
 
             default:
                 break;

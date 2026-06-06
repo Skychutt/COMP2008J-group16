@@ -1,11 +1,13 @@
 package com.monopolydeal.gui;
 
 import com.monopolydeal.model.Player;
+import com.monopolydeal.network.GameStateParser;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
 import javafx.geometry.Pos;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
@@ -44,11 +46,26 @@ public class GameBoardPane extends StackPane {
     private static final double OPP_MAX_TILT = 15.0; // degrees at the outermost seats
 
     private final Pane boardLayer;
-    private final List<OpponentSeatPane> opponentSeats = new ArrayList<>();
+    // Holds either OpponentSeatPane (local) or NetworkOpponentSeatPane (LAN)
+    private final List<Region> opponentSeats = new ArrayList<>();
 
+    /**
+     * Local game constructor — accepts the concrete panel types used in local mode.
+     */
     public GameBoardPane(TopStatusPanel topPanel,
                          PlayerPanel playerPanel,
                          ControlPanel controlPanel) {
+        this(topPanel, (Region) playerPanel, (Region) controlPanel);
+    }
+
+    /**
+     * General constructor — accepts any Region for the side panels.
+     * Used by both local (PlayerPanel/ControlPanel) and LAN
+     * (NetworkPlayerPanel/NetworkControlPanel) modes.
+     */
+    public GameBoardPane(TopStatusPanel topPanel,
+                         Region playerPanel,
+                         Region controlPanel) {
 
         setStyle("-fx-background-color: " + UITheme.toCssHex(UITheme.PAGE_BG) + ";");
 
@@ -149,6 +166,40 @@ public class GameBoardPane extends StackPane {
 
             OpponentSeatPane seat = new OpponentSeatPane(opponents.get(i), resolver);
             seat.setLayoutX(x);
+            seat.setLayoutY(OPP_Y);
+            seat.setRotate(rotation);
+            opponentSeats.add(seat);
+            boardLayer.getChildren().add(seat);
+        }
+    }
+
+    /**
+     * LAN mode: rebuild opponent seats from a game-state snapshot.
+     * Highlights the seat of whichever player's turn it currently is.
+     */
+    public void updateFromSnapshot(GameStateParser.Snapshot snap, int myIndex,
+                                   CardImageResolver resolver) {
+        boardLayer.getChildren().removeAll(opponentSeats);
+        opponentSeats.clear();
+
+        if (snap == null || snap.players == null) return;
+
+        List<GameStateParser.PlayerInfo> opponents = new ArrayList<>();
+        for (GameStateParser.PlayerInfo p : snap.players) {
+            if (p.index != myIndex) opponents.add(p);
+        }
+        if (opponents.isEmpty()) return;
+
+        double[] xPositions = computeXPositions(opponents.size());
+        int n = opponents.size();
+        for (int i = 0; i < n; i++) {
+            double normalizedPos = (n > 1) ? (2.0 * i / (n - 1) - 1.0) : 0.0;
+            double rotation      = normalizedPos * OPP_MAX_TILT;
+            boolean isTurn       = (opponents.get(i).index == snap.turn);
+
+            NetworkOpponentSeatPane seat =
+                    new NetworkOpponentSeatPane(opponents.get(i), resolver, isTurn);
+            seat.setLayoutX(xPositions[i]);
             seat.setLayoutY(OPP_Y);
             seat.setRotate(rotation);
             opponentSeats.add(seat);
