@@ -51,26 +51,24 @@ public class TopStatusPanel extends BorderPane {
     public TopStatusPanel() {
         setStyle("-fx-background-color: transparent;");
 
-        // ── Hub wrapper ──
+        // ── Hub wrapper — transparent to blend with the felt ──
         VBox hub = new VBox(8);
-        hub.setStyle(
-            "-fx-background-color: " + UITheme.toCssRgba(UITheme.PANEL_BG) + ";" +
-            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
-            "-fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;" +
-            "-fx-padding: 8;"
-        );
+        hub.setStyle("-fx-background-color: transparent; -fx-padding: 8;");
         setCenter(hub);
 
         // ── Status row ──
         lblCurrentPlayer = new Label("Current Player: -");
         lblCurrentPlayer.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
-        lblCurrentPlayer.setTextFill(UITheme.TEXT_MAIN);
+        lblCurrentPlayer.setTextFill(Color.rgb(250, 241, 209));
 
         lblActions = new Label("Actions: 0 / 3");
         lblActions.setFont(UITheme.FONT_TITLE);
-        lblActions.setTextFill(UITheme.ACCENT_DARK);
+        lblActions.setTextFill(UITheme.ACCENT);
 
-        HBox statusRow = new HBox(16, lblCurrentPlayer, new Label("|"), lblActions);
+        Label separator = new Label("|");
+        separator.setTextFill(Color.rgb(200, 190, 155));
+
+        HBox statusRow = new HBox(16, lblCurrentPlayer, separator, lblActions);
         statusRow.setAlignment(Pos.CENTER);
         hub.getChildren().add(statusRow);
 
@@ -126,7 +124,7 @@ public class TopStatusPanel extends BorderPane {
 
         lblRecentEvent = new Label("Recent: -");
         lblRecentEvent.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-        lblRecentEvent.setTextFill(UITheme.TEXT_SUB);
+        lblRecentEvent.setTextFill(Color.rgb(210, 230, 210));
 
         VBox centerPlay = new VBox(10, dropZone, lblDiscardHint, lblRecentEvent);
         centerPlay.setAlignment(Pos.CENTER);
@@ -257,11 +255,11 @@ public class TopStatusPanel extends BorderPane {
 
             Label titleLabel = new Label(title);
             titleLabel.setFont(UITheme.FONT_SUBTITLE);
-            titleLabel.setTextFill(UITheme.TEXT_MAIN);
+            titleLabel.setTextFill(Color.rgb(240, 230, 205));
 
             countLabel = new Label(" ");
             countLabel.setFont(UITheme.FONT_SUBTITLE);
-            countLabel.setTextFill(UITheme.TEXT_MAIN);
+            countLabel.setTextFill(Color.rgb(210, 220, 195));
 
             container = new VBox(5, titleLabel, imageView, countLabel);
             container.setAlignment(Pos.CENTER);

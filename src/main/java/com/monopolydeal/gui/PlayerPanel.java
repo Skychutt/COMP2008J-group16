@@ -34,7 +34,7 @@ public class PlayerPanel extends BorderPane {
     private static final int CARD_W = 118;
     private static final int CARD_H = 178;
     private static final int DROP_ZONE_W = 170;
-    private static final int DROP_ZONE_H = 100;
+    private static final int DROP_ZONE_H = 70;
 
     private final GameFrame mainFrame;
     private final Label lblSeat;
@@ -81,15 +81,18 @@ public class PlayerPanel extends BorderPane {
         handCanvas.setPrefHeight(220);
 
         ScrollPane scroll = new ScrollPane(handCanvas);
-        scroll.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-border-color: rgba(176,142,75,0.47);" +
-            "-fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;"
-        );
+        scroll.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-border-width: 0;");
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setFitToHeight(true);
         scroll.setPrefHeight(220);
+        // Make the inner viewport transparent (JavaFX ScrollPane has a separate viewport region)
+        scroll.skinProperty().addListener((obs, old, newSkin) -> {
+            if (newSkin != null) {
+                javafx.scene.Node viewport = scroll.lookup(".viewport");
+                if (viewport != null) viewport.setStyle("-fx-background-color: transparent;");
+            }
+        });
         setCenter(scroll);
 
         // ── Right dock: Bank / Property / End Turn ──
@@ -109,7 +112,7 @@ public class PlayerPanel extends BorderPane {
 
         wireDropZones();
 
-        VBox rightDock = new VBox(8, bankDropZone, propertyDropZone, btnEndTurn);
+        VBox rightDock = new VBox(6, bankDropZone, propertyDropZone, btnEndTurn);
         rightDock.setAlignment(Pos.TOP_CENTER);
         rightDock.setPadding(new Insets(0, 0, 4, 8));
         rightDock.setPrefWidth(DROP_ZONE_W + 16);

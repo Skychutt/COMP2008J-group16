@@ -8,7 +8,6 @@ import com.monopolydeal.model.Player;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Screen;
@@ -28,7 +27,7 @@ public class GameFrame implements IGameObserver {
     private final CardImageResolver imageResolver;
     private final TopStatusPanel topStatusPanel;
     private final PlayerPanel playerPanel;
-    private final OpponentsPanel opponentsPanel;
+    private final GameBoardPane board;
     private final ControlPanel controlPanel;
 
     private boolean gameOverDialogShown = false;
@@ -45,12 +44,8 @@ public class GameFrame implements IGameObserver {
         this.imageResolver = new CardImageResolver();
 
         // ── Build the component tree ──
-        TableSurfacePanel table = new TableSurfacePanel();
-        table.getContentPane().setPadding(new Insets(20, 24, 20, 24));
-
         topStatusPanel = new TopStatusPanel();
         playerPanel    = new PlayerPanel(this);
-        opponentsPanel = new OpponentsPanel(this);
         controlPanel   = new ControlPanel(this);
 
         topStatusPanel.setCardDropHandler(this::handleCenterCardDrop);
@@ -58,21 +53,18 @@ public class GameFrame implements IGameObserver {
         playerPanel.setPropertyDropHandler(this::placePropertyById);
         playerPanel.setEndTurnHandler(this::endCurrentTurn);
 
-        table.getContentPane().setTop(opponentsPanel);
-        table.getContentPane().setLeft(controlPanel);
-        table.getContentPane().setCenter(topStatusPanel);
-        table.getContentPane().setBottom(playerPanel);
+        board = new GameBoardPane(topStatusPanel, playerPanel, controlPanel);
 
         // ── Stage setup ──
         javafx.geometry.Rectangle2D screen = Screen.getPrimary().getVisualBounds();
-        double width  = Math.min(1400, Math.max(1180, screen.getWidth()  - 40));
-        double height = Math.min(920,  Math.max(680,  screen.getHeight() - 80));
+        double width  = Math.min(1440, Math.max(1100, screen.getWidth()  - 40));
+        double height = Math.min(960,  Math.max(700,  screen.getHeight() - 60));
 
-        Scene scene = new Scene(table, width, height);
+        Scene scene = new Scene(board, width, height);
         stage.setTitle("Monopoly Deal");
         stage.setScene(scene);
-        stage.setMinWidth(1180);
-        stage.setMinHeight(680);
+        stage.setMinWidth(960);
+        stage.setMinHeight(640);
         stage.setOnCloseRequest(e -> returnToHomeScreen());
 
         gameManager.attach(this);
@@ -105,7 +97,7 @@ public class GameFrame implements IGameObserver {
         topStatusPanel.updateTableCenter(current, imageResolver, latestEvent,
                 gameManager.isGameOver(), discardMode, discardRemaining);
         playerPanel.updatePlayerView(current, gameManager.isGameOver(), discardMode, discardRemaining);
-        opponentsPanel.updateOpponents(gameManager.getPlayers(), current);
+        board.updateOpponents(gameManager.getPlayers(), current, imageResolver);
         controlPanel.updateTurnStatus(current);
         controlPanel.updateSelfAssets(current);
 

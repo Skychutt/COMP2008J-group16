@@ -19,6 +19,7 @@ C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\Monopoly
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\UITheme.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\card\MoneyCard.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\ButtonDropZone.java
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\OpponentSeatPane.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\ActionHandler.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\factory\CardFactory.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\factory\StandardCardFactory.java
@@ -46,5 +47,6 @@ C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\Loca
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\PropertyArea.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\card\PropertyCard.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\PropertyColorChooser.java
+C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\GameBoardPane.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\PropertySet.java
 C:\Users\phycl\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\MonopolyDealGUIApp.java
