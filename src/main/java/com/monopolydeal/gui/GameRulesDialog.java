@@ -1,19 +1,19 @@
 package com.monopolydeal.gui;
 
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -33,14 +33,13 @@ import java.nio.file.Paths;
 public final class GameRulesDialog {
 
     private static final String RULES_LIBRARY = "Card_Library/RulesCard/";
-    private static final int CARD_MAX_W = 400;
-    private static final int CARD_MAX_H = 620;
+    private static final int CARD_MAX_W = 680;
 
-    private static final String[] RULE_CARD_FILES    = {
+    private static final String[] RULE_CARD_FILES = {
             "quick-start-#1-rules-cards.jpg",
             "quick-start-#2-rules-cards.jpg"
     };
-    private static final String[] RULE_CARD_CAPTIONS = { "Rule card 1", "Rule card 2" };
+    private static final String[] RULE_CARD_CAPTIONS = {"Rule card 1", "Rule card 2"};
 
     private static final String RULES_TEXT =
             "RULES INTRODUCTION\n\n"
@@ -64,19 +63,34 @@ public final class GameRulesDialog {
             + "Action cards can be played for their effect, or banked as money.\n\n"
             + "See the quick-start rule cards above for the official card reference.";
 
-    private GameRulesDialog() {}
+    private GameRulesDialog() {
+    }
 
     public static void show(Window owner) {
         Stage dialog = new Stage();
         dialog.initModality(Modality.WINDOW_MODAL);
-        if (owner != null) dialog.initOwner(owner);
+        if (owner != null) {
+            dialog.initOwner(owner);
+        }
         dialog.setTitle("Game Rules");
+
+        VBox content = buildScrollableContent();
+
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scroll.setStyle(
+                "-fx-background-color: " + UITheme.toCssRgba(UITheme.PANEL_BG) + ";" +
+                "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
+                "-fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;"
+        );
+        content.prefWidthProperty().bind(scroll.widthProperty());
 
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: " + UITheme.toCssRgba(UITheme.PANEL_BG) + ";");
         root.setPadding(new Insets(16));
-        root.setTop(buildRuleCardsPanel());
-        root.setCenter(buildRulesTextPanel());
+        root.setCenter(scroll);
         root.setBottom(buildCloseBar(dialog));
 
         Scene scene = new Scene(root, 760, 740);
@@ -86,46 +100,56 @@ public final class GameRulesDialog {
         dialog.showAndWait();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    private static VBox buildScrollableContent() {
+        Label cardsHeading = new Label("Official Quick-Start Rule Cards");
+        cardsHeading.setFont(UITheme.FONT_SUBTITLE);
+        cardsHeading.setTextFill(Color.BLACK);
 
-    private static VBox buildRuleCardsPanel() {
-        Label heading = new Label("Official Quick-Start Rule Cards");
-        heading.setFont(UITheme.FONT_SUBTITLE);
-        heading.setTextFill(Color.BLACK);
-
-        FlowPane cards = new FlowPane(24, 8);
-        cards.setAlignment(Pos.CENTER);
+        VBox cardsColumn = new VBox(18);
+        cardsColumn.setAlignment(Pos.TOP_CENTER);
+        cardsColumn.setFillWidth(true);
         for (int i = 0; i < RULE_CARD_FILES.length; i++) {
-            cards.getChildren().add(buildRuleCardTile(RULE_CARD_FILES[i], RULE_CARD_CAPTIONS[i]));
+            cardsColumn.getChildren().add(buildRuleCardTile(RULE_CARD_FILES[i], RULE_CARD_CAPTIONS[i]));
         }
 
-        VBox box = new VBox(10, heading, cards);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(0, 0, 10, 0));
-        return box;
+        Label rulesHeading = new Label("Rules Introduction");
+        rulesHeading.setFont(UITheme.FONT_SUBTITLE);
+        rulesHeading.setTextFill(UITheme.TEXT_SUB);
+
+        Text rulesBody = new Text(RULES_TEXT);
+        rulesBody.setFont(UITheme.FONT_BODY);
+        rulesBody.setFill(UITheme.TEXT_MAIN);
+        rulesBody.wrappingWidthProperty().bind(
+                Bindings.subtract(cardsColumn.widthProperty(), 24));
+
+        VBox content = new VBox(14, cardsHeading, cardsColumn, rulesHeading, rulesBody);
+        content.setAlignment(Pos.TOP_CENTER);
+        content.setPadding(new Insets(4, 12, 16, 12));
+        return content;
     }
 
     private static VBox buildRuleCardTile(String fileName, String caption) {
         Image image = loadRulesCardImage(fileName);
-        ImageView imgView;
-        if (image != null) {
-            imgView = new ImageView(image);
-            // Scale to fit within max bounds, preserving ratio
-            double scale = Math.min(CARD_MAX_W / image.getWidth(), CARD_MAX_H / image.getHeight());
-            if (scale > 1.0) scale = 1.0;
-            imgView.setFitWidth(image.getWidth() * scale);
-            imgView.setFitHeight(image.getHeight() * scale);
-            imgView.setPreserveRatio(true);
-        } else {
+        if (image == null) {
             Label placeholder = new Label("<image not found>\n" + fileName);
-            placeholder.setMinSize(CARD_MAX_W, CARD_MAX_H);
+            placeholder.setMinWidth(CARD_MAX_W);
             placeholder.setAlignment(Pos.CENTER);
-            VBox tile = new VBox(6, placeholder, new Label(caption));
+            Label captionLabel = new Label(caption);
+            captionLabel.setFont(UITheme.FONT_BODY);
+            captionLabel.setTextFill(Color.BLACK);
+            VBox tile = new VBox(6, placeholder, captionLabel);
             tile.setAlignment(Pos.CENTER);
             tile.setStyle(UITheme.softPanelStyle());
             tile.setPadding(new Insets(8));
             return tile;
         }
+
+        ImageView imgView = new ImageView(image);
+        imgView.setPreserveRatio(true);
+        imgView.setSmooth(true);
+        double scale = Math.min(1.0, (double) CARD_MAX_W / image.getWidth());
+        imgView.setFitWidth(image.getWidth() * scale);
+        imgView.setFitHeight(image.getHeight() * scale);
 
         Label captionLabel = new Label(caption);
         captionLabel.setFont(UITheme.FONT_BODY);
@@ -135,34 +159,8 @@ public final class GameRulesDialog {
         tile.setAlignment(Pos.CENTER);
         tile.setStyle(UITheme.softPanelStyle());
         tile.setPadding(new Insets(8));
+        tile.setMaxWidth(CARD_MAX_W + 16);
         return tile;
-    }
-
-    private static ScrollPane buildRulesTextPanel() {
-        TextArea area = new TextArea(RULES_TEXT);
-        area.setEditable(false);
-        area.setWrapText(true);
-        area.setFont(UITheme.FONT_BODY);
-        area.setStyle(
-            "-fx-control-inner-background: " + UITheme.toCssRgba(UITheme.PANEL_SOFT_BG) + ";" +
-            "-fx-text-fill: " + UITheme.toCssHex(UITheme.TEXT_MAIN) + ";"
-        );
-        area.setPrefHeight(200);
-
-        ScrollPane scroll = new ScrollPane(area);
-        scroll.setFitToWidth(true);
-        scroll.setStyle(
-            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
-            "-fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;"
-        );
-        VBox wrapper = new VBox();
-        Label title = new Label("Rules Introduction");
-        title.setFont(UITheme.FONT_SUBTITLE);
-        title.setTextFill(UITheme.TEXT_SUB);
-        wrapper.getChildren().addAll(title, scroll);
-        wrapper.setPadding(new Insets(8, 0, 8, 0));
-        // Return scroll directly for simplicity
-        return scroll;
     }
 
     private static HBox buildCloseBar(Stage dialog) {
@@ -176,33 +174,39 @@ public final class GameRulesDialog {
         return bar;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-
     private static Image loadRulesCardImage(String fileName) {
         String resourcePath = RULES_LIBRARY + fileName;
         try (InputStream in = Thread.currentThread()
                 .getContextClassLoader().getResourceAsStream(resourcePath)) {
             if (in != null) {
                 BufferedImage bi = ImageIO.read(in);
-                if (bi != null) return ImageScaleUtil.toFXImage(bi);
+                if (bi != null) {
+                    return ImageScaleUtil.toFXImage(bi);
+                }
             }
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
 
         Path localPath = Paths.get("src", "main", "resources", "Card_Library", "RulesCard", fileName);
         if (Files.exists(localPath)) {
             try (InputStream in = new FileInputStream(localPath.toFile())) {
                 BufferedImage bi = ImageIO.read(in);
-                if (bi != null) return ImageScaleUtil.toFXImage(bi);
-            } catch (IOException ignored) {}
+                if (bi != null) {
+                    return ImageScaleUtil.toFXImage(bi);
+                }
+            } catch (IOException ignored) {
+            }
         }
 
-        // Project-root fallback
         Path rootPath = Paths.get("Card_Library", "RulesCard", fileName);
         if (Files.exists(rootPath)) {
             try (InputStream in = new FileInputStream(rootPath.toFile())) {
                 BufferedImage bi = ImageIO.read(in);
-                if (bi != null) return ImageScaleUtil.toFXImage(bi);
-            } catch (IOException ignored) {}
+                if (bi != null) {
+                    return ImageScaleUtil.toFXImage(bi);
+                }
+            } catch (IOException ignored) {
+            }
         }
         return null;
     }

@@ -1,10 +1,19 @@
 package com.monopolydeal.gui;
 
+import javafx.animation.ScaleTransition;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Labeled;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.StrokeType;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.util.Duration;
 
 /**
  * UI theme constants (colours + fonts) and CSS helper methods for JavaFX components.
@@ -120,6 +129,112 @@ public final class UITheme {
         );
     }
 
+    private static final String EXIT_BTN_NORMAL =
+            "-fx-background-color: rgba(255,252,240,0.94);" +
+            "-fx-text-fill: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-color: " + toCssHex(BORDER) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 8 18 8 18;" +
+            "-fx-cursor: hand;" +
+            "-fx-font-weight: bold;";
+
+    private static final String EXIT_BTN_HOVER =
+            "-fx-background-color: " + toCssHex(ACCENT) + ";" +
+            "-fx-text-fill: " + toCssHex(TEXT_MAIN) + ";" +
+            "-fx-border-color: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 8 18 8 18;" +
+            "-fx-cursor: hand;" +
+            "-fx-font-weight: bold;";
+
+    /** In-game Exit button with hover brighten + slight scale-up. */
+    public static void styleExitButton(Button btn) {
+        btn.setFont(FONT_SUBTITLE);
+
+        DropShadow glow = new DropShadow();
+        glow.setRadius(12);
+        glow.setSpread(0.08);
+        glow.setColor(Color.rgb(255, 220, 120, 0.55));
+
+        ScaleTransition grow = new ScaleTransition(Duration.millis(140), btn);
+        grow.setToX(1.1);
+        grow.setToY(1.1);
+
+        ScaleTransition shrink = new ScaleTransition(Duration.millis(140), btn);
+        shrink.setToX(1.0);
+        shrink.setToY(1.0);
+
+        btn.setStyle(EXIT_BTN_NORMAL);
+        btn.setOnMouseEntered(e -> {
+            btn.setStyle(EXIT_BTN_HOVER);
+            btn.setEffect(glow);
+            grow.playFromStart();
+        });
+        btn.setOnMouseExited(e -> {
+            btn.setStyle(EXIT_BTN_NORMAL);
+            btn.setEffect(null);
+            shrink.playFromStart();
+        });
+    }
+
+    private static final String DIALOG_CONFIRM_NORMAL =
+            "-fx-background-color: " + toCssHex(ACCENT) + ";" +
+            "-fx-text-fill: " + toCssHex(TEXT_MAIN) + ";" +
+            "-fx-border-color: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 9 22 9 22;" +
+            "-fx-cursor: hand;";
+
+    private static final String DIALOG_CONFIRM_HOVER =
+            "-fx-background-color: #ffd66e;" +
+            "-fx-text-fill: " + toCssHex(TEXT_MAIN) + ";" +
+            "-fx-border-color: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 9 22 9 22;" +
+            "-fx-cursor: hand;";
+
+    private static final String DIALOG_CANCEL_NORMAL =
+            "-fx-background-color: " + toCssRgba(PANEL_SOFT_BG) + ";" +
+            "-fx-text-fill: " + toCssHex(TEXT_SUB) + ";" +
+            "-fx-border-color: " + toCssHex(BORDER) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 9 22 9 22;" +
+            "-fx-cursor: hand;";
+
+    private static final String DIALOG_CANCEL_HOVER =
+            "-fx-background-color: rgba(255,255,255,0.98);" +
+            "-fx-text-fill: " + toCssHex(TEXT_SUB) + ";" +
+            "-fx-border-color: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 9 22 9 22;" +
+            "-fx-cursor: hand;";
+
+    public static void styleDialogConfirmButton(Button btn) {
+        btn.setFont(FONT_MENU_BUTTON);
+        btn.setStyle(DIALOG_CONFIRM_NORMAL);
+        btn.setOnMouseEntered(e -> btn.setStyle(DIALOG_CONFIRM_HOVER));
+        btn.setOnMouseExited(e -> btn.setStyle(DIALOG_CONFIRM_NORMAL));
+    }
+
+    public static void styleDialogCancelButton(Button btn) {
+        btn.setFont(FONT_MENU_BUTTON);
+        btn.setStyle(DIALOG_CANCEL_NORMAL);
+        btn.setOnMouseEntered(e -> btn.setStyle(DIALOG_CANCEL_HOVER));
+        btn.setOnMouseExited(e -> btn.setStyle(DIALOG_CANCEL_NORMAL));
+    }
+
     public static void styleLogArea(TextArea logArea) {
         logArea.setFont(FONT_BODY);
         logArea.setStyle(
@@ -146,5 +261,125 @@ public final class UITheme {
                "-fx-border-radius: 4px;" +
                "-fx-background-radius: 4px;" +
                "-fx-padding: 4 6 4 6;";
+    }
+
+    // ─────────────── Setup screen styling (transparent overlay on menu bg) ───────────────
+
+    private static final Font FONT_SETUP_TITLE =
+            Font.font("Segoe UI", FontWeight.BOLD, 30);
+
+    private static final Font FONT_SETUP_LABEL =
+            Font.font("Segoe UI", FontWeight.BOLD, 14);
+
+    private static final String SETUP_LABEL_PILL =
+            "-fx-background-color: rgba(255,248,231,0.92);" +
+            "-fx-background-radius: 6px;" +
+            "-fx-padding: 4 10 4 10;";
+
+    private static final String SETUP_ACCENT_PILL =
+            "-fx-background-color: rgba(255,216,107,0.94);" +
+            "-fx-background-radius: 6px;" +
+            "-fx-padding: 4 12 4 12;";
+
+    private static final String SETUP_FIELD_STYLE =
+            "-fx-background-color: rgba(42,22,8,0.78);" +
+            "-fx-text-fill: #FFF8E7;" +
+            "-fx-prompt-text-fill: #E8D8A8;" +
+            "-fx-border-color: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 8 12 8 12;" +
+            "-fx-font-size: 13px; -fx-font-weight: bold;";
+
+    private static final String SETUP_COMBO_STYLE =
+            "-fx-background-color: rgba(42,22,8,0.78);" +
+            "-fx-border-color: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-font-size: 13px; -fx-font-weight: bold;";
+
+    private static final String SETUP_STEPPER_NORMAL =
+            "-fx-background-color: rgba(255,252,240,0.9);" +
+            "-fx-text-fill: " + toCssHex(TEXT_MAIN) + ";" +
+            "-fx-border-color: " + toCssHex(BORDER) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-cursor: hand;" +
+            "-fx-font-weight: bold;";
+
+    private static final String SETUP_STEPPER_HOVER =
+            "-fx-background-color: " + toCssHex(ACCENT) + ";" +
+            "-fx-text-fill: " + toCssHex(TEXT_MAIN) + ";" +
+            "-fx-border-color: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-cursor: hand;" +
+            "-fx-font-weight: bold;";
+
+    public static void applySetupPanelRoot(javafx.scene.layout.Region panel) {
+        panel.setStyle("-fx-background-color: transparent;");
+    }
+
+    public static javafx.scene.layout.HBox createSetupTitleRow(String value) {
+        javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(createSetupTitleText(value));
+        row.setAlignment(javafx.geometry.Pos.CENTER);
+        return row;
+    }
+
+    public static Text createSetupTitleText(String value) {
+        Text text = new Text(value);
+        text.setFont(FONT_SETUP_TITLE);
+        text.setFill(Color.web("#FFD86B"));
+        text.setStroke(Color.web("#2A1608"));
+        text.setStrokeWidth(1.8);
+        text.setStrokeType(StrokeType.OUTSIDE);
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(10);
+        shadow.setOffsetY(2);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.78));
+        text.setEffect(shadow);
+        return text;
+    }
+
+    public static void styleSetupLabel(Labeled label) {
+        label.setFont(FONT_SETUP_LABEL);
+        label.setTextFill(Color.web("#2A1608"));
+        label.setStyle(SETUP_LABEL_PILL);
+    }
+
+    public static void styleSetupAccentLabel(Labeled label) {
+        label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
+        label.setTextFill(Color.web("#2A1608"));
+        label.setStyle(SETUP_ACCENT_PILL);
+    }
+
+    public static void styleSetupField(TextField field) {
+        field.setFont(FONT_BODY);
+        field.setStyle(SETUP_FIELD_STYLE);
+    }
+
+    public static void styleSetupCombo(ComboBox<?> combo) {
+        combo.setStyle(SETUP_COMBO_STYLE);
+    }
+
+    public static void styleSetupRadio(RadioButton radio) {
+        radio.setFont(FONT_SETUP_LABEL);
+        radio.setTextFill(Color.web("#2A1608"));
+        radio.setStyle(
+                SETUP_LABEL_PILL +
+                "-fx-mark-color: " + toCssHex(ACCENT_DARK) + ";" +
+                "-fx-font-size: 14px; -fx-font-weight: bold;"
+        );
+    }
+
+    public static void styleSetupStepperButton(Button btn) {
+        btn.setFont(FONT_SUBTITLE);
+        btn.setStyle(SETUP_STEPPER_NORMAL);
+        btn.setOnMouseEntered(e -> btn.setStyle(SETUP_STEPPER_HOVER));
+        btn.setOnMouseExited(e -> btn.setStyle(SETUP_STEPPER_NORMAL));
     }
 }

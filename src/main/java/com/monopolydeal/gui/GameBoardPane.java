@@ -6,6 +6,7 @@ import com.monopolydeal.network.GameStateParser;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -30,6 +31,9 @@ public class GameBoardPane extends StackPane {
     private static final double LOCAL_TOP_X = 300;
     private static final double LOCAL_TOP_Y = 162;
     private static final double LOCAL_TOP_W = 680;
+
+    private static final double LOCAL_EXIT_X = 18;
+    private static final double LOCAL_EXIT_Y = 32;
 
     private static final double LOCAL_BANK_X = 18;
     private static final double LOCAL_BANK_Y = 172;
@@ -113,8 +117,11 @@ public class GameBoardPane extends StackPane {
         playerPanel.setMinSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
         playerPanel.setMaxSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
 
+        Button exitButton = buildExitButton(owner);
+
         propertyPreviewLayer.getChildren().add(propertyPreviewName);
-        boardLayer.getChildren().addAll(topPanel, controlPanel, recentLogPanel, propertyPanel, propertyPreviewLayer, playerPanel);
+        boardLayer.getChildren().addAll(
+                exitButton, topPanel, controlPanel, recentLogPanel, propertyPanel, propertyPreviewLayer, playerPanel);
         finishSetup();
     }
 
@@ -314,6 +321,15 @@ public class GameBoardPane extends StackPane {
         label.setTextFill(Color.rgb(210, 48, 48, 0.52));
         label.setStyle("-fx-background-color: transparent;");
         return label;
+    }
+
+    private static Button buildExitButton(GameFrame owner) {
+        Button exit = new Button("Exit");
+        UITheme.styleExitButton(exit);
+        exit.setLayoutX(LOCAL_EXIT_X);
+        exit.setLayoutY(LOCAL_EXIT_Y);
+        exit.setOnAction(e -> owner.requestExitToHome());
+        return exit;
     }
 
     private double[] computeXPositions(int n) {

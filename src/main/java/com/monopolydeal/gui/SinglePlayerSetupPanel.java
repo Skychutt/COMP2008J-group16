@@ -8,7 +8,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 
 /**
  * Single-player lobby: one human name plus AI opponent count.
@@ -31,55 +30,49 @@ public class SinglePlayerSetupPanel extends VBox {
     public SinglePlayerSetupPanel(SetupListener listener) {
         this.listener = listener;
 
-        setStyle(
-            "-fx-background-color: rgba(255,255,255,0.863);" +
-            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
-            "-fx-border-width: 2px; -fx-border-radius: 6px; -fx-background-radius: 6px;"
-        );
-        setPadding(new Insets(24, 40, 24, 40));
-        setSpacing(0);
-        setAlignment(Pos.TOP_CENTER);
+        UITheme.applySetupPanelRoot(this);
+        setPadding(new Insets(24, 32, 24, 32));
+        setSpacing(14);
+        setAlignment(Pos.CENTER);
+        setMaxWidth(560);
+        setFillWidth(false);
 
-        Label title = new Label("Single Player vs AI");
-        title.setFont(UITheme.FONT_MENU_SUBTITLE);
-        title.setTextFill(Color.BLACK);
-        getChildren().add(title);
-        getChildren().add(spacer(16));
+        getChildren().add(UITheme.createSetupTitleRow("Single Player vs AI"));
 
-        HBox nameRow = new HBox(12);
+        HBox nameRow = new HBox(14);
         nameRow.setAlignment(Pos.CENTER);
         Label nameLabel = new Label("Your name:");
-        nameLabel.setFont(UITheme.FONT_BODY);
-        nameLabel.setTextFill(Color.BLACK);
+        UITheme.styleSetupLabel(nameLabel);
         nameField = new TextField("Player 1");
-        nameField.setFont(UITheme.FONT_BODY);
+        UITheme.styleSetupField(nameField);
         nameField.setPrefWidth(220);
         nameRow.getChildren().addAll(nameLabel, nameField);
         getChildren().add(nameRow);
-        getChildren().add(spacer(14));
 
-        HBox aiRow = new HBox(12);
+        HBox aiRow = new HBox(14);
         aiRow.setAlignment(Pos.CENTER);
         Label aiLabel = new Label("AI opponents:");
-        aiLabel.setFont(UITheme.FONT_BODY);
-        aiLabel.setTextFill(Color.BLACK);
+        UITheme.styleSetupLabel(aiLabel);
         aiCountCombo = new ComboBox<>();
         aiCountCombo.getItems().addAll(AI_COUNT_OPTIONS);
+        UITheme.styleSetupCombo(aiCountCombo);
         aiCountCombo.getSelectionModel().select(0);
         aiCountCombo.setPrefWidth(220);
         aiRow.getChildren().addAll(aiLabel, aiCountCombo);
         getChildren().add(aiRow);
-        getChildren().add(spacer(20));
 
         Button back = new Button("Back");
         Button start = new Button("Start Game");
         UITheme.styleMenuButton(back);
         UITheme.styleMenuButton(start);
+        back.setPrefWidth(150);
+        start.setPrefWidth(150);
         back.setOnAction(e -> listener.onBack());
         start.setOnAction(e -> onStartClicked());
 
-        HBox actions = new HBox(16, back, start);
+        HBox actions = new HBox(18, back, start);
         actions.setAlignment(Pos.CENTER);
+        actions.setPadding(new Insets(8, 0, 0, 0));
         getChildren().add(actions);
     }
 
@@ -95,12 +88,5 @@ public class SinglePlayerSetupPanel extends VBox {
         }
         int aiCount = aiCountCombo.getSelectionModel().getSelectedIndex() + 1;
         listener.onStart(name.trim(), aiCount);
-    }
-
-    private static javafx.scene.Node spacer(double height) {
-        javafx.scene.layout.Region region = new javafx.scene.layout.Region();
-        region.setPrefHeight(height);
-        region.setMinHeight(height);
-        return region;
     }
 }

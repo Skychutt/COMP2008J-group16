@@ -2,11 +2,13 @@ package com.monopolydeal.gui;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,18 +30,15 @@ public class LanSetupPanel extends VBox {
     private final RadioButton rbHost;
     private final RadioButton rbJoin;
 
-    // Host panel widgets
     private int selectedCount = 2;
     private final Label lblCount;
     private final VBox namesContainer;
     private final List<TextField> nameFields = new ArrayList<>();
     private final TextField txtHostPort;
 
-    // Join panel widgets
     private final TextField txtJoinIp;
     private final TextField txtJoinPort;
 
-    // Dynamic panels shown/hidden based on mode
     private final VBox hostPane;
     private final VBox joinPane;
 
@@ -48,119 +47,102 @@ public class LanSetupPanel extends VBox {
     public LanSetupPanel(LanSetupListener listener) {
         this.listener = listener;
 
+        UITheme.applySetupPanelRoot(this);
         setSpacing(16);
         setAlignment(Pos.CENTER);
-        setPadding(new Insets(28, 48, 28, 48));
-        setStyle(
-            "-fx-background-color: rgba(255,255,255,0.85);" +
-            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
-            "-fx-border-width: 2px; -fx-border-radius: 8px; -fx-background-radius: 8px;"
-        );
-        setMaxWidth(420);
+        setPadding(new Insets(24, 32, 24, 32));
+        setMaxWidth(560);
+        setFillWidth(false);
 
-        Label title = new Label("LAN Multiplayer");
-        title.setFont(UITheme.FONT_MENU_SUBTITLE);
-        title.setTextFill(Color.BLACK);
+        getChildren().add(UITheme.createSetupTitleRow("LAN Multiplayer"));
 
-        // ── Mode selection ──
         rbHost = new RadioButton("Host a game");
         rbJoin = new RadioButton("Join a game");
-        rbHost.setFont(UITheme.FONT_BODY);
-        rbJoin.setFont(UITheme.FONT_BODY);
-        rbHost.setTextFill(Color.BLACK);
-        rbJoin.setTextFill(Color.BLACK);
-
         ToggleGroup group = new ToggleGroup();
         rbHost.setToggleGroup(group);
         rbJoin.setToggleGroup(group);
         rbHost.setSelected(true);
+        UITheme.styleSetupRadio(rbHost);
+        UITheme.styleSetupRadio(rbJoin);
 
-        HBox modeRow = new HBox(24, rbHost, rbJoin);
+        HBox modeRow = new HBox(28, rbHost, rbJoin);
         modeRow.setAlignment(Pos.CENTER);
+        getChildren().add(modeRow);
 
-        // ── Host panel ──
-        hostPane = new VBox(8);
+        hostPane = new VBox(12);
         hostPane.setAlignment(Pos.CENTER);
 
-        HBox countRow = new HBox(8);
+        HBox countRow = new HBox(10);
         countRow.setAlignment(Pos.CENTER);
         Button btnDec = new Button("-");
         Button btnInc = new Button("+");
-        btnDec.setFont(UITheme.FONT_BODY);
-        btnInc.setFont(UITheme.FONT_BODY);
-        btnDec.setPrefSize(32, 28);
-        btnInc.setPrefSize(32, 28);
+        UITheme.styleSetupStepperButton(btnDec);
+        UITheme.styleSetupStepperButton(btnInc);
+        btnDec.setPrefSize(36, 32);
+        btnInc.setPrefSize(36, 32);
 
         lblCount = new Label("2 Players");
-        lblCount.setFont(UITheme.FONT_BODY);
-        lblCount.setTextFill(Color.BLACK);
-        lblCount.setMinWidth(80);
+        UITheme.styleSetupAccentLabel(lblCount);
+        lblCount.setMinWidth(96);
         lblCount.setAlignment(Pos.CENTER);
 
         Label lblPlayers = new Label("Players:");
-        lblPlayers.setFont(UITheme.FONT_BODY);
-        lblPlayers.setTextFill(Color.BLACK);
-
+        UITheme.styleSetupLabel(lblPlayers);
         countRow.getChildren().addAll(lblPlayers, btnDec, lblCount, btnInc);
         hostPane.getChildren().add(countRow);
 
-        namesContainer = new VBox(6);
+        namesContainer = new VBox(8);
         namesContainer.setAlignment(Pos.CENTER);
         hostPane.getChildren().add(namesContainer);
 
-        HBox portHostRow = new HBox(8);
+        HBox portHostRow = new HBox(10);
         portHostRow.setAlignment(Pos.CENTER);
         Label lblHostPort = new Label("Port:");
-        lblHostPort.setFont(UITheme.FONT_BODY);
-        lblHostPort.setTextFill(Color.BLACK);
+        UITheme.styleSetupLabel(lblHostPort);
         txtHostPort = new TextField(String.valueOf(DEFAULT_PORT));
-        txtHostPort.setFont(UITheme.FONT_BODY);
+        UITheme.styleSetupField(txtHostPort);
         txtHostPort.setPrefColumnCount(8);
         portHostRow.getChildren().addAll(lblHostPort, txtHostPort);
         hostPane.getChildren().add(portHostRow);
 
-        // ── Join panel ──
-        joinPane = new VBox(10);
+        joinPane = new VBox(12);
         joinPane.setAlignment(Pos.CENTER);
         joinPane.setVisible(false);
         joinPane.setManaged(false);
 
-        HBox ipRow = new HBox(8);
+        HBox ipRow = new HBox(10);
         ipRow.setAlignment(Pos.CENTER);
         Label lblIp = new Label("Server IP:");
-        lblIp.setFont(UITheme.FONT_BODY);
-        lblIp.setTextFill(Color.BLACK);
+        UITheme.styleSetupLabel(lblIp);
         txtJoinIp = new TextField("192.168.1.100");
-        txtJoinIp.setFont(UITheme.FONT_BODY);
+        UITheme.styleSetupField(txtJoinIp);
         txtJoinIp.setPrefColumnCount(16);
         ipRow.getChildren().addAll(lblIp, txtJoinIp);
 
-        HBox portJoinRow = new HBox(8);
+        HBox portJoinRow = new HBox(10);
         portJoinRow.setAlignment(Pos.CENTER);
         Label lblJoinPort = new Label("Port:");
-        lblJoinPort.setFont(UITheme.FONT_BODY);
-        lblJoinPort.setTextFill(Color.BLACK);
+        UITheme.styleSetupLabel(lblJoinPort);
         txtJoinPort = new TextField(String.valueOf(DEFAULT_PORT));
-        txtJoinPort.setFont(UITheme.FONT_BODY);
+        UITheme.styleSetupField(txtJoinPort);
         txtJoinPort.setPrefColumnCount(8);
         portJoinRow.getChildren().addAll(lblJoinPort, txtJoinPort);
 
         joinPane.getChildren().addAll(ipRow, portJoinRow);
 
-        // ── Buttons ──
         Button btnBack = new Button("Back");
-        btnAction      = new Button("Host Game");
+        btnAction = new Button("Host Game");
         UITheme.styleMenuButton(btnBack);
         UITheme.styleMenuButton(btnAction);
-        btnBack.setPrefWidth(140);
-        btnAction.setPrefWidth(140);
+        btnBack.setPrefWidth(150);
+        btnAction.setPrefWidth(150);
 
-        HBox btnRow = new HBox(16, btnBack, btnAction);
+        HBox btnRow = new HBox(18, btnBack, btnAction);
         btnRow.setAlignment(Pos.CENTER);
+        btnRow.setPadding(new Insets(8, 0, 0, 0));
 
-        getChildren().addAll(title, modeRow, hostPane, joinPane, btnRow);
+        getChildren().addAll(hostPane, joinPane, btnRow);
 
-        // ── Event wiring ──
         rbHost.setOnAction(e -> switchMode(true));
         rbJoin.setOnAction(e -> switchMode(false));
         btnDec.setOnAction(e -> adjustCount(-1));
@@ -170,8 +152,6 @@ public class LanSetupPanel extends VBox {
 
         rebuildNameFields();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void switchMode(boolean hostMode) {
         hostPane.setVisible(hostMode);
@@ -191,14 +171,13 @@ public class LanSetupPanel extends VBox {
         namesContainer.getChildren().clear();
         nameFields.clear();
         for (int i = 0; i < selectedCount; i++) {
-            HBox row = new HBox(8);
+            HBox row = new HBox(10);
             row.setAlignment(Pos.CENTER);
             Label lbl = new Label("Player " + (i + 1) + ":");
-            lbl.setFont(UITheme.FONT_BODY);
-            lbl.setTextFill(Color.BLACK);
-            lbl.setMinWidth(70);
+            UITheme.styleSetupLabel(lbl);
+            lbl.setMinWidth(78);
             TextField tf = new TextField("Player " + (i + 1));
-            tf.setFont(UITheme.FONT_BODY);
+            UITheme.styleSetupField(tf);
             tf.setPrefColumnCount(16);
             nameFields.add(tf);
             row.getChildren().addAll(lbl, tf);
@@ -217,7 +196,9 @@ public class LanSetupPanel extends VBox {
             listener.onHost(selectedCount, names, port);
         } else {
             String ip = txtJoinIp.getText().trim();
-            if (ip.isEmpty()) ip = "localhost";
+            if (ip.isEmpty()) {
+                ip = "localhost";
+            }
             int port = parsePort(txtJoinPort.getText(), DEFAULT_PORT);
             listener.onJoin(ip, port);
         }

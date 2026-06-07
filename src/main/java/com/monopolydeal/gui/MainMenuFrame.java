@@ -1,5 +1,6 @@
 package com.monopolydeal.gui;
 
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
@@ -88,6 +89,21 @@ public class MainMenuFrame {
         }
         if (menuPanel.getButtonRules() != null) {
             menuPanel.getButtonRules().setOnAction(e -> GameRulesDialog.show(stage));
+        }
+        if (menuPanel.getButtonExit() != null) {
+            menuPanel.getButtonExit().setOnAction(e -> {
+                boolean confirmed = ThemedConfirmDialog.show(
+                        stage,
+                        "Exit Game",
+                        "Quit Monopoly Deal and close the application?",
+                        "Exit",
+                        "Cancel"
+                );
+                if (confirmed) {
+                    Platform.exit();
+                    System.exit(0);
+                }
+            });
         }
     }
 

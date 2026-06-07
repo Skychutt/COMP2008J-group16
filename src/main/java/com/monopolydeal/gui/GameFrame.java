@@ -37,6 +37,7 @@ public class GameFrame implements IGameObserver {
     private final RecentLogPanel recentLogPanel;
 
     private boolean gameOverDialogShown = false;
+    private boolean returnedHome = false;
     private String latestEvent = "Welcome to Monopoly Deal.";
     private boolean discardMode = false;
     private int discardRemaining = 0;
@@ -409,6 +410,21 @@ public class GameFrame implements IGameObserver {
         return stage;
     }
 
+    /** Ask for confirmation, then return to the main menu (local / vs-AI modes). */
+    public void requestExitToHome() {
+        boolean confirmed = ThemedConfirmDialog.show(
+                stage,
+                "Exit Game",
+                "Leave this game and return to the main menu?\nYour current progress will be lost.",
+                "Leave",
+                "Stay"
+        );
+        if (confirmed) {
+            returnToHomeScreen();
+            stage.close();
+        }
+    }
+
     public void showPropertyPreview(Player player) {
         if (player == null || player == getViewPlayer()) {
             return;
@@ -593,9 +609,14 @@ public class GameFrame implements IGameObserver {
     }
 
     private void returnToHomeScreen() {
+        if (returnedHome) {
+            return;
+        }
+        returnedHome = true;
         if (aiExecutor != null) {
             aiExecutor.stop();
         }
+        gameManager.detach(this);
         if (homeCallback != null) {
             homeCallback.run();
         }
