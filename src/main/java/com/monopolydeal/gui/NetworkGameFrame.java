@@ -303,6 +303,7 @@ public class NetworkGameFrame {
     }
 
     private void returnHome() {
+        stage.close();
         returnToHome(homeStage);
     }
 

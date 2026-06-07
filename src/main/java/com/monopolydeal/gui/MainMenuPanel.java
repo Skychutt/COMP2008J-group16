@@ -5,6 +5,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -46,11 +47,14 @@ public class MainMenuPanel extends StackPane {
         singlePlayerSetupPanel.setManaged(false);
 
         menuOverlay = buildMenuOverlay();
+        VBox topLeftMusic = buildTopLeftMusicControl();
 
+        StackPane.setAlignment(topLeftMusic, Pos.TOP_LEFT);
         StackPane.setAlignment(menuOverlay, Pos.CENTER);
         StackPane.setAlignment(setupPanel, Pos.CENTER);
         StackPane.setAlignment(singlePlayerSetupPanel, Pos.CENTER);
-        getChildren().addAll(menuOverlay, setupPanel, singlePlayerSetupPanel);
+        // Music control first (bottom layer) so it cannot block menu buttons.
+        getChildren().addAll(topLeftMusic, menuOverlay, setupPanel, singlePlayerSetupPanel);
 
         showMainMenu();
     }
@@ -216,6 +220,15 @@ public class MainMenuPanel extends StackPane {
         btn.setMaxWidth(width);
         UITheme.styleMenuButton(btn);
         return btn;
+    }
+
+    private static VBox buildTopLeftMusicControl() {
+        VBox box = new VBox(new GameVolumeControl());
+        box.setPadding(new Insets(18, 0, 0, 18));
+        box.setAlignment(Pos.TOP_LEFT);
+        box.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        box.setPickOnBounds(false);
+        return box;
     }
 
     private static javafx.scene.Node spacer(double height) {

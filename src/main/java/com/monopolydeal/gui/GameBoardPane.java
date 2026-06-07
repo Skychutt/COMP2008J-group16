@@ -11,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Rectangle;
@@ -117,11 +118,11 @@ public class GameBoardPane extends StackPane {
         playerPanel.setMinSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
         playerPanel.setMaxSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
 
-        Button exitButton = buildExitButton(owner);
+        VBox topLeftControls = buildTopLeftControls(owner);
 
         propertyPreviewLayer.getChildren().add(propertyPreviewName);
         boardLayer.getChildren().addAll(
-                exitButton, topPanel, controlPanel, recentLogPanel, propertyPanel, propertyPreviewLayer, playerPanel);
+                topLeftControls, topPanel, controlPanel, recentLogPanel, propertyPanel, propertyPreviewLayer, playerPanel);
         finishSetup();
     }
 
@@ -156,6 +157,9 @@ public class GameBoardPane extends StackPane {
         playerPanel.setPrefWidth(BOARD_W - 155);
         playerPanel.setPrefHeight(NETWORK_PLAYER_H);
         boardLayer.getChildren().add(playerPanel);
+
+        VBox topLeftControls = buildTopLeftControls(null);
+        boardLayer.getChildren().add(topLeftControls);
 
         finishSetup();
     }
@@ -323,13 +327,21 @@ public class GameBoardPane extends StackPane {
         return label;
     }
 
-    private static Button buildExitButton(GameFrame owner) {
-        Button exit = new Button("Exit");
-        UITheme.styleExitButton(exit);
-        exit.setLayoutX(LOCAL_EXIT_X);
-        exit.setLayoutY(LOCAL_EXIT_Y);
-        exit.setOnAction(e -> owner.requestExitToHome());
-        return exit;
+    private static VBox buildTopLeftControls(GameFrame owner) {
+        VBox box = new VBox(8);
+        box.setAlignment(Pos.CENTER);
+        box.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        box.setPickOnBounds(false);
+        box.setLayoutX(LOCAL_EXIT_X);
+        box.setLayoutY(LOCAL_EXIT_Y);
+        if (owner != null) {
+            Button exit = new Button("Exit");
+            UITheme.styleExitButton(exit);
+            exit.setOnAction(e -> owner.requestExitToHome());
+            box.getChildren().add(exit);
+        }
+        box.getChildren().add(new GameVolumeControl());
+        return box;
     }
 
     private double[] computeXPositions(int n) {

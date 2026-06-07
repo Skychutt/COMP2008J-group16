@@ -27,6 +27,7 @@ public class MonopolyDealGUIApp extends Application {
         // Prevent JavaFX from auto-exiting when the home stage is temporarily hidden
         // while the game stage is being created.
         Platform.setImplicitExit(false);
+        BackgroundMusicManager.getInstance().start();
         MainMenuFrame.createAndShow(primaryStage);
     }
 

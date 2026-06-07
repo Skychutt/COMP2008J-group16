@@ -4,6 +4,7 @@ C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\V
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\NetworkControlPanel.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\ControlPanel.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\CardImageResolver.java
+C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\GameVolumeControl.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\GameStateSnapshot.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\OpponentsPanel.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\AssetTransferManager.java
@@ -16,6 +17,7 @@ C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\factory\StandardCardFactory.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\TopStatusPanel.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\BackgroundUtil.java
+C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\BackgroundMusicManager.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\interfaces\IGameObserver.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\NetworkGameFrame.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\ImageScaleUtil.java
