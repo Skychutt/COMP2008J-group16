@@ -6,7 +6,8 @@ package com.monopolydeal.enums;
  */
 public enum ActionType {
     GO_PASS,        // Draw 2 extra cards from the deck
-    DOUBLE_RENT,    // Double the rent amount charged to opponents
+    RENT,           // Collect rent from one or all players based on the card colour pair
+    DOUBLE_RENT,    // Modifier: doubles the next RENT card played this turn
     BIRTHDAY,       // Collect 2M from every other player
     JUST_SAY_NO,    // Cancel any action played against you
     DEAL_BREAKER,   // Steal a complete property set from an opponent

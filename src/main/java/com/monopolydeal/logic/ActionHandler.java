@@ -103,6 +103,8 @@ public class ActionHandler {
                 return handleForcedDeal(player, card);
             case DEAL_BREAKER:
                 return handleDealBreaker(player, card);
+            case RENT:
+                return handleDoubleRentOrRent(player, card);
             case DOUBLE_RENT:
                 return handleDoubleRentOrRent(player, card);
             case JUST_SAY_NO:
