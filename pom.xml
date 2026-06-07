@@ -43,11 +43,11 @@
             <artifactId>javafx-graphics</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+        <!-- JavaFX media — background music playback -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>RELEASE</version>
-            <scope>test</scope>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>${javafx.version}</version>
         </dependency>
     </dependencies>
 
@@ -62,6 +62,7 @@
                 <directory>${project.basedir}</directory>
                 <includes>
                     <include>Card_Library/**</include>
+                    <include>music.wav</include>
                 </includes>
             </resource>
         </resources>
