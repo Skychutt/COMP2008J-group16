@@ -21,6 +21,7 @@ public class MainMenuPanel extends StackPane {
     private final VBox menuOverlay;
     private final LocalGameSetupPanel setupPanel;
     private final SinglePlayerSetupPanel singlePlayerSetupPanel;
+    private final VBox topLeftMusic;
     private LanSetupPanel lanSetupPanel;
 
     // Buttons stored for external wiring in MainMenuFrame
@@ -41,20 +42,24 @@ public class MainMenuPanel extends StackPane {
         setupPanel = new LocalGameSetupPanel(setupListener);
         setupPanel.setVisible(false);
         setupPanel.setManaged(false);
+        configureOverlayLayer(setupPanel);
 
         singlePlayerSetupPanel = new SinglePlayerSetupPanel(singlePlayerListener);
         singlePlayerSetupPanel.setVisible(false);
         singlePlayerSetupPanel.setManaged(false);
+        configureOverlayLayer(singlePlayerSetupPanel);
 
         menuOverlay = buildMenuOverlay();
-        VBox topLeftMusic = buildTopLeftMusicControl();
+        configureOverlayLayer(menuOverlay);
+
+        topLeftMusic = buildTopLeftMusicControl();
 
         StackPane.setAlignment(topLeftMusic, Pos.TOP_LEFT);
         StackPane.setAlignment(menuOverlay, Pos.CENTER);
         StackPane.setAlignment(setupPanel, Pos.CENTER);
         StackPane.setAlignment(singlePlayerSetupPanel, Pos.CENTER);
-        // Music control first (bottom layer) so it cannot block menu buttons.
-        getChildren().addAll(topLeftMusic, menuOverlay, setupPanel, singlePlayerSetupPanel);
+        // Music control on top so the slider receives mouse events in the top-left corner.
+        getChildren().addAll(menuOverlay, setupPanel, singlePlayerSetupPanel, topLeftMusic);
 
         showMainMenu();
     }
@@ -112,16 +117,14 @@ public class MainMenuPanel extends StackPane {
         // Lazily create LanSetupPanel the first time it's needed
         if (lanSetupPanel == null) {
             lanSetupPanel = new LanSetupPanel(listener);
-            StackPane.setAlignment(lanSetupPanel, Pos.CENTER);
-            getChildren().add(lanSetupPanel);
         } else {
-            // Update listener in case it changed
             lanSetupPanel = new LanSetupPanel(listener);
-            // Remove old, add new
             getChildren().removeIf(n -> n instanceof LanSetupPanel);
-            StackPane.setAlignment(lanSetupPanel, Pos.CENTER);
-            getChildren().add(lanSetupPanel);
         }
+        configureOverlayLayer(lanSetupPanel);
+        StackPane.setAlignment(lanSetupPanel, Pos.CENTER);
+        getChildren().add(lanSetupPanel);
+        topLeftMusic.toFront();
         lanSetupPanel.resetToDefaults();
         menuOverlay.setVisible(false);
         menuOverlay.setManaged(false);
@@ -222,12 +225,17 @@ public class MainMenuPanel extends StackPane {
         return btn;
     }
 
+    private static void configureOverlayLayer(Region layer) {
+        layer.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        layer.setPickOnBounds(false);
+    }
+
     private static VBox buildTopLeftMusicControl() {
         VBox box = new VBox(new GameVolumeControl());
         box.setPadding(new Insets(18, 0, 0, 18));
         box.setAlignment(Pos.TOP_LEFT);
         box.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-        box.setPickOnBounds(false);
+        box.setPickOnBounds(true);
         return box;
     }
 
