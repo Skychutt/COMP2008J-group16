@@ -62,10 +62,16 @@ public final class ImageScaleUtil {
         if (source == null) return null;
         int w = source.getWidth();
         int h = source.getHeight();
-        BufferedImage dest = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        int type = hasAlpha(source) ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
+        BufferedImage dest = new BufferedImage(w, h, type);
         Graphics2D g2 = dest.createGraphics();
         enableQuality(g2);
-        g2.drawImage(source, w, 0, 0, h, 0, 0, w, h, null);
+        if (type == BufferedImage.TYPE_INT_ARGB) {
+            g2.setComposite(AlphaComposite.Clear);
+            g2.fillRect(0, 0, w, h);
+            g2.setComposite(AlphaComposite.SrcOver);
+        }
+        g2.drawImage(source, w, h, 0, 0, 0, 0, w, h, null);
         g2.dispose();
         return dest;
     }
