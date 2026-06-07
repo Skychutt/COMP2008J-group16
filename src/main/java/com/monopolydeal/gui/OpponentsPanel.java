@@ -1,9 +1,7 @@
 package com.monopolydeal.gui;
 
 import com.monopolydeal.model.Player;
-import com.monopolydeal.model.PropertySet;
 import com.monopolydeal.model.card.Card;
-import com.monopolydeal.model.card.PropertyCard;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -98,26 +96,7 @@ public class OpponentsPanel extends VBox {
         bankSection.getChildren().addAll(bankTitle, bankCards);
         seat.getChildren().add(bankSection);
 
-        // Properties section
-        VBox propSection = new VBox(2);
-        propSection.setStyle(UITheme.softPanelStyle());
-        Label propTitle = new Label("Properties");
-        propTitle.setFont(UITheme.FONT_SMALL);
-        propTitle.setTextFill(UITheme.TEXT_SUB);
-        FlowPane propCards = new FlowPane(3, 0);
-        addCardsPreview(propCards, collectPropertyCards(opponent), 34, 52, 6);
-        propSection.getChildren().addAll(propTitle, propCards);
-        seat.getChildren().add(propSection);
-
         return seat;
-    }
-
-    private static List<Card> collectPropertyCards(Player player) {
-        List<Card> cards = new ArrayList<>();
-        for (PropertySet set : player.getPropertyArea().getSets()) {
-            for (PropertyCard pc : set.getCards()) cards.add(pc);
-        }
-        return cards;
     }
 
     private void addCardsPreview(FlowPane row, List<? extends Card> cards, int w, int h, int maxCount) {
