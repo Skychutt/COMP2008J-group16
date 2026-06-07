@@ -1,135 +1,121 @@
 package com.monopolydeal.gui;
 
 import com.monopolydeal.network.GameStateParser;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * LAN Battle Game opponent panel
+ * Opponent Information Panel in LAN Online Mode
+ *
+ * Display public information of all non players
  */
-public class NetworkOpponentsPanel extends JPanel {
+public class NetworkOpponentsPanel extends HBox {
 
-    private static final int ICON_W = 34;
-    private static final int ICON_H = 52;
+    private static final int ICON_W = 30;
+    private static final int ICON_H = 46;
 
     private final NetworkGameFrame frame;
-    private final JPanel seatRow;
 
     public NetworkOpponentsPanel(NetworkGameFrame frame) {
         this.frame = frame;
-        setOpaque(false);
-        setLayout(new BorderLayout(0, 4));
+        setSpacing(12);
+        setPadding(new Insets(6, 0, 6, 0));
+        setAlignment(Pos.TOP_LEFT);
+        setStyle("-fx-background-color: transparent;");
 
-        JLabel title = new JLabel("Opponents");
+        Label title = new Label("Opponents");
         title.setFont(UITheme.FONT_SUBTITLE);
-        title.setForeground(new Color(248, 233, 191));
-        add(title, BorderLayout.NORTH);
-
-        seatRow = new JPanel(new GridLayout(1, 1, 12, 0));
-        seatRow.setOpaque(false);
-        add(seatRow, BorderLayout.CENTER);
+        title.setTextFill(Color.rgb(248, 233, 191));
+        getChildren().add(title);
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+
     public void updateFromSnapshot(GameStateParser.Snapshot snap, int myIndex) {
-        seatRow.removeAll();
+        getChildren().clear();
 
-        if (snap == null || snap.players == null) {
-            seatRow.revalidate();
-            seatRow.repaint();
-            return;
-        }
+        Label title = new Label("Opponents");
+        title.setFont(UITheme.FONT_SUBTITLE);
+        title.setTextFill(Color.rgb(248, 233, 191));
+        getChildren().add(title);
 
-        List<GameStateParser.PlayerInfo> opponents = new java.util.ArrayList<>();
+        if (snap == null || snap.players == null) return;
+
+        List<GameStateParser.PlayerInfo> opponents = new ArrayList<>();
         for (GameStateParser.PlayerInfo p : snap.players) {
             if (p.index != myIndex) opponents.add(p);
         }
 
-        int columns = Math.max(1, opponents.size());
-        seatRow.setLayout(new GridLayout(1, columns, 12, 0));
-
         if (opponents.isEmpty()) {
-            JLabel empty = new JLabel("(No opponents)");
+            Label empty = new Label("(No opponents)");
             empty.setFont(UITheme.FONT_BODY);
-            empty.setForeground(new Color(248, 233, 191));
-            seatRow.add(empty);
-        } else {
-            for (GameStateParser.PlayerInfo opp : opponents) {
-                seatRow.add(buildSeatPanel(opp, opp.index == snap.turn));
-            }
+            empty.setTextFill(Color.rgb(248, 233, 191));
+            getChildren().add(empty);
+            return;
         }
 
-        seatRow.revalidate();
-        seatRow.repaint();
+        for (GameStateParser.PlayerInfo opp : opponents) {
+            getChildren().add(buildSeatPane(opp, opp.index == snap.turn));
+        }
     }
 
-    private JPanel buildSeatPanel(GameStateParser.PlayerInfo p, boolean isCurrentTurn) {
-        JPanel seat = new JPanel();
-        seat.setLayout(new BoxLayout(seat, BoxLayout.Y_AXIS));
-        seat.setBackground(UITheme.PANEL_BG);
-        seat.setOpaque(true);
-        seat.setBorder(UITheme.createSectionBorder(
-                (isCurrentTurn ? "** " : "") + p.name));
+    private VBox buildSeatPane(GameStateParser.PlayerInfo p, boolean isCurrentTurn) {
+        VBox seat = new VBox(4);
+        seat.setAlignment(Pos.TOP_CENTER);
+        seat.setPadding(new Insets(6));
+        seat.setMinWidth(180);
+        seat.setMaxWidth(220);
+        seat.setStyle(
+                "-fx-background-color: " + UITheme.toCssHex(UITheme.PANEL_BG) + ";" +
+                        "-fx-border-color: " + UITheme.toCssHex(isCurrentTurn ? UITheme.ACCENT_DARK : UITheme.BORDER) + ";" +
+                        "-fx-border-width: " + (isCurrentTurn ? "2px" : "1px") + ";" +
+                        "-fx-border-radius: 5px; -fx-background-radius: 5px;"
+        );
 
-        JLabel info = new JLabel("Hand " + p.handSize + " | Sets " + p.sets);
-        info.setFont(UITheme.FONT_SMALL);
-        info.setForeground(UITheme.TEXT_SUB);
-        info.setAlignmentX(CENTER_ALIGNMENT);
-        seat.add(info);
-        seat.add(Box.createVerticalStrut(4));
+        String nameText = (isCurrentTurn ? "▶ " : "") + p.name;
+        Label lblName = new Label(nameText);
+        lblName.setFont(UITheme.FONT_SUBTITLE);
+        lblName.setTextFill(isCurrentTurn ? UITheme.ACCENT_DARK : UITheme.TEXT_MAIN);
 
-        JPanel bankRow = new JPanel(new BorderLayout(6, 0));
-        bankRow.setOpaque(false);
-        bankRow.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UITheme.BORDER), "Bank"));
+        Label lblInfo = new Label("Hand " + p.handSize + " | Sets " + p.sets);
+        lblInfo.setFont(UITheme.FONT_SMALL);
+        lblInfo.setTextFill(UITheme.TEXT_SUB);
 
-        JLabel bankTotal = new JLabel(p.bank + "M");
-        bankTotal.setFont(UITheme.FONT_BANK_TOTAL);
-        bankTotal.setForeground(UITheme.TEXT_MAIN);
-        bankRow.add(bankTotal, BorderLayout.WEST);
+        Label lblBank = new Label("Bank: " + p.bank + "M");
+        lblBank.setFont(UITheme.FONT_BANK_TOTAL);
+        lblBank.setTextFill(UITheme.TEXT_MAIN);
 
-        JPanel bankCards = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        bankCards.setOpaque(false);
-        addCardPreviews(bankCards, p.bankCards, 4);
-        bankRow.add(bankCards, BorderLayout.CENTER);
-        seat.add(bankRow);
-
-        JPanel propsRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        propsRow.setOpaque(false);
-        propsRow.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UITheme.BORDER), "Properties"));
-
-        List<GameStateParser.CardInfo> propCards = new java.util.ArrayList<>();
+        // Property card thumbnails
+        FlowPane propFlow = new FlowPane(3, 2);
+        propFlow.setPadding(new Insets(2));
+        List<GameStateParser.CardInfo> propCards = new ArrayList<>();
         if (p.propertySets != null) {
             for (GameStateParser.PropertySetInfo psi : p.propertySets) {
                 if (psi.cards != null) propCards.addAll(psi.cards);
             }
         }
-        addCardPreviews(propsRow, propCards, 6);
-        seat.add(propsRow);
+        addCardPreviews(propFlow, propCards, 6);
 
+        seat.getChildren().addAll(lblName, lblInfo, lblBank, propFlow);
         return seat;
     }
 
-
-    /**
-     * Add card thumbnails to the panel
-     */
-    private void addCardPreviews(JPanel row, List<GameStateParser.CardInfo> cards, int maxCount) {
+    private void addCardPreviews(FlowPane row, List<GameStateParser.CardInfo> cards, int maxCount) {
         if (cards == null || cards.isEmpty()) {
-            JLabel empty = new JLabel("-");
-            empty.setFont(UITheme.FONT_SMALL);
-            empty.setForeground(UITheme.TEXT_SUB);
-            row.add(empty);
+            Label dash = new Label("-");
+            dash.setFont(UITheme.FONT_SMALL);
+            dash.setTextFill(UITheme.TEXT_SUB);
+            row.getChildren().add(dash);
             return;
         }
 
@@ -137,17 +123,19 @@ public class NetworkOpponentsPanel extends JPanel {
         int count = Math.min(cards.size(), maxCount);
         for (int i = 0; i < count; i++) {
             GameStateParser.CardInfo c = cards.get(i);
-            ImageIcon icon = resolver.getIconByName(c.name, ICON_W, ICON_H);
-            JLabel lbl = new JLabel(icon);
-            lbl.setToolTipText(c.name + " (" + c.value + "M)");
-            row.add(lbl);
+            javafx.scene.image.Image img = resolver.getCardIconFromInfo(c, ICON_W, ICON_H);
+            ImageView iv = new ImageView(img);
+            iv.setFitWidth(ICON_W);
+            iv.setFitHeight(ICON_H);
+            iv.setPreserveRatio(false);
+            Tooltip.install(iv, new Tooltip(c.name + " (" + c.value + "M)"));
+            row.getChildren().add(iv);
         }
-
         if (cards.size() > maxCount) {
-            JLabel more = new JLabel("+" + (cards.size() - maxCount));
+            Label more = new Label("+" + (cards.size() - maxCount));
             more.setFont(UITheme.FONT_SMALL);
-            more.setForeground(UITheme.TEXT_SUB);
-            row.add(more);
+            more.setTextFill(UITheme.TEXT_SUB);
+            row.getChildren().add(more);
         }
     }
 }

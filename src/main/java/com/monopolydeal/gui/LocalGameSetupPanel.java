@@ -1,28 +1,24 @@
 package com.monopolydeal.gui;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Local game lobby on top of the main menu background: player count dropdown and name fields.
+ * Local game lobby: player-count dropdown + name fields.
  */
-public class LocalGameSetupPanel extends JPanel {
+public class LocalGameSetupPanel extends VBox {
 
     public interface SetupListener {
         void onBack();
-
         void onStart(int playerCount, List<String> playerNames);
     }
 
@@ -31,118 +27,99 @@ public class LocalGameSetupPanel extends JPanel {
     };
 
     private final SetupListener listener;
-    private final JComboBox<String> playerCountCombo;
-    private final JPanel namesContainer;
-    private final List<JTextField> nameFields;
+    private final ComboBox<String> playerCountCombo;
+    private final VBox namesBox;
+    private final List<TextField> nameFields = new ArrayList<>();
 
     public LocalGameSetupPanel(SetupListener listener) {
         this.listener = listener;
-        this.nameFields = new ArrayList<JTextField>();
 
-        setOpaque(true);
-        setBackground(new Color(255, 255, 255, 220));
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(UITheme.BORDER, 2, true),
-                BorderFactory.createEmptyBorder(24, 40, 24, 40)
-        ));
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        UITheme.applySetupPanelRoot(this);
+        setPadding(new Insets(24, 32, 24, 32));
+        setSpacing(14);
+        setAlignment(Pos.CENTER);
+        setMaxWidth(560);
+        setFillWidth(false);
 
-        JLabel title = new JLabel("Local Game Setup");
-        title.setFont(UITheme.FONT_MENU_SUBTITLE);
-        title.setForeground(Color.BLACK);
-        title.setAlignmentX(CENTER_ALIGNMENT);
-        add(title);
-        add(Box.createVerticalStrut(16));
+        getChildren().add(UITheme.createSetupTitleRow("Local Game Setup"));
 
-        JPanel countRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
-        countRow.setOpaque(false);
-        JLabel countLabel = new JLabel("Number of players:");
-        countLabel.setFont(UITheme.FONT_BODY);
-        countLabel.setForeground(Color.BLACK);
-        countRow.add(countLabel);
+        HBox countRow = new HBox(14);
+        countRow.setAlignment(Pos.CENTER);
+        Label countLabel = new Label("Number of players:");
+        UITheme.styleSetupLabel(countLabel);
+        playerCountCombo = new ComboBox<>();
+        playerCountCombo.getItems().addAll(PLAYER_COUNT_OPTIONS);
+        UITheme.styleSetupCombo(playerCountCombo);
+        playerCountCombo.setPrefWidth(180);
+        playerCountCombo.getSelectionModel().select(1);
+        countRow.getChildren().addAll(countLabel, playerCountCombo);
+        getChildren().add(countRow);
 
-        playerCountCombo = new JComboBox<String>(PLAYER_COUNT_OPTIONS);
-        playerCountCombo.setFont(UITheme.FONT_BODY);
-        playerCountCombo.setPreferredSize(new Dimension(160, 28));
-        playerCountCombo.setSelectedIndex(1);
-        countRow.add(playerCountCombo);
-        add(countRow);
-        add(Box.createVerticalStrut(14));
+        HBox namesHeading = new HBox();
+        namesHeading.setAlignment(Pos.CENTER);
+        Label namesLabel = new Label("Player names:");
+        UITheme.styleSetupLabel(namesLabel);
+        namesHeading.getChildren().add(namesLabel);
+        getChildren().add(namesHeading);
 
-        JLabel namesLabel = new JLabel("Player names:");
-        namesLabel.setFont(UITheme.FONT_BODY);
-        namesLabel.setForeground(Color.BLACK);
-        namesLabel.setAlignmentX(CENTER_ALIGNMENT);
-        add(namesLabel);
-        add(Box.createVerticalStrut(8));
+        namesBox = new VBox(10);
+        namesBox.setAlignment(Pos.CENTER);
+        getChildren().add(namesBox);
 
-        namesContainer = new JPanel();
-        namesContainer.setOpaque(false);
-        namesContainer.setLayout(new GridLayout(0, 1, 0, 8));
-        namesContainer.setAlignmentX(CENTER_ALIGNMENT);
-        namesContainer.setMaximumSize(new Dimension(320, 220));
-        add(namesContainer);
-        add(Box.createVerticalStrut(20));
-
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 0));
-        actions.setOpaque(false);
-        JButton back = new JButton("Back");
-        JButton start = new JButton("Start Game");
+        Button back = new Button("Back");
+        Button start = new Button("Start Game");
         UITheme.styleMenuButton(back);
         UITheme.styleMenuButton(start);
-        back.addActionListener(e -> listener.onBack());
-        start.addActionListener(e -> onStartClicked());
-        actions.add(back);
-        actions.add(start);
-        add(actions);
+        back.setPrefWidth(150);
+        start.setPrefWidth(150);
+        back.setOnAction(e -> listener.onBack());
+        start.setOnAction(e -> onStartClicked());
 
-        playerCountCombo.addActionListener(e -> rebuildNameFields());
+        HBox actions = new HBox(18, back, start);
+        actions.setAlignment(Pos.CENTER);
+        actions.setPadding(new Insets(8, 0, 0, 0));
+        getChildren().add(actions);
+
+        playerCountCombo.setOnAction(e -> rebuildNameFields());
         rebuildNameFields();
     }
 
     public void resetToDefaults() {
-        playerCountCombo.setSelectedIndex(1);
+        playerCountCombo.getSelectionModel().select(1);
         rebuildNameFields();
     }
 
     private int getSelectedPlayerCount() {
-        return playerCountCombo.getSelectedIndex() + 2;
+        return playerCountCombo.getSelectionModel().getSelectedIndex() + 2;
     }
 
     private void rebuildNameFields() {
         int count = getSelectedPlayerCount();
-        namesContainer.removeAll();
+        namesBox.getChildren().clear();
         nameFields.clear();
 
         for (int i = 0; i < count; i++) {
-            JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-            row.setOpaque(false);
-            JLabel label = new JLabel("Player " + (i + 1) + ":");
-            label.setFont(UITheme.FONT_BODY);
-            label.setForeground(Color.BLACK);
-            label.setPreferredSize(new Dimension(72, 24));
+            Label lbl = new Label("Player " + (i + 1) + ":");
+            UITheme.styleSetupLabel(lbl);
+            lbl.setMinWidth(88);
 
-            JTextField field = new JTextField("Player " + (i + 1), 18);
-            field.setFont(UITheme.FONT_BODY);
-            field.setForeground(Color.BLACK);
+            TextField field = new TextField("Player " + (i + 1));
+            UITheme.styleSetupField(field);
+            field.setPrefWidth(220);
             nameFields.add(field);
 
-            row.add(label);
-            row.add(field);
-            namesContainer.add(row);
+            HBox row = new HBox(12, lbl, field);
+            row.setAlignment(Pos.CENTER);
+            namesBox.getChildren().add(row);
         }
-
-        namesContainer.revalidate();
-        namesContainer.repaint();
     }
 
     private void onStartClicked() {
         int count = getSelectedPlayerCount();
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         for (int i = 0; i < nameFields.size(); i++) {
-            JTextField field = nameFields.get(i);
-            String text = field.getText();
-            if (text == null || text.trim().length() == 0) {
+            String text = nameFields.get(i).getText();
+            if (text == null || text.trim().isEmpty()) {
                 text = "Player " + (i + 1);
             }
             names.add(text.trim());

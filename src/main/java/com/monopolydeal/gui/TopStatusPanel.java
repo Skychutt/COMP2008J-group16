@@ -3,307 +3,285 @@ package com.monopolydeal.gui;
 import com.monopolydeal.model.Deck;
 import com.monopolydeal.model.Player;
 import com.monopolydeal.model.card.Card;
+import com.monopolydeal.network.GameStateParser;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.TransferHandler;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.datatransfer.DataFlavor;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
- * Center table hub: deck/discard, turn status, drop-to-play zone, and recent action.
+ * Top play area: draw pile, center play zone, discard pile, current player, and steps left.
  */
-public class TopStatusPanel extends JPanel {
-    private static final Color DROP_ZONE_PLAY_BG = UITheme.DROP_ZONE;
-    private static final Color DROP_ZONE_PLAY_BORDER = UITheme.DROP_ZONE_BORDER;
-    private static final Color DROP_ZONE_PLAY_HOVER_BORDER = new Color(126, 84, 24);
-    private static final Color DROP_ZONE_DISCARD_BG = new Color(168, 56, 56);
-    private static final Color DROP_ZONE_DISCARD_BORDER = new Color(176, 54, 54);
-    private static final Color DROP_ZONE_DISCARD_TEXT = Color.WHITE;
-    private static final Color DROP_ZONE_DISCARD_HINT = new Color(255, 235, 235);
+public class TopStatusPanel extends BorderPane {
 
-    private final JLabel lblCurrentPlayer;
-    private final JLabel lblActions;
-    private final JLabel lblDrawTop;
-    private final JLabel lblDrawCount;
-    private final JLabel lblDiscardTop;
-    private final JLabel lblDiscardCount;
-    private final JLabel lblDiscardHint;
-    private final JLabel lblRecentEvent;
-    private final JPanel dropZone;
-    private final JLabel lblDropText;
-    private final javax.swing.border.Border dropBorderNormal;
-    private final javax.swing.border.Border dropBorderActive;
-    private final javax.swing.border.Border dropBorderDiscard;
+    private static final Color DROP_ZONE_PLAY_BG      = UITheme.DROP_ZONE;
+    private static final Color DROP_ZONE_PLAY_BORDER  = UITheme.DROP_ZONE_BORDER;
+    private static final Color DROP_ZONE_HOVER_BORDER = Color.rgb(126, 84, 24);
+    private static final Color DROP_ZONE_DISCARD_BG   = Color.rgb(168, 56, 56);
+
+    private final Label lblCurrentPlayer;
+    private final Label lblActions;
+    private final ImageView ivDrawTop;
+    private final Label lblDrawCount;
+    private final ImageView ivDiscardTop;
+    private final Label lblDiscardCount;
+    private final StackPane dropZone;
+    private final Label lblDropText;
 
     private IntConsumer cardDropHandler;
-    private boolean gameOver;
-    private boolean discardMode;
-    private int discardRemaining;
+    private IntPredicate cardDropValidator;
+    private boolean gameOver = false;
+    private boolean discardMode = false;
 
     public TopStatusPanel() {
-        setOpaque(false);
-        setLayout(new BorderLayout());
+        setStyle("-fx-background-color: transparent;");
 
-        JPanel hub = new JPanel(new BorderLayout(10, 10));
-        hub.setOpaque(true);
-        hub.setBackground(UITheme.PANEL_BG);
-        hub.setBorder(UITheme.createSectionBorder("Table Center"));
-        add(hub, BorderLayout.CENTER);
+        VBox root = new VBox(12);
+        root.setPadding(new Insets(6, 8, 6, 8));
+        root.setAlignment(Pos.TOP_CENTER);
+        setCenter(root);
 
-        JPanel rowStatus = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 6));
-        rowStatus.setOpaque(false);
-        lblCurrentPlayer = new JLabel("Current Player: -");
-        lblCurrentPlayer.setFont(new Font(UITheme.FONT_TITLE.getName(), Font.BOLD, 20));
-        lblCurrentPlayer.setForeground(UITheme.TEXT_MAIN);
+        lblCurrentPlayer = new Label("-");
+        lblCurrentPlayer.setFont(Font.font("Segoe UI", FontWeight.BOLD, 24));
+        lblCurrentPlayer.setTextFill(Color.rgb(250, 241, 209));
 
-        lblActions = new JLabel("Actions: 0 / 3");
-        lblActions.setFont(UITheme.FONT_TITLE);
-        lblActions.setForeground(UITheme.ACCENT_DARK);
-        rowStatus.add(lblCurrentPlayer);
-        rowStatus.add(new JLabel("|"));
-        rowStatus.add(lblActions);
-        hub.add(rowStatus, BorderLayout.NORTH);
+        lblActions = new Label("Steps Left: 0");
+        lblActions.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        lblActions.setTextFill(UITheme.ACCENT);
 
-        JPanel middle = new JPanel(new BorderLayout(12, 10));
-        middle.setOpaque(false);
-        hub.add(middle, BorderLayout.CENTER);
+        HBox statusRow = new HBox(28, lblCurrentPlayer, lblActions);
+        statusRow.setAlignment(Pos.CENTER);
+        root.getChildren().add(statusRow);
 
-        JPanel leftDeck = buildDeckSlot("Draw Pile");
-        lblDrawTop = (JLabel) leftDeck.getClientProperty("card");
-        lblDrawCount = (JLabel) leftDeck.getClientProperty("count");
-        middle.add(leftDeck, BorderLayout.WEST);
+        DeckSlot drawSlot = new DeckSlot();
+        DeckSlot discardSlot = new DeckSlot();
+        drawSlot.titleLabel.setText("Draw Pile");
+        discardSlot.titleLabel.setText("Discard Pile");
+        ivDrawTop = drawSlot.imageView;
+        lblDrawCount = drawSlot.countLabel;
+        ivDiscardTop = discardSlot.imageView;
+        lblDiscardCount = discardSlot.countLabel;
 
-        JPanel rightDiscard = buildDeckSlot("Discard Top");
-        lblDiscardTop = (JLabel) rightDiscard.getClientProperty("card");
-        lblDiscardCount = (JLabel) rightDiscard.getClientProperty("count");
-        middle.add(rightDiscard, BorderLayout.EAST);
+        lblDropText = new Label("Play Area");
+        lblDropText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        lblDropText.setTextFill(UITheme.TEXT_MAIN);
 
-        JPanel centerPlay = new JPanel();
-        centerPlay.setOpaque(false);
-        centerPlay.setLayout(new BoxLayout(centerPlay, BoxLayout.Y_AXIS));
+        dropZone = new StackPane(lblDropText);
+        dropZone.setPrefSize(340, 140);
+        dropZone.setMinSize(280, 120);
+        refreshDropZoneStyle(false);
+        wireDropZone();
 
-        dropZone = new JPanel(new BorderLayout());
-        dropZone.setOpaque(true);
-        dropZone.setBackground(DROP_ZONE_PLAY_BG);
-        dropBorderNormal = BorderFactory.createLineBorder(DROP_ZONE_PLAY_BORDER, 2, true);
-        dropBorderActive = BorderFactory.createLineBorder(DROP_ZONE_PLAY_HOVER_BORDER, 3, true);
-        dropBorderDiscard = BorderFactory.createLineBorder(DROP_ZONE_DISCARD_BORDER, 3, true);
-        dropZone.setBorder(dropBorderNormal);
-        dropZone.setPreferredSize(new Dimension(430, 168));
-        lblDropText = new JLabel("Drag Card Here To Play", JLabel.CENTER);
-        lblDropText.setFont(new Font(UITheme.FONT_TITLE.getName(), Font.BOLD, 20));
-        lblDropText.setForeground(UITheme.TEXT_MAIN);
-        dropZone.add(lblDropText, BorderLayout.CENTER);
-        dropZone.setTransferHandler(new CardDropTransferHandler());
-
-        lblDiscardHint = new JLabel(" ", JLabel.CENTER);
-        lblDiscardHint.setFont(new Font(UITheme.FONT_BODY.getName(), Font.BOLD, 14));
-        lblDiscardHint.setForeground(DROP_ZONE_DISCARD_HINT);
-
-        lblRecentEvent = new JLabel("Recent: -", JLabel.CENTER);
-        lblRecentEvent.setFont(new Font(UITheme.FONT_BODY.getName(), Font.BOLD, 13));
-        lblRecentEvent.setForeground(UITheme.TEXT_SUB);
-
-        centerPlay.add(dropZone);
-        centerPlay.add(Box.createVerticalStrut(10));
-        centerPlay.add(lblDiscardHint);
-        centerPlay.add(Box.createVerticalStrut(4));
-        centerPlay.add(lblRecentEvent);
-        middle.add(centerPlay, BorderLayout.CENTER);
+        HBox middle = new HBox(20, drawSlot.container, dropZone, discardSlot.container);
+        middle.setAlignment(Pos.CENTER);
+        root.getChildren().add(middle);
     }
 
-    private JPanel buildDeckSlot(String title) {
-        JPanel slot = new JPanel();
-        slot.setOpaque(false);
-        slot.setLayout(new BoxLayout(slot, BoxLayout.Y_AXIS));
-
-        JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(UITheme.FONT_SUBTITLE);
-        lblTitle.setForeground(UITheme.TEXT_MAIN);
-        lblTitle.setAlignmentX(CENTER_ALIGNMENT);
-
-        JLabel image = new JLabel();
-        image.setAlignmentX(CENTER_ALIGNMENT);
-        image.setBorder(BorderFactory.createLineBorder(UITheme.BORDER, 1, true));
-
-        JLabel lblCount = new JLabel(" ");
-        lblCount.setFont(UITheme.FONT_SUBTITLE);
-        lblCount.setForeground(UITheme.TEXT_MAIN);
-        lblCount.setAlignmentX(CENTER_ALIGNMENT);
-
-        slot.putClientProperty("card", image);
-        slot.putClientProperty("count", lblCount);
-        slot.add(lblTitle);
-        slot.add(Box.createVerticalStrut(5));
-        slot.add(image);
-        slot.add(Box.createVerticalStrut(6));
-        slot.add(lblCount);
-        return slot;
+    public void setCardDropHandler(IntConsumer handler) {
+        this.cardDropHandler = handler;
     }
 
-    public void setCardDropHandler(IntConsumer cardDropHandler) {
-        this.cardDropHandler = cardDropHandler;
+    public void setCardDropValidator(IntPredicate validator) {
+        this.cardDropValidator = validator;
     }
 
-    public void updateTableCenter(Player currentPlayer, CardImageResolver resolver, String latestEvent,
+    public void showWaitingMessage(String message) {
+        lblCurrentPlayer.setText(message == null ? "Waiting..." : message);
+        lblActions.setText("");
+        lblDrawCount.setText("");
+        lblDiscardCount.setText("");
+        ivDrawTop.setImage(null);
+        ivDiscardTop.setImage(null);
+        refreshDropZoneStyle(false);
+    }
+
+    public void updateFromSnapshot(GameStateParser.Snapshot snap,
+                                   CardImageResolver resolver,
+                                   boolean myTurn, boolean discardMode, int discardRemaining) {
+        if (snap == null) {
+            return;
+        }
+
+        this.gameOver = snap.gameOver;
+        this.discardMode = discardMode;
+
+        String currentName = snap.currentPlayer == null ? "-" : snap.currentPlayer;
+        lblCurrentPlayer.setText(currentName);
+
+        GameStateParser.PlayerInfo current = null;
+        if (snap.players != null) {
+            for (GameStateParser.PlayerInfo p : snap.players) {
+                if (p.name != null && p.name.equals(snap.currentPlayer)) {
+                    current = p;
+                    break;
+                }
+            }
+        }
+
+        lblActions.setText("Steps Left: " + (current != null ? current.actions : 0));
+        lblDrawCount.setText(String.valueOf(snap.deckSize));
+        lblDiscardCount.setText("0");
+        ivDrawTop.setImage(resolver.getFallbackIcon(82, 124));
+        ivDiscardTop.setImage(resolver.getFallbackIcon(82, 124));
+        if (!myTurn) {
+            refreshDropZoneStyle(false);
+        } else {
+            refreshDropZoneStyle(false);
+        }
+    }
+
+    public void updateTableCenter(Player currentPlayer, CardImageResolver resolver,
                                   boolean gameOver, boolean discardMode, int discardRemaining) {
         this.gameOver = gameOver;
         this.discardMode = discardMode;
-        this.discardRemaining = discardRemaining;
+
         if (currentPlayer == null) {
-            showEmptyTableState(latestEvent);
+            lblCurrentPlayer.setText("-");
+            lblActions.setText("Steps Left: 0");
+            lblDrawCount.setText("0");
+            lblDiscardCount.setText("0");
+            ivDrawTop.setImage(null);
+            ivDiscardTop.setImage(null);
+            refreshDropZoneStyle(false);
             return;
         }
 
         Deck deck = Deck.getInstance();
-        lblCurrentPlayer.setText("Current Player: " + currentPlayer.getName());
-        lblActions.setText("Actions: " + currentPlayer.getActions() + " / 3");
+        lblCurrentPlayer.setText(currentPlayer.getName());
+        lblActions.setText("Steps Left: " + currentPlayer.getActions());
         updateDeckPreviews(deck, resolver);
-        refreshDropZoneState(false);
-        setRecentEventText(latestEvent);
+        refreshDropZoneStyle(false);
     }
 
-    private void showEmptyTableState(String latestEvent) {
-        // No active turn yet: keep the table neutral and show only the latest message.
-        lblCurrentPlayer.setText("Current Player: -");
-        lblActions.setText("Actions: 0 / 3");
-        lblDrawCount.setText("Remaining: 0");
-        lblDiscardCount.setText("Total discarded: 0");
-        lblDrawTop.setIcon(null);
-        lblDiscardTop.setIcon(null);
-        refreshDropZoneState(false);
-        setRecentEventText(latestEvent);
+    private void wireDropZone() {
+        dropZone.setOnDragOver(e -> {
+            if (!e.getDragboard().hasString() || gameOver) {
+                e.consume();
+                return;
+            }
+
+            boolean ok = canAcceptCard(e.getDragboard().getString());
+            if (ok) {
+                e.acceptTransferModes(TransferMode.COPY);
+            }
+            refreshDropZoneStyle(ok);
+            e.consume();
+        });
+
+        dropZone.setOnDragExited(e -> {
+            refreshDropZoneStyle(false);
+            e.consume();
+        });
+
+        dropZone.setOnDragDropped(e -> {
+            refreshDropZoneStyle(false);
+            boolean success = false;
+            if (e.getDragboard().hasString() && canAcceptCard(e.getDragboard().getString())) {
+                try {
+                    int cardId = Integer.parseInt(e.getDragboard().getString().trim());
+                    if (cardDropHandler != null) {
+                        cardDropHandler.accept(cardId);
+                        success = true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
+    }
+
+    private boolean canAcceptCard(String rawCardId) {
+        if (rawCardId == null) {
+            return false;
+        }
+        try {
+            int cardId = Integer.parseInt(rawCardId.trim());
+            return cardDropValidator == null || cardDropValidator.test(cardId);
+        } catch (NumberFormatException ex) {
+            return false;
+        }
     }
 
     private void updateDeckPreviews(Deck deck, CardImageResolver resolver) {
-        int remaining = deck.drawPileSize();
-        lblDrawTop.setIcon(resolver.getFallbackIcon(76, 118));
-        lblDrawTop.setToolTipText("Draw pile — " + remaining + " card(s) left");
-        lblDrawCount.setText("Remaining: " + remaining);
-
-        int totalDiscarded = deck.getTotalDiscardedCount();
-        lblDiscardCount.setText("Total discarded: " + totalDiscarded);
+        ivDrawTop.setImage(resolver.getFallbackIcon(82, 124));
+        lblDrawCount.setText(String.valueOf(deck.drawPileSize()));
 
         Card discardTop = deck.getVisibleDiscardTop();
         if (discardTop == null) {
-            lblDiscardTop.setIcon(resolver.getFallbackIcon(76, 118));
-            lblDiscardTop.setToolTipText("No cards discarded yet");
+            ivDiscardTop.setImage(resolver.getFallbackIcon(82, 124));
+        } else {
+            ivDiscardTop.setImage(resolver.getCardIcon(discardTop, 82, 124));
+        }
+        lblDiscardCount.setText(String.valueOf(deck.getTotalDiscardedCount()));
+    }
+
+    private void refreshDropZoneStyle(boolean hovered) {
+        if (discardMode) {
+            dropZone.setStyle(
+                    "-fx-background-color: " + UITheme.toCssHex(DROP_ZONE_DISCARD_BG) + ";" +
+                    "-fx-border-color: " + UITheme.toCssHex(Color.rgb(176, 54, 54)) + ";" +
+                    "-fx-border-width: 3px; -fx-border-radius: 8px; -fx-background-radius: 8px;"
+            );
+            lblDropText.setText("Discard");
+            lblDropText.setTextFill(Color.WHITE);
             return;
         }
 
-        lblDiscardTop.setIcon(resolver.getCardIcon(discardTop, 76, 118));
-        String pileNote = deck.discardSize() > 0
-                ? "Top of discard pile"
-                : "Last discarded (placed under draw pile)";
-        lblDiscardTop.setToolTipText(discardTop.getName() + " — " + pileNote);
+        String borderColor = hovered
+                ? UITheme.toCssHex(DROP_ZONE_HOVER_BORDER)
+                : UITheme.toCssHex(DROP_ZONE_PLAY_BORDER);
+        String borderWidth = hovered ? "3px" : "2px";
+
+        dropZone.setStyle(
+                "-fx-background-color: " + UITheme.toCssHex(DROP_ZONE_PLAY_BG) + ";" +
+                "-fx-border-color: " + borderColor + ";" +
+                "-fx-border-width: " + borderWidth + ";" +
+                "-fx-border-radius: 8px; -fx-background-radius: 8px;"
+        );
+        lblDropText.setText("Play Area");
+        lblDropText.setTextFill(UITheme.TEXT_MAIN);
     }
 
-    /**
-     * Switch the center zone between play mode and discard mode.
-     * Discard mode uses a red highlight so the player knows the drop target changed.
-     */
-    private void refreshDropZoneState(boolean hovered) {
-        if (discardMode) {
-            dropZone.setBackground(DROP_ZONE_DISCARD_BG);
-            dropZone.setBorder(dropBorderDiscard);
-            lblDropText.setText("Drag Here To Discard");
-            lblDropText.setForeground(DROP_ZONE_DISCARD_TEXT);
-            lblDiscardHint.setText(discardRemaining > 0
-                    ? "You still need to discard " + discardRemaining + " card(s)."
-                    : "Discard the extra cards.");
-            lblDiscardHint.setForeground(DROP_ZONE_DISCARD_HINT);
-        } else {
-            dropZone.setBackground(DROP_ZONE_PLAY_BG);
-            dropZone.setBorder(hovered ? dropBorderActive : dropBorderNormal);
-            lblDropText.setText("Drag Card Here To Play");
-            lblDropText.setForeground(UITheme.TEXT_MAIN);
-            lblDiscardHint.setText(" ");
-        }
-    }
+    private static class DeckSlot {
+        final VBox container;
+        final ImageView imageView;
+        final Label titleLabel;
+        final Label countLabel;
 
-    /**
-     * Keep the recent-event label short so the center panel stays readable.
-     */
-    private void setRecentEventText(String latestEvent) {
-        String event = latestEvent == null ? "-" : latestEvent.trim();
-        if (event.isEmpty()) {
-            event = "-";
-        }
-        if (event.length() > 84) {
-            event = event.substring(0, 84) + "...";
-        }
-        lblRecentEvent.setText("Recent: " + event);
-    }
+        DeckSlot() {
+            imageView = new ImageView();
+            imageView.setFitWidth(82);
+            imageView.setFitHeight(124);
+            imageView.setPreserveRatio(false);
+            imageView.setStyle(
+                    "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
+                    "-fx-border-width: 1px;"
+            );
 
-    /**
-     *Displaying message (Connection in progress / Used when waiting for other players to join)
-     */
-    public void showWaitingMessage(String message) {
-        lblCurrentPlayer.setText(message);
-        lblActions.setText("");
-        setRecentEventText("");
-        refreshDropZoneState(false);
-    }
+            titleLabel = new Label(" ");
+            titleLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
+            titleLabel.setTextFill(Color.rgb(240, 230, 205));
 
-    /**
-     * Update the central area of the desktop based on the online game snapshot.
-     * Same as the updateTableCenter(Player, ...) function, but the data comes from server-pushed snapshots.
-     */
-    public void updateFromSnapshot(com.monopolydeal.network.GameStateParser.Snapshot snap,
-                                   CardImageResolver resolver,
-                                   boolean myTurn, boolean discardMode, int discardRemaining) {
-        if (snap == null) return;
-        this.gameOver = snap.gameOver;
-        this.discardMode = discardMode;
-        this.discardRemaining = discardRemaining;
+            countLabel = new Label("0");
+            countLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
+            countLabel.setTextFill(Color.rgb(240, 230, 205));
 
-        lblCurrentPlayer.setText("Current Player: " + snap.currentPlayer);
-        lblActions.setText(myTurn ? "Your turn!" : "Waiting for " + snap.currentPlayer + "...");
-
-        // Deck preview
-        try {
-            updateDeckPreviews(com.monopolydeal.model.Deck.getInstance(), resolver);
-        } catch (Exception ignored) {}
-
-        refreshDropZoneState(false);
-    }
-
-    private class CardDropTransferHandler extends TransferHandler {
-        @Override
-        public boolean canImport(TransferSupport support) {
-            boolean ok = support.isDrop() && !gameOver && support.isDataFlavorSupported(DataFlavor.stringFlavor);
-            refreshDropZoneState(ok);
-            return ok;
-        }
-
-        @Override
-        public boolean importData(TransferSupport support) {
-            if (!canImport(support)) {
-                return false;
-            }
-            try {
-                String cardIdText = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-                int cardId = Integer.parseInt(cardIdText.trim());
-                if (cardDropHandler != null) {
-                    cardDropHandler.accept(cardId);
-                }
-                return true;
-            } catch (Exception ignored) {
-                return false;
-            } finally {
-                refreshDropZoneState(false);
-            }
+            container = new VBox(8, titleLabel, imageView, countLabel);
+            container.setAlignment(Pos.CENTER);
+            container.setStyle("-fx-background-color: transparent;");
         }
     }
 }
-

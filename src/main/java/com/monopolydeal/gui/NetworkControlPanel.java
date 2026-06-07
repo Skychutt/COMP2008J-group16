@@ -1,127 +1,128 @@
 package com.monopolydeal.gui;
 
 import com.monopolydeal.network.GameStateParser;
-
-import javax.swing.*;
-import java.awt.*;
+import javafx.geometry.Insets;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.VBox;
 
 /**
- * Left control/asset panel
+ * Left asset panel in LAN online mode
  *
+ * Display the player's action count, bank balance, bank card, real estate group, and event log
+ * 
  */
-public class NetworkControlPanel extends JPanel {
+public class NetworkControlPanel extends VBox {
 
     private final NetworkGameFrame frame;
-    private final JLabel lblActions;
-    private final JLabel lblBank;
-    private final JPanel pnlBankCards;
-    private final JPanel pnlPropertySets;
-    private final JTextArea txtLog;
+    private final Label lblActions;
+    private final Label lblBank;
+    private final VBox pnlBankCards;
+    private final VBox pnlPropertySets;
+    private final TextArea txtLog;
 
     public NetworkControlPanel(NetworkGameFrame frame) {
         this.frame = frame;
-        setOpaque(false);
-        setPreferredSize(new Dimension(330, 420));
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setSpacing(6);
+        setPadding(new Insets(8, 6, 6, 6));
+        setStyle("-fx-background-color: transparent;");
 
-        lblActions = new JLabel("Actions: 0 / 3");
+        lblActions = new Label("Actions: 0 / 3");
         lblActions.setFont(UITheme.FONT_SUBTITLE);
-        lblActions.setForeground(UITheme.ACCENT_DARK);
-        lblActions.setAlignmentX(LEFT_ALIGNMENT);
-        add(lblActions);
+        lblActions.setTextFill(UITheme.ACCENT_DARK);
 
-        lblBank = new JLabel("Bank: 0M");
+        lblBank = new Label("Bank: 0M");
         lblBank.setFont(UITheme.FONT_BANK_TOTAL);
-        lblBank.setForeground(UITheme.TEXT_MAIN);
-        lblBank.setAlignmentX(LEFT_ALIGNMENT);
-        add(lblBank);
-        add(Box.createVerticalStrut(6));
+        lblBank.setTextFill(UITheme.TEXT_MAIN);
 
-        pnlBankCards = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
-        pnlBankCards.setBackground(UITheme.PANEL_BG);
-        add(makeSectionBox("Bank Cards", pnlBankCards, 80));
-        add(Box.createVerticalStrut(6));
+        pnlBankCards = new VBox(2);
+        pnlBankCards.setStyle(
+            "-fx-background-color: " + UITheme.toCssHex(UITheme.PANEL_BG) + ";" +
+            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
+            "-fx-border-width: 1px; -fx-border-radius: 3px; -fx-padding: 4;"
+        );
+        ScrollPane bankScroll = new ScrollPane(pnlBankCards);
+        bankScroll.setMaxHeight(80);
+        bankScroll.setFitToWidth(true);
+        bankScroll.setStyle("-fx-background-color: transparent;");
 
-        pnlPropertySets = new JPanel();
-        pnlPropertySets.setLayout(new BoxLayout(pnlPropertySets, BoxLayout.Y_AXIS));
-        pnlPropertySets.setBackground(UITheme.PANEL_BG);
-        add(makeSectionBox("Properties", pnlPropertySets, 120));
-        add(Box.createVerticalStrut(6));
+        pnlPropertySets = new VBox(2);
+        pnlPropertySets.setStyle(
+            "-fx-background-color: " + UITheme.toCssHex(UITheme.PANEL_BG) + ";" +
+            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
+            "-fx-border-width: 1px; -fx-border-radius: 3px; -fx-padding: 4;"
+        );
+        ScrollPane propScroll = new ScrollPane(pnlPropertySets);
+        propScroll.setMaxHeight(120);
+        propScroll.setFitToWidth(true);
+        propScroll.setStyle("-fx-background-color: transparent;");
 
-        txtLog = new JTextArea(10, 24);
+        txtLog = new TextArea();
         txtLog.setEditable(false);
-        txtLog.setBackground(UITheme.LOG_BG);
-        txtLog.setForeground(UITheme.LOG_TEXT);
-        txtLog.setFont(UITheme.FONT_SMALL);
-        txtLog.setLineWrap(true);
-        txtLog.setWrapStyleWord(true);
+        txtLog.setWrapText(true);
+        txtLog.setPrefRowCount(10);
+        txtLog.setStyle(
+            "-fx-background-color: " + UITheme.toCssHex(UITheme.LOG_BG) + ";" +
+            "-fx-text-fill: " + UITheme.toCssHex(UITheme.LOG_TEXT) + ";" +
+            "-fx-font-size: 11;"
+        );
 
-        JScrollPane scroll = new JScrollPane(txtLog);
-        scroll.setAlignmentX(LEFT_ALIGNMENT);
-        scroll.setMaximumSize(new Dimension(320, 180));
-        scroll.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UITheme.BORDER, 1, true), "Event Log"));
-        add(scroll);
+        Label lblBankTitle = sectionTitle("Bank Cards");
+        Label lblPropTitle = sectionTitle("Properties");
+        Label lblLogTitle  = sectionTitle("Event Log");
+
+        getChildren().addAll(
+                lblActions, lblBank,
+                lblBankTitle, bankScroll,
+                lblPropTitle, propScroll,
+                lblLogTitle, txtLog
+        );
     }
 
-    /**
-     * Update your asset information
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+
     public void updateFromSnapshot(GameStateParser.Snapshot snap, int myIndex) {
         if (snap == null) return;
-
         GameStateParser.PlayerInfo me = snap.getMyInfo(myIndex);
         if (me == null) return;
 
         lblActions.setText("Actions: " + me.actions + " / 3");
         lblBank.setText("Bank: " + me.bank + "M");
 
-        pnlBankCards.removeAll();
+        pnlBankCards.getChildren().clear();
         if (me.bankCards != null) {
             for (GameStateParser.CardInfo c : me.bankCards) {
-                JLabel lbl = new JLabel(c.name + "(" + c.value + "M)");
+                Label lbl = new Label(c.name + " (" + c.value + "M)");
                 lbl.setFont(UITheme.FONT_SMALL);
-                lbl.setForeground(UITheme.TEXT_SUB);
-                lbl.setBorder(BorderFactory.createLineBorder(UITheme.BORDER, 1, true));
-                pnlBankCards.add(lbl);
+                lbl.setTextFill(UITheme.TEXT_SUB);
+                pnlBankCards.getChildren().add(lbl);
             }
         }
-        pnlBankCards.revalidate();
-        pnlBankCards.repaint();
 
-        pnlPropertySets.removeAll();
+        pnlPropertySets.getChildren().clear();
         if (me.propertySets != null) {
             for (GameStateParser.PropertySetInfo psi : me.propertySets) {
                 String mark = psi.complete ? " ✓" : "";
-                String text = psi.color + mark + " (" + psi.cards.size() + " card(s), rent " + psi.rent + "M)";
-                JLabel lbl = new JLabel(text);
+                String text = psi.color + mark +
+                        " (" + psi.cards.size() + " card(s), rent " + psi.rent + "M)";
+                Label lbl = new Label(text);
                 lbl.setFont(UITheme.FONT_SMALL);
-                lbl.setForeground(psi.complete ? UITheme.ACCENT_DARK : UITheme.TEXT_SUB);
-                pnlPropertySets.add(lbl);
+                lbl.setTextFill(psi.complete ? UITheme.ACCENT_DARK : UITheme.TEXT_SUB);
+                pnlPropertySets.getChildren().add(lbl);
             }
         }
-        pnlPropertySets.revalidate();
-        pnlPropertySets.repaint();
     }
 
     public void logEvent(String event) {
         if (event == null || event.isEmpty()) return;
-        txtLog.append(event + "\n");
-        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+        txtLog.appendText(event + "\n");
     }
 
-    private static JPanel makeSectionBox(String title, JPanel content, int height) {
-        JPanel box = new JPanel(new BorderLayout());
-        box.setOpaque(false);
-        box.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UITheme.BORDER, 1, true), title));
-        box.setAlignmentX(LEFT_ALIGNMENT);
-        box.setMaximumSize(new Dimension(320, height));
-        JScrollPane scroll = new JScrollPane(content);
-        scroll.setBorder(null);
-        scroll.setOpaque(false);
-        box.add(scroll, BorderLayout.CENTER);
-        return box;
+    private static Label sectionTitle(String text) {
+        Label lbl = new Label(text);
+        lbl.setFont(UITheme.FONT_SUBTITLE);
+        lbl.setTextFill(UITheme.TEXT_MAIN);
+        return lbl;
     }
 }

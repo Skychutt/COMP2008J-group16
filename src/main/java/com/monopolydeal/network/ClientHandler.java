@@ -86,6 +86,13 @@ public class ClientHandler implements Runnable {
                         server.requestDiscard(playerIndex, cardId));
                 break;
 
+            case NetworkMessage.PING:
+                send(new NetworkMessage(NetworkMessage.PONG, ""));
+                break;
+
+            case NetworkMessage.PONG:
+                break; // client echoed back, no action needed
+
             default:
                 send(new NetworkMessage(NetworkMessage.EVENT,
                         "Unknown command: " + msg.getType()));

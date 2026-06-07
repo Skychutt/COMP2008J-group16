@@ -1,169 +1,247 @@
 package com.monopolydeal.gui;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.util.List;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 
 /**
- * Home screen: main background image with menu or local setup overlay.
+ * Home screen: background image + menu/setup overlay using a {@link StackPane}.
  */
-public class MainMenuPanel extends JPanel {
+public class MainMenuPanel extends StackPane {
 
-    private static final String CARD_MENU = "menu";
-    private static final String CARD_SETUP = "setup";
-    private static final String CARD_LAN   = "lan";
-
-    private final Image background;
-    private final CardLayout cardLayout;
-    private final JPanel cardHost;
-    private final JPanel menuCard;
+    private final VBox menuOverlay;
     private final LocalGameSetupPanel setupPanel;
+    private final SinglePlayerSetupPanel singlePlayerSetupPanel;
+    private final VBox topLeftMusic;
     private LanSetupPanel lanSetupPanel;
 
-    public MainMenuPanel(LocalGameSetupPanel.SetupListener setupListener) {
-        background = BackgroundUtil.getMainBackground();
-        setLayout(new GridBagLayout());
-        setOpaque(true);
+    // Buttons stored for external wiring in MainMenuFrame
+    private Button btnLocalGame;
+    private Button btnSinglePlayer;
+    private Button btnOnline;
+    private Button btnRules;
+    private Button btnExit;
 
-        cardLayout = new CardLayout();
-        cardHost = new JPanel(cardLayout);
-        cardHost.setOpaque(false);
+    public MainMenuPanel(LocalGameSetupPanel.SetupListener setupListener,
+                         SinglePlayerSetupPanel.SetupListener singlePlayerListener) {
+        // Background image fills the pane using CSS cover
+        BackgroundUtil.applyCoverBackground(this, BackgroundUtil.getMainBackground());
+        if (BackgroundUtil.getMainBackground() == null) {
+            setStyle("-fx-background-color: " + UITheme.toCssHex(UITheme.PAGE_BG) + ";");
+        }
 
-        menuCard = buildMenuOverlay();
         setupPanel = new LocalGameSetupPanel(setupListener);
+        setupPanel.setVisible(false);
+        setupPanel.setManaged(false);
+        configureOverlayLayer(setupPanel);
 
-        cardHost.add(menuCard, CARD_MENU);
-        cardHost.add(setupPanel, CARD_SETUP);
+        singlePlayerSetupPanel = new SinglePlayerSetupPanel(singlePlayerListener);
+        singlePlayerSetupPanel.setVisible(false);
+        singlePlayerSetupPanel.setManaged(false);
+        configureOverlayLayer(singlePlayerSetupPanel);
 
-        add(cardHost, createCenterConstraints());
+        menuOverlay = buildMenuOverlay();
+        configureOverlayLayer(menuOverlay);
+
+        topLeftMusic = buildTopLeftMusicControl();
+
+        StackPane.setAlignment(topLeftMusic, Pos.TOP_LEFT);
+        StackPane.setAlignment(menuOverlay, Pos.CENTER);
+        StackPane.setAlignment(setupPanel, Pos.CENTER);
+        StackPane.setAlignment(singlePlayerSetupPanel, Pos.CENTER);
+        // Music control on top so the slider receives mouse events in the top-left corner.
+        getChildren().addAll(menuOverlay, setupPanel, singlePlayerSetupPanel, topLeftMusic);
+
         showMainMenu();
     }
 
-    private GridBagConstraints createCenterConstraints() {
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.anchor = GridBagConstraints.CENTER;
-        return gbc;
-    }
+    // ─────────────────────────────────────────────────────────────────────────
+    // Navigation
+    // ─────────────────────────────────────────────────────────────────────────
 
     public void showMainMenu() {
-        cardLayout.show(cardHost, CARD_MENU);
+        menuOverlay.setVisible(true);
+        menuOverlay.setManaged(true);
+        setupPanel.setVisible(false);
+        setupPanel.setManaged(false);
+        singlePlayerSetupPanel.setVisible(false);
+        singlePlayerSetupPanel.setManaged(false);
+        if (lanSetupPanel != null) {
+            lanSetupPanel.setVisible(false);
+            lanSetupPanel.setManaged(false);
+        }
     }
 
     public void showLocalSetup() {
         setupPanel.resetToDefaults();
-        cardLayout.show(cardHost, CARD_SETUP);
+        menuOverlay.setVisible(false);
+        menuOverlay.setManaged(false);
+        setupPanel.setVisible(true);
+        setupPanel.setManaged(true);
+        singlePlayerSetupPanel.setVisible(false);
+        singlePlayerSetupPanel.setManaged(false);
+        if (lanSetupPanel != null) {
+            lanSetupPanel.setVisible(false);
+            lanSetupPanel.setManaged(false);
+        }
+    }
+
+    public void showSinglePlayerSetup() {
+        singlePlayerSetupPanel.resetToDefaults();
+        menuOverlay.setVisible(false);
+        menuOverlay.setManaged(false);
+        setupPanel.setVisible(false);
+        setupPanel.setManaged(false);
+        singlePlayerSetupPanel.setVisible(true);
+        singlePlayerSetupPanel.setManaged(true);
+        if (lanSetupPanel != null) {
+            lanSetupPanel.setVisible(false);
+            lanSetupPanel.setManaged(false);
+        }
     }
 
     /**
-     * Display the LAN settings panel
+     * Display LAN online settings interface
+     *
      */
     public void showLanSetup(LanSetupPanel.LanSetupListener listener) {
+        // Lazily create LanSetupPanel the first time it's needed
         if (lanSetupPanel == null) {
             lanSetupPanel = new LanSetupPanel(listener);
-            cardHost.add(lanSetupPanel, CARD_LAN);
         } else {
-            lanSetupPanel.resetToDefaults();
+            lanSetupPanel = new LanSetupPanel(listener);
+            getChildren().removeIf(n -> n instanceof LanSetupPanel);
         }
-        cardLayout.show(cardHost, CARD_LAN);
+        configureOverlayLayer(lanSetupPanel);
+        StackPane.setAlignment(lanSetupPanel, Pos.CENTER);
+        getChildren().add(lanSetupPanel);
+        topLeftMusic.toFront();
+        lanSetupPanel.resetToDefaults();
+        menuOverlay.setVisible(false);
+        menuOverlay.setManaged(false);
+        setupPanel.setVisible(false);
+        setupPanel.setManaged(false);
+        singlePlayerSetupPanel.setVisible(false);
+        singlePlayerSetupPanel.setManaged(false);
+        lanSetupPanel.setVisible(true);
+        lanSetupPanel.setManaged(true);
     }
 
-    private JPanel buildMenuOverlay() {
-        JPanel overlay = new JPanel();
-        overlay.setOpaque(true);
-        overlay.setBackground(new Color(255, 255, 255, 200));
-        overlay.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(UITheme.BORDER, 2, true),
-                BorderFactory.createEmptyBorder(28, 48, 28, 48)
-        ));
-        overlay.setLayout(new BoxLayout(overlay, BoxLayout.Y_AXIS));
+    // ─────────────────────────────────────────────────────────────────────────
+    // Button access (wired in MainMenuFrame)
+    // ─────────────────────────────────────────────────────────────────────────
 
-        JLabel title = new JLabel("MONOPOLY DEAL");
-        title.setFont(UITheme.FONT_MENU_TITLE);
-        title.setForeground(Color.BLACK);
-        title.setAlignmentX(CENTER_ALIGNMENT);
-        overlay.add(title);
+    public Button getButtonLocalGame()    { return btnLocalGame; }
+    public Button getButtonSinglePlayer() { return btnSinglePlayer; }
+    public Button getButtonOnline()       { return btnOnline; }
+    public Button getButtonRules()        { return btnRules; }
+    public Button getButtonExit()         { return btnExit; }
 
-        JLabel subtitle = new JLabel("Card Game");
-        subtitle.setFont(UITheme.FONT_MENU_SUBTITLE);
-        subtitle.setForeground(Color.BLACK);
-        subtitle.setAlignmentX(CENTER_ALIGNMENT);
-        overlay.add(Box.createVerticalStrut(6));
-        overlay.add(subtitle);
-        overlay.add(Box.createVerticalStrut(28));
+    // ─────────────────────────────────────────────────────────────────────────
+    // Menu overlay
+    // ─────────────────────────────────────────────────────────────────────────
 
-        overlay.add(createMenuButton("Local Game"));
-        overlay.add(Box.createVerticalStrut(12));
-        overlay.add(createMenuButton("Single Player"));
-        overlay.add(Box.createVerticalStrut(12));
-        overlay.add(createMenuButton("Online Multiplayer"));
-        overlay.add(Box.createVerticalStrut(12));
-        overlay.add(createMenuButton("Game Rules"));
+    private static final Font FONT_MENU_TITLE_LARGE =
+            Font.font("Segoe UI", FontWeight.EXTRA_BOLD, 52);
+    private static final Font FONT_MENU_SUBTITLE_LARGE =
+            Font.font("Segoe UI", FontWeight.BOLD, 22);
 
+    private VBox buildMenuOverlay() {
+        Text titleTop = createMenuTitleText("MONOPOLY");
+        Text titleBottom = createMenuTitleText("DEAL");
+
+        VBox titleBlock = new VBox(-6, titleTop, titleBottom);
+        titleBlock.setAlignment(Pos.CENTER);
+
+        Text subtitle = createMenuSubtitleText("Card Game");
+
+        btnLocalGame    = createMenuButton("Local Game", 168);
+        btnSinglePlayer = createMenuButton("Single Player", 168);
+        btnOnline       = createMenuButton("Online Multiplayer", 196);
+        btnRules        = createMenuButton("Game Rules", 168);
+        btnExit         = createMenuButton("Exit Game", 168);
+
+        HBox buttonRowTop = new HBox(14, btnLocalGame, btnSinglePlayer, btnOnline);
+        buttonRowTop.setAlignment(Pos.CENTER);
+        HBox buttonRowBottom = new HBox(14, btnRules, btnExit);
+        buttonRowBottom.setAlignment(Pos.CENTER);
+
+        VBox buttonBlock = new VBox(12, buttonRowTop, buttonRowBottom);
+        buttonBlock.setAlignment(Pos.CENTER);
+
+        VBox overlay = new VBox(10, titleBlock, subtitle, spacer(20), buttonBlock);
+        overlay.setAlignment(Pos.CENTER);
+        overlay.setPadding(new Insets(0, 24, 48, 24));
+        overlay.setStyle("-fx-background-color: transparent;");
         return overlay;
     }
 
-    private JButton createMenuButton(String text) {
-        JButton button = new JButton(text);
-        button.setAlignmentX(CENTER_ALIGNMENT);
-        button.setMaximumSize(new Dimension(280, 46));
-        button.setPreferredSize(new Dimension(280, 46));
-        button.setMinimumSize(new Dimension(280, 46));
-        UITheme.styleMenuButton(button);
-        return button;
+    private static Text createMenuTitleText(String value) {
+        Text text = new Text(value);
+        text.setFont(FONT_MENU_TITLE_LARGE);
+        text.setFill(Color.web("#FFD86B"));
+        text.setStroke(Color.web("#2A1608"));
+        text.setStrokeWidth(2.8);
+        text.setStrokeType(javafx.scene.shape.StrokeType.OUTSIDE);
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(14);
+        shadow.setOffsetX(0);
+        shadow.setOffsetY(3);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.82));
+        text.setEffect(shadow);
+        return text;
     }
 
-    public JButton getButtonByText(String text) {
-        return findButton(menuCard, text);
+    private static Text createMenuSubtitleText(String value) {
+        Text text = new Text(value);
+        text.setFont(FONT_MENU_SUBTITLE_LARGE);
+        text.setFill(Color.web("#FFF1C8"));
+        text.setStroke(Color.web("#2A1608"));
+        text.setStrokeWidth(1.6);
+        text.setStrokeType(javafx.scene.shape.StrokeType.OUTSIDE);
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(8);
+        shadow.setOffsetY(2);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.75));
+        text.setEffect(shadow);
+        return text;
     }
 
-    private JButton findButton(java.awt.Container parent, String text) {
-        for (int i = 0; i < parent.getComponentCount(); i++) {
-            java.awt.Component child = parent.getComponent(i);
-            if (child instanceof JButton) {
-                JButton btn = (JButton) child;
-                if (text.equals(btn.getText())) {
-                    return btn;
-                }
-            }
-            if (child instanceof java.awt.Container) {
-                JButton found = findButton((java.awt.Container) child, text);
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
+    private static Button createMenuButton(String text, double width) {
+        Button btn = new Button(text);
+        btn.setMinWidth(width);
+        btn.setPrefWidth(width);
+        btn.setMaxWidth(width);
+        UITheme.styleMenuButton(btn);
+        return btn;
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        BackgroundUtil.enableQuality(g2);
+    private static void configureOverlayLayer(Region layer) {
+        layer.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        layer.setPickOnBounds(false);
+    }
 
-        int w = getWidth();
-        int h = getHeight();
-        if (background != null && w > 0 && h > 0) {
-            BackgroundUtil.paintCover(g2, background, w, h);
-        } else {
-            g2.setColor(UITheme.PAGE_BG);
-            g2.fillRect(0, 0, w, h);
-        }
-        g2.dispose();
+    private static VBox buildTopLeftMusicControl() {
+        VBox box = new VBox(new GameVolumeControl());
+        box.setPadding(new Insets(18, 0, 0, 18));
+        box.setAlignment(Pos.TOP_LEFT);
+        box.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        box.setPickOnBounds(true);
+        return box;
+    }
+
+    private static javafx.scene.Node spacer(double height) {
+        javafx.scene.layout.Region r = new javafx.scene.layout.Region();
+        r.setPrefHeight(height);
+        return r;
     }
 }

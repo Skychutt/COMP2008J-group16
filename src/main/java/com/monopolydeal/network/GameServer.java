@@ -44,12 +44,12 @@ public class GameServer {
     private ServerStatusListener statusListener;
 
     public interface ServerStatusListener {
-        /** Number of new players connected */
-        void onPlayerJoined(int count, int total);
+        /** A new player has joined; count = current, total = needed, playerName = their name */
+        void onPlayerJoined(int count, int total, String playerName);
         /** The game starts when all players arrive */
         void onGameStarted();
         /** A player disconnected from the connection */
-        void onPlayerDisconnected(int playerIndex);
+        void onPlayerDisconnected(int playerIndex, String playerName);
     }
 
     public GameServer(int port, int playerCount, List<String> playerNames) {
@@ -89,8 +89,9 @@ public class GameServer {
             broadcastEvent("Player " + (idx + 1) + " connected ("
                     + clients.size() + "/" + playerCount + ")");
 
+            String joinedName = (idx < playerNames.size()) ? playerNames.get(idx) : "Player " + (idx + 1);
             if (statusListener != null) {
-                statusListener.onPlayerJoined(clients.size(), playerCount);
+                statusListener.onPlayerJoined(clients.size(), playerCount, joinedName);
             }
         }
 
@@ -314,9 +315,10 @@ public class GameServer {
     }
 
     public void onClientDisconnected(int playerIndex) {
-        broadcastEvent("Player " + (playerIndex + 1) + " disconnected.");
+        String name = (playerIndex < playerNames.size()) ? playerNames.get(playerIndex) : "Player " + (playerIndex + 1);
+        broadcastEvent(name + " disconnected.");
         if (statusListener != null) {
-            statusListener.onPlayerDisconnected(playerIndex);
+            statusListener.onPlayerDisconnected(playerIndex, name);
         }
     }
 

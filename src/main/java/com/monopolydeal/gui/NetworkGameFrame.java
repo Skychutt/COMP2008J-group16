@@ -1,33 +1,26 @@
 package com.monopolydeal.gui;
 
 import com.monopolydeal.enums.PropertyType;
-import com.monopolydeal.model.GameManager;
-import com.monopolydeal.model.Player;
-import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 import com.monopolydeal.network.GameClient;
 import com.monopolydeal.network.GameStateParser;
-
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Toolkit;
-import java.util.List;
+import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 
 /**
- * LAN Battle Game Window
+ * LAN online game main window
  *
- *  The hand is only visible to oneself, and other players only display the number of hands
+ * Each player can only see their own hand, while other players only display the number of hands
  */
-public class NetworkGameFrame extends JFrame {
+public class NetworkGameFrame {
 
+    private final Stage stage;
     private final GameClient client;
+    private final Stage homeStage;
+
     private volatile int myPlayerIndex = -1;
     private volatile boolean myTurn = false;
     private volatile boolean discardMode = false;
@@ -36,67 +29,62 @@ public class NetworkGameFrame extends JFrame {
     private final CardImageResolver imageResolver;
     private TopStatusPanel topStatusPanel;
     private NetworkPlayerPanel playerPanel;
-    private NetworkOpponentsPanel opponentsPanel;
     private NetworkControlPanel controlPanel;
+    private GameBoardPane board;
 
     private volatile GameStateParser.Snapshot snapshot;
-
-    private final JFrame homeFrame;
     private boolean gameOverShown = false;
 
-    private NetworkGameFrame(GameClient client, JFrame homeFrame) {
-        this.client = client;
-        this.homeFrame = homeFrame;
+    private NetworkGameFrame(GameClient client, Stage homeStage) {
+        this.client    = client;
+        this.homeStage = homeStage;
         this.imageResolver = new CardImageResolver();
 
-        setTitle("Monopoly Deal — LAN");
-        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-        int w = Math.min(1400, Math.max(1180, screen.width - 40));
-        int h = Math.min(920, Math.max(680, screen.height - 80));
-        setSize(w, h);
-        setMinimumSize(new Dimension(1180, 680));
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
+        stage = new Stage();
+        stage.setTitle("Monopoly Deal — LAN");
 
-        buildUI();
-        wireClient();
+        javafx.geometry.Rectangle2D screen = Screen.getPrimary().getVisualBounds();
+        double w = Math.min(1400, Math.max(1180, screen.getWidth() - 40));
+        double h = Math.min(920,  Math.max(680,  screen.getHeight() - 80));
 
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosed(java.awt.event.WindowEvent e) {
-                client.disconnect();
-                returnHome();
-            }
+        stage.setMinWidth(1100);
+        stage.setMinHeight(660);
+        stage.setOnCloseRequest(e -> {
+            client.disconnect();
+            returnHome();
         });
+
+        buildUI(w, h);
+        wireClient();
     }
 
-    /**
-     * Host as player 0 connects to its own server
-     */
-    public static void openAsHost(GameManager gm, JFrame homeFrame) {
-        openAsClient("localhost", com.monopolydeal.network.GameServer.DEFAULT_PORT, homeFrame);
+    // ─────────────────────────────────────────────────────────────────────────
+    // Factory methods
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Host (Player 0) connects to its own server as a client */
+    public static void openAsHost(Stage homeStage) {
+        openAsClient("localhost", com.monopolydeal.network.GameServer.DEFAULT_PORT, homeStage);
     }
 
-    /**
-     * Connect to the specified server
-     */
-    public static void openAsClient(String host, int port, JFrame homeFrame) {
+    /** Connect to the specified server */
+    public static void openAsClient(String host, int port, Stage homeStage) {
         GameClient client = new GameClient(host, port);
-        NetworkGameFrame frame = new NetworkGameFrame(client, homeFrame);
+        NetworkGameFrame frame = new NetworkGameFrame(client, homeStage);
 
         Thread connectThread = new Thread(() -> {
             try {
                 client.connect();
-                SwingUtilities.invokeLater(() -> {
-                    frame.setVisible(true);
-                });
+                Platform.runLater(() -> frame.stage.show());
             } catch (Exception e) {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(homeFrame,
-                            "Cannot connect to server:\n" + e.getMessage(),
-                            "Connection Failed",
-                            JOptionPane.ERROR_MESSAGE);
-                    returnToHome(homeFrame);
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Connection Failed");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Cannot connect to server:\n" + e.getMessage());
+                    if (homeStage != null) alert.initOwner(homeStage);
+                    alert.showAndWait();
+                    returnToHome(homeStage);
                 });
             }
         }, "NetworkConnect");
@@ -104,34 +92,32 @@ public class NetworkGameFrame extends JFrame {
         connectThread.start();
     }
 
-    private void buildUI() {
-        TableSurfacePanel table = new TableSurfacePanel();
-        table.setLayout(new BorderLayout(14, 14));
-        table.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 24, 20, 24));
-        setContentPane(table);
+    // ─────────────────────────────────────────────────────────────────────────
+    // UI construction
+    // ─────────────────────────────────────────────────────────────────────────
 
+    private void buildUI(double w, double h) {
         topStatusPanel = new TopStatusPanel();
-        playerPanel = new NetworkPlayerPanel(this);
-        opponentsPanel = new NetworkOpponentsPanel(this);
-        controlPanel = new NetworkControlPanel(this);
+        playerPanel    = new NetworkPlayerPanel(this);
+        controlPanel   = new NetworkControlPanel(this);
 
         topStatusPanel.setCardDropHandler(this::handleCenterDrop);
         playerPanel.setBankDropHandler(this::handleBankDrop);
         playerPanel.setPropertyDropHandler(this::handlePropertyDrop);
         playerPanel.setEndTurnHandler(this::handleEndTurn);
 
-        add(opponentsPanel, BorderLayout.NORTH);
-        add(controlPanel, BorderLayout.WEST);
-        add(topStatusPanel, BorderLayout.CENTER);
-        add(playerPanel, BorderLayout.SOUTH);
+        // Use the same circular oval-table board as local mode
+        board = new GameBoardPane(topStatusPanel, playerPanel, controlPanel);
 
-        showWaitingOverlay("Connecting to server...");
+        Scene scene = new Scene(board, w, h);
+        stage.setScene(scene);
+
+        topStatusPanel.showWaitingMessage("Connecting to server...");
     }
 
-    private void showWaitingOverlay(String message) {
-        topStatusPanel.showWaitingMessage(message);
-    }
-
+    // ─────────────────────────────────────────────────────────────────────────
+    // Client wiring
+    // ─────────────────────────────────────────────────────────────────────────
 
     private void wireClient() {
         client.setMessageListener(new GameClient.MessageListener() {
@@ -139,33 +125,31 @@ public class NetworkGameFrame extends JFrame {
             @Override
             public void onConnected(int myIndex) {
                 myPlayerIndex = myIndex;
-                SwingUtilities.invokeLater(() ->
-                        showWaitingOverlay("Connected! Waiting for all players..."));
+                Platform.runLater(() ->
+                        topStatusPanel.showWaitingMessage("Connected! Waiting for all players..."));
             }
 
             @Override
             public void onGameStart(String message) {
-                SwingUtilities.invokeLater(() ->
-                        showWaitingOverlay("Game starting..."));
+                Platform.runLater(() ->
+                        topStatusPanel.showWaitingMessage("Game starting..."));
             }
 
             @Override
             public void onGameState(String stateJson) {
                 GameStateParser.Snapshot snap = GameStateParser.parse(stateJson, myPlayerIndex);
                 snapshot = snap;
-                if (snap != null && !snap.gameOver) {
-                    myTurn = (snap.turn == myPlayerIndex);
-                } else if (snap != null && snap.gameOver) {
-                    myTurn = false;
+                if (snap != null) {
+                    myTurn = !snap.gameOver && (snap.turn == myPlayerIndex);
                 }
-                SwingUtilities.invokeLater(() -> refreshFromSnapshot(snap));
+                Platform.runLater(() -> refreshFromSnapshot(snap));
             }
 
             @Override
             public void onYourTurn(String message) {
                 myTurn = true;
                 discardMode = false;
-                SwingUtilities.invokeLater(() -> {
+                Platform.runLater(() -> {
                     controlPanel.logEvent("** YOUR TURN — " + message);
                     refreshTurnIndicator();
                 });
@@ -174,7 +158,7 @@ public class NetworkGameFrame extends JFrame {
             @Override
             public void onWait(String message) {
                 myTurn = false;
-                SwingUtilities.invokeLater(() -> {
+                Platform.runLater(() -> {
                     controlPanel.logEvent(message);
                     refreshTurnIndicator();
                 });
@@ -182,9 +166,9 @@ public class NetworkGameFrame extends JFrame {
 
             @Override
             public void onEvent(String event) {
-                SwingUtilities.invokeLater(() -> {
+                Platform.runLater(() -> {
                     controlPanel.logEvent(event);
-                    if (event.contains("must discard") && myTurn) {
+                    if (event != null && event.contains("must discard") && myTurn) {
                         discardMode = true;
                         try {
                             discardRemaining = Integer.parseInt(
@@ -199,47 +183,55 @@ public class NetworkGameFrame extends JFrame {
 
             @Override
             public void onGameOver(String winner) {
-                SwingUtilities.invokeLater(() -> {
+                Platform.runLater(() -> {
                     if (!gameOverShown) {
                         gameOverShown = true;
-                        JOptionPane.showMessageDialog(NetworkGameFrame.this,
-                                winner, "Game Over!", JOptionPane.INFORMATION_MESSAGE);
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Game Over!");
+                        alert.setHeaderText(null);
+                        alert.setContentText(winner);
+                        alert.initOwner(stage);
+                        alert.showAndWait();
                     }
                 });
             }
 
             @Override
             public void onDisconnected(String reason) {
-                SwingUtilities.invokeLater(() -> {
+                Platform.runLater(() -> {
                     if (!gameOverShown) {
-                        JOptionPane.showMessageDialog(NetworkGameFrame.this,
-                                "Disconnected: " + reason, "Connection Lost",
-                                JOptionPane.WARNING_MESSAGE);
-                        dispose();
+                        Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setTitle("Connection Lost");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Disconnected: " + reason);
+                        alert.initOwner(stage);
+                        alert.showAndWait();
+                        stage.close();
                     }
                 });
             }
         });
     }
 
-    /**
-     * Refresh all UI panels
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // UI refresh
+    // ─────────────────────────────────────────────────────────────────────────
+
     private void refreshFromSnapshot(GameStateParser.Snapshot snap) {
         if (snap == null) return;
-
         topStatusPanel.updateFromSnapshot(snap, imageResolver, myTurn, discardMode, discardRemaining);
-
         playerPanel.updateFromSnapshot(snap, myTurn, discardMode, discardRemaining);
-
-        opponentsPanel.updateFromSnapshot(snap, myPlayerIndex);
-
+        board.updateFromSnapshot(snap, myPlayerIndex, imageResolver);
         controlPanel.updateFromSnapshot(snap, myPlayerIndex);
     }
 
     private void refreshTurnIndicator() {
         playerPanel.setMyTurn(myTurn, discardMode, discardRemaining);
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Card action handlers (called from child panels)
+    // ─────────────────────────────────────────────────────────────────────────
 
     public void handleCenterDrop(int cardId) {
         if (!myTurn) return;
@@ -250,7 +242,7 @@ public class NetworkGameFrame extends JFrame {
             if (card != null && "PROPERTY".equals(card.cardType)) {
                 if (card.needsChoice) {
                     PropertyCard dummy = makeDummyPropertyCard(card);
-                    PropertyType chosen = PropertyColorChooser.prompt(this, dummy);
+                    PropertyType chosen = PropertyColorChooser.prompt(stage, dummy);
                     if (chosen == null) return;
                     client.sendPlaceProperty(cardId, chosen.name());
                 } else {
@@ -271,10 +263,9 @@ public class NetworkGameFrame extends JFrame {
         if (!myTurn || discardMode) return;
         GameStateParser.CardInfo card = findCardInHand(cardId);
         if (card == null || !"PROPERTY".equals(card.cardType)) return;
-
         if (card.needsChoice) {
             PropertyCard dummy = makeDummyPropertyCard(card);
-            PropertyType chosen = PropertyColorChooser.prompt(this, dummy);
+            PropertyType chosen = PropertyColorChooser.prompt(stage, dummy);
             if (chosen == null) return;
             client.sendPlaceProperty(cardId, chosen.name());
         } else {
@@ -288,6 +279,10 @@ public class NetworkGameFrame extends JFrame {
         myTurn = false;
         refreshTurnIndicator();
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────────────────
 
     private GameStateParser.CardInfo findCardInHand(int cardId) {
         if (snapshot == null || snapshot.myHand == null) return null;
@@ -308,21 +303,26 @@ public class NetworkGameFrame extends JFrame {
     }
 
     private void returnHome() {
-        returnToHome(homeFrame);
+        stage.close();
+        returnToHome(homeStage);
     }
 
-    private static void returnToHome(JFrame homeFrame) {
-        if (homeFrame instanceof MainMenuFrame) {
-            ((MainMenuFrame) homeFrame).showHomeAgain();
-        } else if (homeFrame != null) {
-            homeFrame.setVisible(true);
+    private static void returnToHome(Stage homeStage) {
+        if (homeStage != null) {
+            homeStage.show();
+            homeStage.toFront();
         }
     }
 
-    public GameClient getClient() { return client; }
-    public int getMyPlayerIndex() { return myPlayerIndex; }
-    public boolean isMyTurn() { return myTurn; }
-    public boolean isDiscardMode() { return discardMode; }
-    public CardImageResolver getImageResolver() { return imageResolver; }
-    public GameStateParser.Snapshot getSnapshot() { return snapshot; }
+    // ─────────────────────────────────────────────────────────────────────────
+    // Getters (used by child panels)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public GameClient getClient()                { return client; }
+    public int getMyPlayerIndex()                { return myPlayerIndex; }
+    public boolean isMyTurn()                    { return myTurn; }
+    public boolean isDiscardMode()               { return discardMode; }
+    public CardImageResolver getImageResolver()  { return imageResolver; }
+    public GameStateParser.Snapshot getSnapshot(){ return snapshot; }
+    public Stage getStage()                      { return stage; }
 }

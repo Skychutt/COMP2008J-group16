@@ -4,44 +4,54 @@ import com.monopolydeal.model.Player;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.TransferHandler;
-import javax.swing.TransferHandler.TransferSupport;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.Point;
-import java.awt.image.BufferedImage;
+import javafx.geometry.Insets;
+import javafx.geometry.Bounds;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Popup;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
 
 /**
- * Bottom player seat: fan-style hand cards with drag-to-play.
+ * Bottom player seat with hand cards, prompt area, and right-side shortcut dock.
  */
-public class PlayerPanel extends JPanel {
+public class PlayerPanel extends BorderPane {
+
     private static final int CARD_W = 118;
     private static final int CARD_H = 178;
-    private static final int DROP_ZONE_W = 170;
-    private static final int DROP_ZONE_H = 100;
-    /** Bank + Property + End Turn, with small gaps between. */
-    private static final int RIGHT_DOCK_H = DROP_ZONE_H * 3 + 24;
+    private static final int CARD_STEP = CARD_W - 18;
+    private static final int MIN_CARD_STEP = 18;
+    private static final int LEFT_INFO_W = 146;
+    private static final int DOCK_W = 132;
+    private static final int DOCK_H = 56;
 
     private final GameFrame mainFrame;
-    private final JLabel lblSeat;
-    private final JLabel lblActions;
-    private final JPanel handCanvas;
+    private final Label lblActionsTitle;
+    private final Label lblActions;
+    private final Label lblSetsTitle;
+    private final Label lblSets;
+    private final Label lblPrompt;
+    private final Popup hintPopup;
+    private final Pane handCanvas;
     private final ButtonDropZone bankDropZone;
     private final ButtonDropZone propertyDropZone;
     private final ImageActionButton btnEndTurn;
@@ -49,383 +59,399 @@ public class PlayerPanel extends JPanel {
     private IntConsumer bankDropHandler;
     private IntConsumer propertyDropHandler;
     private Runnable endTurnHandler;
-    private boolean gameOver;
-    private boolean discardMode;
-    private int discardRemaining;
-    private int lastActionsLeft = Integer.MIN_VALUE;
-    private boolean lastGameOver;
-    private boolean lastDiscardMode;
+
+    private Player displayedPlayer;
+    private boolean gameOver = false;
+    private boolean discardMode = false;
+    private boolean interactive = true;
 
     public PlayerPanel(GameFrame mainFrame) {
         this.mainFrame = mainFrame;
-        setOpaque(false);
-        setLayout(new BorderLayout(10, 6));
-        setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
-        setPreferredSize(new Dimension(1400, RIGHT_DOCK_H + 40));
+        setStyle("-fx-background-color: transparent; -fx-border-width: 0;");
+        setPadding(new Insets(8, 0, 0, 0));
 
-        lblSeat = new JLabel("Your Seat");
-        lblSeat.setFont(UITheme.FONT_SUBTITLE);
-        lblSeat.setForeground(new Color(250, 241, 209));
-        lblActions = new JLabel("Actions: 0 / 3");
-        lblActions.setFont(UITheme.FONT_BODY);
-        lblActions.setForeground(new Color(252, 239, 197));
+        lblActionsTitle = new Label("Steps Left");
+        lblActionsTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 21));
+        lblActionsTitle.setTextFill(UITheme.TEXT_MAIN);
 
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-        header.add(lblSeat, BorderLayout.WEST);
-        header.add(lblActions, BorderLayout.EAST);
-        add(header, BorderLayout.NORTH);
+        lblActions = new Label("0");
+        lblActions.setFont(Font.font("Segoe UI", FontWeight.BOLD, 38));
+        lblActions.setTextFill(UITheme.ACCENT_DARK);
 
-        handCanvas = new JPanel(null);
-        handCanvas.setOpaque(false);
-        handCanvas.setPreferredSize(new Dimension(1040, 220));
+        lblSetsTitle = new Label("Sets");
+        lblSetsTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 19));
+        lblSetsTitle.setTextFill(UITheme.TEXT_MAIN);
 
-        JScrollPane scroll = new JScrollPane(handCanvas);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(176, 142, 75, 120), 1, true));
-        scroll.getViewport().setOpaque(false);
-        scroll.setOpaque(false);
-        scroll.setPreferredSize(new Dimension(1040, 220));
-        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        lblSets = new Label("0");
+        lblSets.setFont(Font.font("Segoe UI", FontWeight.BOLD, 34));
+        lblSets.setTextFill(UITheme.ACCENT_DARK);
 
-        JPanel handWrapper = new JPanel(new BorderLayout());
-        handWrapper.setOpaque(false);
-        handWrapper.add(scroll, BorderLayout.CENTER);
-        add(handWrapper, BorderLayout.CENTER);
+        lblPrompt = new Label("Hint");
+        lblPrompt.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
+        lblPrompt.setTextFill(Color.rgb(240, 230, 205));
+        lblPrompt.setCursor(Cursor.HAND);
 
-        btnEndTurn = new ImageActionButton("End Turn.png", DROP_ZONE_W, DROP_ZONE_H);
-        btnEndTurn.setToolTipText("End Turn");
-        btnEndTurn.addActionListener(e -> {
-            if (gameOver || endTurnHandler == null) {
+        hintPopup = buildHintPopup(
+                "Play up to 3 cards each turn.\n" +
+                "Drag cards to the center to play them.\n" +
+                "Drag target actions onto an opponent.\n" +
+                "Drag money, action, or bankable property cards to Bank.\n" +
+                "Drag property cards to a color lane. Wilds must match the lane.\n" +
+                "Hover over an opponent to preview their property area.\n" +
+                "End your turn with 7 cards or fewer."
+        );
+        lblPrompt.setOnMouseClicked(e -> {
+            if (e.getButton() != MouseButton.PRIMARY || discardMode) {
                 return;
             }
-            endTurnHandler.run();
+            if (hintPopup.isShowing()) {
+                hintPopup.hide();
+            } else {
+                Bounds bounds = lblPrompt.localToScreen(lblPrompt.getBoundsInLocal());
+                if (bounds != null && lblPrompt.getScene() != null) {
+                    hintPopup.show(lblPrompt.getScene().getWindow(), bounds.getMaxX() + 10, bounds.getMinY() - 8);
+                }
+            }
         });
-        updateEndTurnButtonStyle(0, false, false);
 
-        bankDropZone = new ButtonDropZone("Bank.png", DROP_ZONE_W, DROP_ZONE_H);
+        VBox leftInfo = new VBox(2, lblActionsTitle, lblActions, lblSetsTitle, lblSets, lblPrompt);
+        leftInfo.setAlignment(Pos.CENTER_LEFT);
+        leftInfo.setPadding(new Insets(0, 8, 0, 0));
+        leftInfo.setPrefWidth(LEFT_INFO_W);
+        leftInfo.setMinWidth(LEFT_INFO_W);
+        setLeft(leftInfo);
+        BorderPane.setAlignment(leftInfo, Pos.CENTER_LEFT);
+
+        handCanvas = new Pane();
+        handCanvas.setStyle("-fx-background-color: transparent;");
+        handCanvas.setPrefHeight(210);
+        setCenter(handCanvas);
+        BorderPane.setMargin(handCanvas, new Insets(0, 12, 0, 12));
+
+        btnEndTurn = new ImageActionButton("End Turn.png", DOCK_W, DOCK_H, true);
+        btnEndTurn.setImageOffsetX(-1);
+        btnEndTurn.setOnAction(e -> {
+            if (!gameOver && endTurnHandler != null) {
+                endTurnHandler.run();
+            }
+        });
+
+        bankDropZone = new ButtonDropZone("Bank.png", DOCK_W, DOCK_H);
         bankDropZone.setImageOffsetY(6);
-        bankDropZone.setTransferHandler(new BankDropTransferHandler());
-        bankDropZone.setToolTipText("Drag money, action, or property cards here to bank as money");
 
-        propertyDropZone = new ButtonDropZone("Property.png", DROP_ZONE_W, DROP_ZONE_H);
-        propertyDropZone.setTransferHandler(new PropertyDropTransferHandler());
-        propertyDropZone.setToolTipText("Drag property cards here to play");
+        propertyDropZone = new ButtonDropZone("Property.png", DOCK_W, DOCK_H);
 
-        JPanel rightDock = new JPanel();
-        rightDock.setLayout(new javax.swing.BoxLayout(rightDock, javax.swing.BoxLayout.Y_AXIS));
-        rightDock.setOpaque(false);
-        Dimension dockSize = new Dimension(DROP_ZONE_W + 8, RIGHT_DOCK_H);
-        rightDock.setPreferredSize(dockSize);
-        rightDock.setMinimumSize(dockSize);
-        rightDock.setMaximumSize(new Dimension(DROP_ZONE_W + 8, RIGHT_DOCK_H));
-        rightDock.setBorder(BorderFactory.createEmptyBorder(0, 8, 4, 0));
-        alignDockButton(bankDropZone);
-        alignDockButton(propertyDropZone);
-        alignDockButton(btnEndTurn);
-        rightDock.add(bankDropZone);
-        rightDock.add(javax.swing.Box.createVerticalStrut(8));
-        rightDock.add(propertyDropZone);
-        rightDock.add(javax.swing.Box.createVerticalStrut(8));
-        rightDock.add(btnEndTurn);
-        add(rightDock, BorderLayout.EAST);
+        wireDropZones();
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        VBox rightDock = new VBox(8, spacer, bankDropZone, propertyDropZone, btnEndTurn);
+        rightDock.setAlignment(Pos.BOTTOM_CENTER);
+        rightDock.setPadding(new Insets(0, 0, 6, 0));
+        rightDock.setPrefWidth(DOCK_W + 4);
+        rightDock.setMinWidth(DOCK_W + 4);
+        rightDock.setPrefHeight(210);
+        rightDock.setFillWidth(false);
+        setRight(rightDock);
+        BorderPane.setAlignment(rightDock, Pos.BOTTOM_RIGHT);
+
+        widthProperty().addListener((obs, oldWidth, newWidth) -> {
+            if (displayedPlayer != null) {
+                renderHand(displayedPlayer);
+            }
+        });
+
+        updateEndTurnButtonStyle(0, false, false, true);
     }
 
-    public void setBankDropHandler(IntConsumer bankDropHandler) {
-        this.bankDropHandler = bankDropHandler;
+    public void setBankDropHandler(IntConsumer h) {
+        this.bankDropHandler = h;
     }
 
-    public void setPropertyDropHandler(IntConsumer propertyDropHandler) {
-        this.propertyDropHandler = propertyDropHandler;
+    public void setPropertyDropHandler(IntConsumer h) {
+        this.propertyDropHandler = h;
     }
 
-    public void setEndTurnHandler(Runnable endTurnHandler) {
-        this.endTurnHandler = endTurnHandler;
+    public void setEndTurnHandler(Runnable h) {
+        this.endTurnHandler = h;
     }
 
     public void updatePlayerView(Player current, boolean gameOver, boolean discardMode, int discardRemaining) {
+        updatePlayerView(current, gameOver, discardMode, discardRemaining, true);
+    }
+
+    public void updatePlayerView(Player current, boolean gameOver, boolean discardMode,
+                                 int discardRemaining, boolean interactive) {
         if (current == null) {
             return;
         }
+
         this.gameOver = gameOver;
         this.discardMode = discardMode;
-        this.discardRemaining = Math.max(0, discardRemaining);
-        if (discardMode) {
-            lblSeat.setText(current.getName() + " - Drag to center to discard " + this.discardRemaining + " card(s)");
-        } else {
-            lblSeat.setText(current.getName()
-                    + " - Drag to center to play actions, bank (right) for money, property (right) for land cards");
+        this.interactive = interactive;
+        this.displayedPlayer = current;
+
+        lblActions.setText(String.valueOf(current.getActions()));
+        lblSets.setText(String.valueOf(current.getPropertyArea().countCompleteSets()));
+        lblPrompt.setText(discardMode ? "Discard" : "Hint");
+        if (discardMode && hintPopup.isShowing()) {
+            hintPopup.hide();
         }
         refreshDropZoneHighlight(false, false);
-        lblActions.setText("Actions: " + current.getActions() + " / 3");
-        updateEndTurnButtonStyle(current.getActions(), gameOver, discardMode);
+        updateEndTurnButtonStyle(current.getActions(), gameOver, discardMode, interactive);
         renderHand(current);
     }
 
-    private static void alignDockButton(java.awt.Component button) {
-        if (button instanceof JComponent) {
-            ((JComponent) button).setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-        }
-    }
-
-    private void refreshDropZoneHighlight(boolean bankHovered, boolean propertyHovered) {
-        boolean enabled = !gameOver && !discardMode;
-        bankDropZone.setHighlight(enabled && bankHovered);
-        bankDropZone.setHoverText(enabled && bankHovered ? "Move to Bank" : null);
-        propertyDropZone.setHighlight(enabled && propertyHovered);
-        propertyDropZone.setHoverText(enabled && propertyHovered ? "Move to Property" : null);
-    }
-
-    private void updateEndTurnButtonStyle(int actionsLeft, boolean gameOver, boolean discardMode) {
-        if (actionsLeft == lastActionsLeft && gameOver == lastGameOver && discardMode == lastDiscardMode) {
-            return;
-        }
-
-        if (gameOver || discardMode) {
-            btnEndTurn.setEnabled(false);
-            btnEndTurn.setVisualState(ImageActionButton.VisualState.DISABLED);
-        } else if (actionsLeft > 0) {
-            btnEndTurn.setEnabled(true);
-            btnEndTurn.setVisualState(ImageActionButton.VisualState.WAITING);
-        } else {
-            btnEndTurn.setEnabled(true);
-            btnEndTurn.setVisualState(ImageActionButton.VisualState.ENABLED);
-        }
-
-        lastActionsLeft = actionsLeft;
-        lastGameOver = gameOver;
-        lastDiscardMode = discardMode;
-    }
-
     private void renderHand(Player current) {
-        handCanvas.removeAll();
+        handCanvas.getChildren().clear();
 
         List<Card> cards = new ArrayList<>(current.getHand().getCards());
         if (cards.isEmpty()) {
-            JLabel empty = new JLabel("No cards in hand");
-            empty.setFont(UITheme.FONT_BODY);
-            empty.setForeground(new Color(250, 241, 209));
-            empty.setBounds(12, 24, 180, 24);
-            handCanvas.add(empty);
-            handCanvas.revalidate();
-            handCanvas.repaint();
             return;
         }
 
-        // Keep cards mostly fully visible with a light fan so the hand stays readable.
-        int step = CARD_W - 10;
-        int n = cards.size();
-        int totalW = CARD_W + Math.max(0, n - 1) * step;
-        int canvasW = Math.max(1040, totalW + 80);
-        handCanvas.setPreferredSize(new Dimension(canvasW, 220));
+        double canvasW = Math.max(420, getHandAreaWidth());
+        handCanvas.setPrefWidth(canvasW);
 
-        int startX = (canvasW - totalW) / 2;
-        double middle = (n - 1) / 2.0;
-        for (int i = 0; i < n; i++) {
-            Card card = cards.get(i);
-            int x = startX + i * step;
-            // Keep most of each card visible so the hand reads like a fanned row, not a stack.
-            double d = Math.abs(i - middle);
-            int y = 14 + (int) (d * d * 2.2);
-            JLabel cardLabel = buildDraggableCardLabel(current, card);
-            cardLabel.setBounds(x, y, CARD_W, CARD_H);
-            handCanvas.add(cardLabel);
+        double step = CARD_STEP;
+        if (cards.size() > 1) {
+            step = Math.min(CARD_STEP, (canvasW - CARD_W - 8) / (cards.size() - 1.0));
+            step = Math.max(MIN_CARD_STEP, step);
         }
 
-        handCanvas.revalidate();
-        handCanvas.repaint();
+        double totalW = CARD_W + Math.max(0, cards.size() - 1) * step;
+        double startX = Math.max(0, (canvasW - totalW) / 2.0);
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.get(i);
+            int x = (int) Math.round(startX + i * step);
+            int y = 12 + Math.abs(i - ((cards.size() - 1) / 2)) * 4;
+            buildDraggableCardView(current, card, x, y);
+        }
     }
 
-    private JLabel buildDraggableCardLabel(Player current, Card card) {
-        JLabel label = new JLabel(mainFrame.getImageResolver().getCardIcon(card, CARD_W, CARD_H));
-        label.setOpaque(true);
-        label.setBackground(new Color(255, 255, 255, 18));
-        label.setBorder(BorderFactory.createLineBorder(new Color(246, 229, 173), 1, true));
-        label.setToolTipText(card.getName() + " (" + card.getValue() + "M)");
+    private void buildDraggableCardView(Player current, Card card, int x, int y) {
+        ImageView iv = new ImageView(mainFrame.getImageResolver().getCardIcon(card, CARD_W, CARD_H));
+        iv.setFitWidth(CARD_W);
+        iv.setFitHeight(CARD_H);
+        iv.setPreserveRatio(false);
 
         boolean canPlay = mainFrame.getGameLogic().getRuleValidator().canPlayCard(current, card);
-        boolean canBank = current.getActions() > 0
-                && (!(card instanceof PropertyCard) || ((PropertyCard) card).canBankAsMoney());
-        boolean canPlaceProperty = card instanceof PropertyCard && canPlay;
-        boolean draggable = discardMode || canPlay || canBank;
+        boolean canBank = mainFrame.canBankCard(card.getId());
+        boolean draggable = interactive && (discardMode || canPlay || canBank);
 
-        label.setEnabled(draggable);
+        StackPane wrapper = new StackPane(iv);
+        wrapper.setPrefSize(CARD_W, CARD_H);
+        wrapper.setMaxSize(CARD_W, CARD_H);
+        wrapper.setLayoutX(x);
+        wrapper.setLayoutY(y);
+        wrapper.setStyle(
+                "-fx-border-color: " + borderColor(card, draggable, canPlay, canBank) + ";" +
+                "-fx-border-width: 1px;" +
+                "-fx-border-radius: 4px;" +
+                "-fx-background-color: rgba(255,255,255,0.02);"
+        );
+
         if (!draggable) {
-            label.setBorder(BorderFactory.createLineBorder(new Color(130, 130, 130), 1, true));
-            label.setCursor(Cursor.getDefaultCursor());
+            wrapper.setOpacity(0.55);
+            wrapper.setCursor(Cursor.DEFAULT);
         } else {
-            label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            if (discardMode) {
-                label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Drag to center to discard");
-            } else if (canPlaceProperty && canBank) {
-                label.setBorder(BorderFactory.createLineBorder(new Color(76, 130, 68), 2, true));
-                label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Property zone, center, or Bank");
-            } else if (canPlaceProperty) {
-                label.setBorder(BorderFactory.createLineBorder(new Color(76, 130, 68), 2, true));
-                label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Drag to Property zone or center");
-            } else if (!canPlay && canBank) {
-                label.setBorder(BorderFactory.createLineBorder(UITheme.BANK_ZONE_BORDER, 2, true));
-                label.setToolTipText(card.getName() + " (" + card.getValue() + "M) - Bank only");
-            }
-            CardDragTransferHandler handler = new CardDragTransferHandler(card.getId());
-            label.setTransferHandler(handler);
-            label.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    // Use the card image itself as the drag image so the card follows the mouse.
-                    handler.prepareDragImage(label, e);
-                }
-
-                @Override
-                public void mouseReleased(MouseEvent e) {
-                    handler.clearDragImage();
-                }
-            });
-            label.addMouseMotionListener(new MouseAdapter() {
-                @Override
-                public void mouseDragged(MouseEvent e) {
-                    JComponent src = (JComponent) e.getSource();
-                    src.getTransferHandler().exportAsDrag(src, e, TransferHandler.COPY);
-                }
-            });
+            wrapper.setCursor(Cursor.HAND);
+            wireCardHover(wrapper);
+            wireCardDrag(wrapper, iv, card.getId());
         }
-        return label;
+
+        handCanvas.getChildren().add(wrapper);
     }
 
-    private static class CardDragTransferHandler extends TransferHandler {
-        private final int cardId;
+    private void wireCardHover(StackPane wrapper) {
+        wrapper.setOnMouseEntered(e -> {
+            wrapper.toFront();
+            wrapper.setScaleX(1.25);
+            wrapper.setScaleY(1.25);
+        });
+        wrapper.setOnMouseExited(e -> {
+            wrapper.setScaleX(1.0);
+            wrapper.setScaleY(1.0);
+        });
+    }
 
-        CardDragTransferHandler(int cardId) {
-            this.cardId = cardId;
-        }
+    private void wireCardDrag(StackPane wrapper, ImageView imageView, int cardId) {
+        wrapper.setOnDragDetected(e -> {
+            Dragboard db = wrapper.startDragAndDrop(TransferMode.COPY);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(String.valueOf(cardId));
 
-        void prepareDragImage(JLabel label, MouseEvent e) {
-            if (label == null || label.getIcon() == null) {
+            SnapshotParameters params = new SnapshotParameters();
+            params.setFill(Color.TRANSPARENT);
+            WritableImage snapshot = imageView.snapshot(params, null);
+            db.setDragView(snapshot, snapshot.getWidth() / 2.0, snapshot.getHeight() / 2.0);
+            db.setContent(content);
+            e.consume();
+        });
+    }
+
+    private void wireDropZones() {
+        bankDropZone.setOnDragOver(e -> {
+            if (gameOver || discardMode || !interactive) {
+                e.consume();
                 return;
             }
-            setDragImage(createDragImage(label));
-            // Center the hotspot so the card feels "pinched" instead of grabbed from a corner.
-            setDragImageOffset(new Point(label.getWidth() / 2, label.getHeight() / 2));
-        }
-
-        void clearDragImage() {
-            setDragImage(null);
-        }
-
-        /**
-         * Paint the card label itself so the drag image matches the hand card exactly.
-         */
-        private java.awt.Image createDragImage(JLabel label) {
-            int width = Math.max(1, label.getWidth());
-            int height = Math.max(1, label.getHeight());
-            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2 = image.createGraphics();
-            label.paint(g2);
-            g2.dispose();
-            return image;
-        }
-
-        @Override
-        protected Transferable createTransferable(javax.swing.JComponent c) {
-            return new StringSelection(String.valueOf(cardId));
-        }
-
-        @Override
-        public int getSourceActions(javax.swing.JComponent c) {
-            return COPY;
-        }
-    }
-
-    private class BankDropTransferHandler extends TransferHandler {
-        @Override
-        public boolean canImport(TransferSupport support) {
-            if (gameOver || discardMode || !support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                refreshDropZoneHighlight(false, false);
-                return false;
-            }
-            Card card = findDraggedCard(support);
-            boolean ok = card != null && canDropOnBank(card);
-            refreshDropZoneHighlight(ok, false);
-            return ok;
-        }
-
-        @Override
-        public boolean importData(TransferSupport support) {
-            if (!canImport(support)) {
-                return false;
-            }
-            try {
-                int cardId = parseCardId(support);
-                if (bankDropHandler != null) {
-                    bankDropHandler.accept(cardId);
+            if (e.getDragboard().hasString()) {
+                Card card = findDraggedCard(e.getDragboard().getString());
+                boolean ok = card != null && mainFrame.canBankCard(card.getId());
+                if (ok) {
+                    e.acceptTransferModes(TransferMode.COPY);
                 }
-                return true;
-            } catch (Exception ignored) {
-                return false;
-            } finally {
-                refreshDropZoneHighlight(false, false);
+                refreshDropZoneHighlight(ok, false);
             }
-        }
-    }
-
-    private class PropertyDropTransferHandler extends TransferHandler {
-        @Override
-        public boolean canImport(TransferSupport support) {
-            if (gameOver || discardMode || !support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                refreshDropZoneHighlight(false, false);
-                return false;
-            }
-            Card card = findDraggedCard(support);
-            boolean ok = card instanceof PropertyCard;
-            refreshDropZoneHighlight(false, ok);
-            return ok;
-        }
-
-        @Override
-        public boolean importData(TransferSupport support) {
-            if (!canImport(support)) {
-                return false;
-            }
-            try {
-                int cardId = parseCardId(support);
-                if (propertyDropHandler != null) {
-                    propertyDropHandler.accept(cardId);
+            e.consume();
+        });
+        bankDropZone.setOnDragExited(e -> {
+            refreshDropZoneHighlight(false, false);
+            e.consume();
+        });
+        bankDropZone.setOnDragDropped(e -> {
+            refreshDropZoneHighlight(false, false);
+            boolean success = false;
+            if (!gameOver && !discardMode && interactive && e.getDragboard().hasString()) {
+                try {
+                    int cardId = Integer.parseInt(e.getDragboard().getString().trim());
+                    if (bankDropHandler != null) {
+                        bankDropHandler.accept(cardId);
+                        success = true;
+                    }
+                } catch (NumberFormatException ignored) {
                 }
-                return true;
-            } catch (Exception ignored) {
-                return false;
-            } finally {
-                refreshDropZoneHighlight(false, false);
             }
+            e.setDropCompleted(success);
+            e.consume();
+        });
+
+        propertyDropZone.setOnDragOver(e -> {
+            if (gameOver || discardMode || !interactive) {
+                e.consume();
+                return;
+            }
+            if (e.getDragboard().hasString()) {
+                Card card = findDraggedCard(e.getDragboard().getString());
+                boolean ok = card instanceof PropertyCard;
+                if (ok) {
+                    e.acceptTransferModes(TransferMode.COPY);
+                }
+                refreshDropZoneHighlight(false, ok);
+            }
+            e.consume();
+        });
+        propertyDropZone.setOnDragExited(e -> {
+            refreshDropZoneHighlight(false, false);
+            e.consume();
+        });
+        propertyDropZone.setOnDragDropped(e -> {
+            refreshDropZoneHighlight(false, false);
+            boolean success = false;
+            if (!gameOver && !discardMode && interactive && e.getDragboard().hasString()) {
+                try {
+                    int cardId = Integer.parseInt(e.getDragboard().getString().trim());
+                    if (propertyDropHandler != null) {
+                        propertyDropHandler.accept(cardId);
+                        success = true;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
+    }
+
+    private void refreshDropZoneHighlight(boolean bank, boolean prop) {
+        boolean enabled = !gameOver && !discardMode && interactive;
+        bankDropZone.setHighlight(enabled && bank);
+        bankDropZone.setHoverText(null);
+        propertyDropZone.setHighlight(enabled && prop);
+        propertyDropZone.setHoverText(null);
+    }
+
+    private void updateEndTurnButtonStyle(int actionsLeft, boolean gameOver,
+                                          boolean discardMode, boolean interactive) {
+        if (gameOver || discardMode || !interactive) {
+            btnEndTurn.setVisualState(ImageActionButton.VisualState.DISABLED);
+        } else if (actionsLeft > 0) {
+            btnEndTurn.setVisualState(ImageActionButton.VisualState.WAITING);
+        } else {
+            btnEndTurn.setVisualState(ImageActionButton.VisualState.ENABLED);
         }
     }
 
-    private Card findDraggedCard(TransferSupport support) {
+    private Card findDraggedCard(String data) {
+        if (data == null) {
+            return null;
+        }
         try {
-            int cardId = parseCardId(support);
+            int cardId = Integer.parseInt(data.trim());
             Player current = mainFrame.getGameManager().getCurrentPlayer();
             if (current == null) {
                 return null;
             }
             return current.getHand().findCard(cardId);
-        } catch (Exception ex) {
+        } catch (NumberFormatException e) {
             return null;
         }
     }
 
-    private static int parseCardId(TransferSupport support) throws Exception {
-        String cardIdText = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
-        return Integer.parseInt(cardIdText.trim());
+    private String borderColor(Card card, boolean draggable, boolean canPlay, boolean canBank) {
+        if (!draggable) {
+            return "rgba(130,130,130,0.8)";
+        }
+        if (discardMode) {
+            return "rgba(246,229,173,0.8)";
+        }
+        if (card instanceof PropertyCard && canPlay) {
+            return "rgba(76,130,68,0.95)";
+        }
+        if (canBank) {
+            return UITheme.toCssHex(UITheme.BANK_ZONE_BORDER);
+        }
+        return canPlay ? "rgba(246,229,173,0.9)" : "rgba(130,130,130,0.8)";
     }
 
-    private static boolean canDropOnBank(Card card) {
-        if (card == null) {
-            return false;
+    private double getHandAreaWidth() {
+        double currentWidth = getWidth();
+        if (currentWidth <= 0) {
+            currentWidth = getPrefWidth();
         }
-        if (!(card instanceof PropertyCard)) {
-            return true;
-        }
-        return ((PropertyCard) card).canBankAsMoney();
+        double reserved = LEFT_INFO_W + DOCK_W + 44;
+        return Math.max(420, currentWidth - reserved);
+    }
+
+    private Popup buildHintPopup(String text) {
+        Label content = new Label(text);
+        content.setWrapText(true);
+        content.setMaxWidth(290);
+        content.setTextFill(UITheme.TEXT_MAIN);
+        content.setFont(Font.font("Segoe UI", FontWeight.BOLD, 17));
+        content.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-padding: 12 14 12 14;" +
+                "-fx-line-spacing: 1px;"
+        );
+
+        StackPane bubble = new StackPane(content);
+        bubble.setStyle(
+                "-fx-background-color: rgba(248,243,229,0.97);" +
+                "-fx-border-color: rgba(96,74,42,0.75);" +
+                "-fx-border-width: 1px;" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-padding: 0;"
+        );
+
+        Popup popup = new Popup();
+        popup.getContent().add(bubble);
+        popup.setAutoHide(true);
+        popup.setAutoFix(true);
+        popup.setHideOnEscape(true);
+        return popup;
     }
 }
-

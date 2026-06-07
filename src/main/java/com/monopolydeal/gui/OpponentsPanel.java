@@ -1,144 +1,127 @@
 package com.monopolydeal.gui;
 
 import com.monopolydeal.model.Player;
-import com.monopolydeal.model.PropertySet;
 import com.monopolydeal.model.card.Card;
-import com.monopolydeal.model.card.PropertyCard;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Top row seats for opponents.
+ * Top row of opponent seats.
  */
-public class OpponentsPanel extends JPanel {
+public class OpponentsPanel extends VBox {
 
     private final GameFrame mainFrame;
-    private final JPanel seatRow;
+    private final HBox seatRow;
 
     public OpponentsPanel(GameFrame mainFrame) {
         this.mainFrame = mainFrame;
-        setOpaque(false);
-        setLayout(new BorderLayout(0, 4));
+        setStyle("-fx-background-color: transparent;");
+        setSpacing(4);
 
-        JLabel title = new JLabel("Opponents");
+        Label title = new Label("Opponents");
         title.setFont(UITheme.FONT_SUBTITLE);
-        title.setForeground(new java.awt.Color(248, 233, 191));
-        add(title, BorderLayout.NORTH);
+        title.setTextFill(Color.rgb(248, 233, 191));
+        getChildren().add(title);
 
-        seatRow = new JPanel(new GridLayout(1, 1, 12, 0));
-        seatRow.setOpaque(false);
-        add(seatRow, BorderLayout.CENTER);
+        seatRow = new HBox(12);
+        seatRow.setAlignment(Pos.TOP_LEFT);
+        getChildren().add(seatRow);
     }
 
     public void updateOpponents(List<Player> players, Player current) {
-        seatRow.removeAll();
+        seatRow.getChildren().clear();
 
         List<Player> opponents = new ArrayList<>();
-        for (Player player : players) {
-            if (player != current) {
-                opponents.add(player);
-            }
+        for (Player p : players) {
+            if (p != current) opponents.add(p);
         }
-
-        int columns = Math.max(1, opponents.size());
-        seatRow.setLayout(new GridLayout(1, columns, 12, 0));
 
         if (opponents.isEmpty()) {
-            JLabel empty = new JLabel("(No opponents)");
+            Label empty = new Label("(No opponents)");
             empty.setFont(UITheme.FONT_BODY);
-            empty.setForeground(new java.awt.Color(248, 233, 191));
-            seatRow.add(empty);
+            empty.setTextFill(Color.rgb(248, 233, 191));
+            seatRow.getChildren().add(empty);
         } else {
-            for (Player opponent : opponents) {
-                seatRow.add(buildSeatPanel(opponent));
+            for (Player opp : opponents) {
+                seatRow.getChildren().add(buildSeatPanel(opp));
             }
         }
-
-        seatRow.revalidate();
-        seatRow.repaint();
     }
 
-    private JPanel buildSeatPanel(Player opponent) {
-        JPanel seat = new JPanel();
-        seat.setLayout(new BoxLayout(seat, BoxLayout.Y_AXIS));
-        seat.setBackground(UITheme.PANEL_BG);
-        seat.setOpaque(true);
-        seat.setBorder(UITheme.createSectionBorder(opponent.getName()));
+    // ─────────────────────────────────────────────────────────────────────────
 
-        JLabel info = new JLabel("Hand " + opponent.getHand().size() + " | Sets " + opponent.getPropertyArea().countCompleteSets());
+    private VBox buildSeatPanel(Player opponent) {
+        VBox seat = new VBox(4);
+        seat.setStyle(
+            "-fx-background-color: " + UITheme.toCssRgba(UITheme.PANEL_BG) + ";" +
+            "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
+            "-fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;" +
+            "-fx-padding: 6 8 6 8;"
+        );
+        seat.setPrefWidth(220);
+        seat.setMinWidth(180);
+
+        // Header: name + brief stats
+        Label header = new Label(opponent.getName());
+        header.setFont(UITheme.FONT_SUBTITLE);
+        header.setTextFill(UITheme.TEXT_MAIN);
+
+        Label info = new Label(
+            "Hand: " + opponent.getHand().size() +
+            "  |  Sets: " + opponent.getPropertyArea().countCompleteSets()
+        );
         info.setFont(UITheme.FONT_SMALL);
-        info.setForeground(UITheme.TEXT_SUB);
-        info.setAlignmentX(CENTER_ALIGNMENT);
-        seat.add(info);
-        seat.add(Box.createVerticalStrut(4));
+        info.setTextFill(UITheme.TEXT_SUB);
+        seat.getChildren().addAll(header, info);
 
-        JPanel bankRow = new JPanel(new BorderLayout(6, 0));
-        bankRow.setOpaque(false);
-        bankRow.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(UITheme.BORDER), "Bank"));
-
-        JLabel bankTotal = new JLabel(opponent.getBankArea().total() + "M");
-        bankTotal.setFont(UITheme.FONT_BANK_TOTAL);
-        bankTotal.setForeground(UITheme.TEXT_MAIN);
-        bankRow.add(bankTotal, BorderLayout.WEST);
-
-        JPanel bankCards = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        bankCards.setOpaque(false);
+        // Bank section
+        VBox bankSection = new VBox(2);
+        bankSection.setStyle(UITheme.softPanelStyle());
+        Label bankTitle = new Label("Bank: " + opponent.getBankArea().total() + "M");
+        bankTitle.setFont(UITheme.FONT_SUBTITLE);
+        bankTitle.setTextFill(UITheme.TEXT_MAIN);
+        FlowPane bankCards = new FlowPane(3, 0);
         addCardsPreview(bankCards, opponent.getBankArea().getMoney(), 34, 52, 4);
-        bankRow.add(bankCards, BorderLayout.CENTER);
-        seat.add(bankRow);
-
-        JPanel propsRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-        propsRow.setOpaque(false);
-        propsRow.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(UITheme.BORDER), "Properties"));
-        List<Card> propertyCards = collectPropertyCards(opponent);
-        addCardsPreview(propsRow, propertyCards, 34, 52, 6);
-        seat.add(propsRow);
+        bankSection.getChildren().addAll(bankTitle, bankCards);
+        seat.getChildren().add(bankSection);
 
         return seat;
     }
 
-    private List<Card> collectPropertyCards(Player player) {
-        List<Card> cards = new ArrayList<>();
-        for (PropertySet set : player.getPropertyArea().getSets()) {
-            for (PropertyCard card : set.getCards()) {
-                cards.add(card);
-            }
-        }
-        return cards;
-    }
-
-    private void addCardsPreview(JPanel row, List<? extends Card> cards, int iconW, int iconH, int maxCount) {
+    private void addCardsPreview(FlowPane row, List<? extends Card> cards, int w, int h, int maxCount) {
         if (cards == null || cards.isEmpty()) {
-            JLabel empty = new JLabel("-");
+            Label empty = new Label("-");
             empty.setFont(UITheme.FONT_SMALL);
-            empty.setForeground(UITheme.TEXT_SUB);
-            row.add(empty);
+            empty.setTextFill(UITheme.TEXT_SUB);
+            row.getChildren().add(empty);
             return;
         }
-
         int count = Math.min(cards.size(), maxCount);
         for (int i = 0; i < count; i++) {
             Card card = cards.get(i);
-            JLabel icon = new JLabel(mainFrame.getImageResolver().getCardIcon(card, iconW, iconH));
-            icon.setToolTipText(card.getName());
-            row.add(icon);
+            ImageView iv = new ImageView(mainFrame.getImageResolver().getCardIcon(card, w, h));
+            iv.setFitWidth(w);
+            iv.setFitHeight(h);
+            iv.setPreserveRatio(false);
+            Tooltip.install(iv, new Tooltip(card.getName()));
+            row.getChildren().add(iv);
         }
-
         if (cards.size() > maxCount) {
-            JLabel more = new JLabel("+" + (cards.size() - maxCount));
+            Label more = new Label("+" + (cards.size() - maxCount));
             more.setFont(UITheme.FONT_SMALL);
-            more.setForeground(UITheme.TEXT_SUB);
-            row.add(more);
+            more.setTextFill(UITheme.TEXT_SUB);
+            row.getChildren().add(more);
         }
     }
 }
-

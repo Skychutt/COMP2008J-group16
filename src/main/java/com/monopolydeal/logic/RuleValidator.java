@@ -131,19 +131,11 @@ public class RuleValidator {
                 continue;
             }
             ActionCard action = (ActionCard) c;
-            if (isStandardRentCard(action) && hasRentableSetForCard(player, action)) {
+            if (isRentCard(action) && hasRentableSetForCard(player, action)) {
                 return true;
             }
         }
         return false;
-    }
-
-    private boolean isStandardRentCard(ActionCard card) {
-        if (!isRentCard(card)) {
-            return false;
-        }
-        String name = card.getName();
-        return name != null && !name.contains("Any");
     }
 
     private boolean hasRentableSetForCard(Player player, ActionCard rentCard) {

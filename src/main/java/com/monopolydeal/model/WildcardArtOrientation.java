@@ -17,12 +17,12 @@ public final class WildcardArtOrientation {
     static {
         map("Wild Red/Yellow", PropertyType.YELLOW, PropertyType.RED);
         map("Wild Blue/Green", PropertyType.BLUE, PropertyType.GREEN);
-        map("Wild Green/Black", PropertyType.BLACK, PropertyType.GREEN);
+        map("Wild Green/Black", PropertyType.GREEN, PropertyType.BLACK);
         map("Wild Brown/LightBlue", PropertyType.LIGHTBLUE, PropertyType.BROWN);
         map("Wild LightBlue/Brown", PropertyType.LIGHTBLUE, PropertyType.BROWN);
-        map("Wild LightBlue/Black", PropertyType.BLACK, PropertyType.LIGHTBLUE);
+        map("Wild LightBlue/Black", PropertyType.LIGHTBLUE, PropertyType.BLACK);
         map("Wild Purple/Orange", PropertyType.ORANGE, PropertyType.PURPLE);
-        map("Wild Black/LightGreen", PropertyType.BLACK, PropertyType.LIGHTGREEN);
+        map("Wild Black/LightGreen", PropertyType.LIGHTGREEN, PropertyType.BLACK);
     }
 
     private static void map(String name, PropertyType top, PropertyType bottom) {

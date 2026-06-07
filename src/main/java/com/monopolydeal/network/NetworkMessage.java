@@ -19,6 +19,10 @@ public class NetworkMessage {
     public static final String END_TURN     = "END_TURN";
     public static final String DISCARD      = "DISCARD";
 
+    // Keep-alive heartbeat (modelled after ENG-19)
+    public static final String PING         = "PING";
+    public static final String PONG         = "PONG";
+
     private final String type;
     private final String data;
     public NetworkMessage(String type, String data) {

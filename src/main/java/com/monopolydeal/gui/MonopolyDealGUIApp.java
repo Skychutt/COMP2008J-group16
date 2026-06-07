@@ -1,33 +1,52 @@
 package com.monopolydeal.gui;
 
+import com.monopolydeal.ai.AIPlayerBrain;
+import com.monopolydeal.enums.PlayerType;
 import com.monopolydeal.logic.GameLogic;
 import com.monopolydeal.model.Deck;
 import com.monopolydeal.model.GameManager;
 
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import java.util.ArrayList;
+
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.stage.Stage;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.List;
 
 /**
- * GUI entry point: home screen first, then local hot-seat game session.
+ * JavaFX application entry point. Launches the home screen on the primary Stage.
  */
-public class MonopolyDealGUIApp {
+public class MonopolyDealGUIApp extends Application {
+
+    @Override
+    public void start(Stage primaryStage) {
+        // Prevent JavaFX from auto-exiting when the home stage is temporarily hidden
+        // while the game stage is being created.
+        Platform.setImplicitExit(false);
+        BackgroundMusicManager.getInstance().start();
+        MainMenuFrame.createAndShow(primaryStage);
+    }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            applySystemLookAndFeel();
-            MainMenuFrame.createAndShow();
-        });
+        launch(args);
     }
 
     /**
-     * Starts local hot-seat game after setup on the main menu (names already chosen).
+     * Starts a local hot-seat game after setup is complete.
+     *
+     * @param homeFrame    the home-screen wrapper (its {@code showHomeAgain()} is called on exit)
+     * @param playerCount  number of players (2–5)
+     * @param playerNames  player display names
      */
-    public static void startLocalGame(JFrame homeFrame, int playerCount, java.util.List<String> playerNames) {
+    public static void startLocalGame(MainMenuFrame homeFrame,
+                                      int playerCount,
+                                      List<String> playerNames) {
         if (playerCount < 2 || playerCount > 5) {
-            if (homeFrame != null) {
-                homeFrame.setVisible(true);
-            }
+            homeFrame.showHomeAgain();
             return;
         }
 
@@ -40,15 +59,86 @@ public class MonopolyDealGUIApp {
         GameLogic logic = new GameLogic(gameManager);
         logic.getActionHandler().setUseDialogInput(true);
 
-        GameFrame frame = new GameFrame(gameManager, logic, homeFrame);
-        frame.setVisible(true);
-        logic.startGame();
+        Stage gameStage = new Stage();
+        Runnable homeCallback = homeFrame::showHomeAgain;
+
+        try {
+            GameFrame gameFrame = new GameFrame(gameManager, logic, gameStage, homeCallback);
+            // Show the game stage BEFORE hiding home — keeps window count > 0 at all times,
+            // preventing JavaFX implicit-exit from firing when the home stage is hidden.
+            gameFrame.show();
+            homeFrame.getStage().hide();
+            logic.startGame();
+        } catch (Exception e) {
+            e.printStackTrace();
+            gameStage.close();
+            homeFrame.getStage().show();
+            homeFrame.getStage().toFront();
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Failed to start game");
+            alert.setHeaderText(e.getClass().getSimpleName() + ": " + e.getMessage());
+            alert.setContentText(sw.toString().length() > 800
+                    ? sw.toString().substring(0, 800) + "..."
+                    : sw.toString());
+            alert.initOwner(homeFrame.getStage());
+            alert.showAndWait();
+        }
     }
 
-    private static void applySystemLookAndFeel() {
+    /**
+     * Starts a single-player game against one or more AI opponents.
+     */
+    public static void startAiGame(MainMenuFrame homeFrame,
+                                   String humanName,
+                                   int aiOpponents) {
+        if (aiOpponents < 1 || aiOpponents > 4) {
+            homeFrame.showHomeAgain();
+            return;
+        }
+
+        Deck.reset();
+        GameManager.reset();
+
+        List<GameManager.PlayerSetup> setups = new ArrayList<>();
+        setups.add(new GameManager.PlayerSetup(humanName, PlayerType.HUMAN));
+        for (int i = 1; i <= aiOpponents; i++) {
+            setups.add(new GameManager.PlayerSetup("AI " + i, PlayerType.AI));
+        }
+
+        GameManager gameManager = GameManager.getInstance();
+        gameManager.initGameWithSetups(setups);
+
+        AIPlayerBrain aiBrain = new AIPlayerBrain();
+        GameLogic logic = new GameLogic(gameManager);
+        logic.getActionHandler().setUseDialogInput(true);
+        logic.getActionHandler().setDecisionResolver(aiBrain);
+
+        Stage gameStage = new Stage();
+        Runnable homeCallback = homeFrame::showHomeAgain;
+
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
+            GameFrame gameFrame = new GameFrame(
+                    gameManager, logic, gameStage, homeCallback, true, aiBrain);
+            gameFrame.show();
+            homeFrame.getStage().hide();
+            logic.startGame();
+        } catch (Exception e) {
+            e.printStackTrace();
+            gameStage.close();
+            homeFrame.getStage().show();
+            homeFrame.getStage().toFront();
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Failed to start AI game");
+            alert.setHeaderText(e.getClass().getSimpleName() + ": " + e.getMessage());
+            alert.setContentText(sw.toString().length() > 800
+                    ? sw.toString().substring(0, 800) + "..."
+                    : sw.toString());
+            alert.initOwner(homeFrame.getStage());
+            alert.showAndWait();
         }
     }
 }

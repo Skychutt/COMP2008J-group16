@@ -1,196 +1,175 @@
 package com.monopolydeal.gui;
 
 import com.monopolydeal.model.Player;
-import com.monopolydeal.model.PropertySet;
 import com.monopolydeal.model.card.Card;
-import com.monopolydeal.model.card.PropertyCard;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
- * Left-bottom info area: self assets + log.
+ * Left-side Bank area for the local game board.
  */
-public class ControlPanel extends JPanel {
+public class ControlPanel extends VBox {
+
+    private static final int CARD_W = 108;
+    private static final int CARD_H = 162;
 
     private final GameFrame mainFrame;
-    private final JLabel lblActionsLeft;
-    private final JLabel lblBankTotal;
-    private final JPanel pnlBank;
-    private final JPanel pnlProperty;
-    private final JTextArea txtGameLog;
+    private final Label lblBankTotal;
+    private final VBox cardList;
+    private final ScrollPane scrollPane;
 
     public ControlPanel(GameFrame mainFrame) {
         this.mainFrame = mainFrame;
-        setOpaque(false);
-        setPreferredSize(new Dimension(330, 420));
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        lblActionsLeft = new JLabel("Actions: 0 / 3");
-        lblActionsLeft.setFont(UITheme.FONT_SUBTITLE);
-        lblActionsLeft.setForeground(UITheme.ACCENT_DARK);
-        lblActionsLeft.setAlignmentX(LEFT_ALIGNMENT);
-        add(lblActionsLeft);
+        setSpacing(10);
+        setPadding(new Insets(12));
+        setPrefWidth(170);
+        setAlignment(Pos.TOP_CENTER);
+        setStyle(UITheme.panelBorderStyle());
 
-        lblBankTotal = new JLabel("Bank: 0M");
-        lblBankTotal.setFont(UITheme.FONT_BANK_TOTAL);
-        lblBankTotal.setForeground(UITheme.TEXT_MAIN);
-        lblBankTotal.setAlignmentX(LEFT_ALIGNMENT);
-        add(lblBankTotal);
-        add(Box.createVerticalStrut(6));
+        Label title = new Label("Bank");
+        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
+        title.setTextFill(UITheme.TEXT_MAIN);
 
-        pnlBank = createStripPanel();
-        add(createSectionBox("Bank Cards", pnlBank, 96));
-        add(Box.createVerticalStrut(6));
+        lblBankTotal = new Label("0M");
+        lblBankTotal.setFont(Font.font("Segoe UI", FontWeight.BOLD, 28));
+        lblBankTotal.setTextFill(UITheme.ACCENT_DARK);
 
-        pnlProperty = createStripPanel();
-        add(createSectionBox("Property Cards", pnlProperty, 120));
-        add(Box.createVerticalStrut(6));
+        cardList = new VBox(8);
+        cardList.setAlignment(Pos.TOP_CENTER);
 
-        txtGameLog = new JTextArea(8, 26);
-        configureLogArea(txtGameLog);
-        add(createLogScroll(txtGameLog));
+        scrollPane = new ScrollPane(cardList);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-border-width: 0;");
+        scrollPane.setPrefViewportHeight(430);
+        scrollPane.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (newSkin != null) {
+                javafx.scene.Node viewport = scrollPane.lookup(".viewport");
+                if (viewport != null) {
+                    viewport.setStyle("-fx-background-color: transparent;");
+                }
+            }
+        });
+
+        wireBankDropTarget();
+        getChildren().addAll(title, lblBankTotal, scrollPane);
     }
 
     public void updateTurnStatus(Player currentPlayer) {
-        lblActionsLeft.setText(currentPlayer == null
-                ? "Actions: 0 / 3"
-                : "Actions: " + currentPlayer.getActions() + " / 3");
+        // Bank panel no longer shows turn text.
     }
 
     public void updateSelfAssets(Player currentPlayer) {
-        pnlBank.removeAll();
-        pnlProperty.removeAll();
+        cardList.getChildren().clear();
 
         if (currentPlayer == null) {
-            lblBankTotal.setText("Bank: 0M");
-            pnlBank.revalidate();
-            pnlProperty.revalidate();
-            pnlBank.repaint();
-            pnlProperty.repaint();
+            lblBankTotal.setText("0M");
             return;
         }
 
-        lblBankTotal.setText("Bank: " + currentPlayer.getBankArea().total() + "M");
+        lblBankTotal.setText(currentPlayer.getBankArea().total() + "M");
 
-        renderCardStrip(pnlBank, new ArrayList<>(currentPlayer.getBankArea().getMoney()), 40, 60, 8);
+        List<Card> cards = new ArrayList<>(currentPlayer.getBankArea().getMoney());
+        cards.sort(Comparator.comparingInt(Card::getValue)
+                .thenComparing(Card::getName, String.CASE_INSENSITIVE_ORDER));
 
-        renderCardStrip(pnlProperty, collectPropertyCards(currentPlayer), 40, 60, 10);
-
-        pnlBank.revalidate();
-        pnlProperty.revalidate();
-        pnlBank.repaint();
-        pnlProperty.repaint();
-    }
-
-    /**
-     * Keep the asset rows compact by showing only a short preview of each pile.
-     */
-    private void renderCardStrip(JPanel panel, List<Card> cards, int width, int height, int maxShow) {
-        if (cards.isEmpty()) {
-            JLabel none = new JLabel("-");
-            none.setFont(UITheme.FONT_SMALL);
-            none.setForeground(UITheme.TEXT_SUB);
-            panel.add(none);
-            return;
-        }
-
-        int count = Math.min(cards.size(), maxShow);
-        for (int i = 0; i < count; i++) {
-            Card card = cards.get(i);
-            JLabel icon = new JLabel(mainFrame.getImageResolver().getCardIcon(card, width, height));
-            icon.setToolTipText(card.getName());
-            panel.add(icon);
-        }
-        if (cards.size() > maxShow) {
-            JLabel more = new JLabel("+" + (cards.size() - maxShow));
-            more.setFont(UITheme.FONT_SMALL);
-            more.setForeground(UITheme.TEXT_SUB);
-            panel.add(more);
+        for (Card card : cards) {
+            cardList.getChildren().add(buildBankCard(card));
         }
     }
 
-    private JPanel createSectionBox(String title, JPanel content, int height) {
-        JPanel box = new JPanel(new BorderLayout());
-        box.setOpaque(true);
-        box.setBackground(UITheme.PANEL_SOFT_BG);
-        box.setBorder(UITheme.createSectionBorder(title));
-        box.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
-        box.setPreferredSize(new Dimension(310, height));
-        box.setAlignmentX(LEFT_ALIGNMENT);
-        box.add(content, BorderLayout.CENTER);
-        return box;
+    private StackPane buildBankCard(Card card) {
+        ImageView iv = new ImageView(mainFrame.getImageResolver().getCardIcon(card, CARD_W, CARD_H));
+        iv.setFitWidth(CARD_W);
+        iv.setFitHeight(CARD_H);
+        iv.setPreserveRatio(false);
+
+        Rectangle shade = new Rectangle(CARD_W, CARD_H, Color.rgb(0, 0, 0, 0.14));
+        shade.setArcWidth(10);
+        shade.setArcHeight(10);
+
+        Label value = new Label(String.valueOf(card.getValue()));
+        value.setFont(Font.font("Segoe UI", FontWeight.EXTRA_BOLD, 34));
+        value.setTextFill(Color.rgb(255, 250, 224));
+        value.setStyle(
+                "-fx-background-color: rgba(28, 22, 14, 0.60);" +
+                "-fx-background-radius: 999px;" +
+                "-fx-padding: 6 15 6 15;"
+        );
+
+        StackPane cardPane = new StackPane(iv, shade, value);
+        cardPane.setPrefSize(CARD_W, CARD_H);
+        cardPane.setMaxSize(CARD_W, CARD_H);
+        cardPane.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.24);" +
+                "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
+                "-fx-border-width: 1px; -fx-border-radius: 6px; -fx-background-radius: 6px;"
+        );
+        return cardPane;
     }
 
-    private JPanel createStripPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 3));
-        panel.setOpaque(true);
-        panel.setBackground(UITheme.PANEL_SOFT_BG);
-        return panel;
-    }
-
-    private JScrollPane createLogScroll(JTextArea logArea) {
-        JScrollPane logScroll = new JScrollPane(logArea);
-        logScroll.setOpaque(true);
-        logScroll.getViewport().setOpaque(true);
-        logScroll.setBackground(UITheme.LOG_BG);
-        logScroll.getViewport().setBackground(UITheme.LOG_BG);
-        logScroll.setBorder(UITheme.createSectionBorder("Recent Log"));
-        logScroll.setAlignmentX(LEFT_ALIGNMENT);
-        return logScroll;
-    }
-
-    private void configureLogArea(JTextArea logArea) {
-        logArea.setEditable(false);
-        logArea.setLineWrap(true);
-        logArea.setWrapStyleWord(true);
-        logArea.setOpaque(true);
-        logArea.setBackground(UITheme.LOG_BG);
-        logArea.setForeground(UITheme.LOG_TEXT);
-        logArea.setText("[System] Ready.\n");
-    }
-
-    private List<Card> collectPropertyCards(Player currentPlayer) {
-        List<Card> cards = new ArrayList<>();
-        for (PropertySet set : currentPlayer.getPropertyArea().getSets()) {
-            for (PropertyCard card : set.getCards()) {
-                cards.add(card);
+    private void wireBankDropTarget() {
+        setOnDragOver(e -> {
+            if (e.getDragboard().hasString() && canAcceptDrop(e.getDragboard().getString())) {
+                e.acceptTransferModes(TransferMode.COPY);
+                setStyle(
+                        "-fx-background-color: " + UITheme.toCssRgba(UITheme.BANK_ZONE_ACTIVE) + ";" +
+                        "-fx-border-color: " + UITheme.toCssHex(UITheme.BANK_ZONE_BORDER) + ";" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-border-radius: 4px;" +
+                        "-fx-background-radius: 4px;"
+                );
             }
-        }
-        return cards;
+            e.consume();
+        });
+
+        setOnDragExited(e -> {
+            setStyle(UITheme.panelBorderStyle());
+            e.consume();
+        });
+
+        setOnDragDropped(e -> {
+            setStyle(UITheme.panelBorderStyle());
+            boolean success = false;
+            if (e.getDragboard().hasString() && canAcceptDrop(e.getDragboard().getString())) {
+                try {
+                    int cardId = Integer.parseInt(e.getDragboard().getString().trim());
+                    mainFrame.bankCardById(cardId);
+                    success = true;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
     }
 
-    public void logEvent(String event) {
-        if (event == null || event.trim().isEmpty()) {
-            return;
+    private boolean canAcceptDrop(String rawCardId) {
+        if (rawCardId == null) {
+            return false;
         }
-        txtGameLog.append("[Event] " + event + "\n");
-        trimLogLines(16);
-        txtGameLog.setCaretPosition(txtGameLog.getDocument().getLength());
-    }
-
-    private void trimLogLines(int maxLines) {
-        String[] lines = txtGameLog.getText().split("\n");
-        if (lines.length <= maxLines) {
-            return;
+        try {
+            int cardId = Integer.parseInt(rawCardId.trim());
+            return mainFrame.canBankCard(cardId);
+        } catch (NumberFormatException ex) {
+            return false;
         }
-        // Keep only the newest log lines so the panel stays readable.
-        StringBuilder sb = new StringBuilder();
-        for (int i = lines.length - maxLines; i < lines.length; i++) {
-            sb.append(lines[i]).append('\n');
-        }
-        txtGameLog.setText(sb.toString());
     }
 }
-

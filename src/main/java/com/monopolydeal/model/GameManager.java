@@ -1,5 +1,6 @@
 package com.monopolydeal.model;
 
+import com.monopolydeal.enums.PlayerType;
 import com.monopolydeal.interfaces.IGameObserver;
 import com.monopolydeal.model.card.Card;
 
@@ -13,6 +14,25 @@ import java.util.List;
  * Uses the Singleton pattern to ensure only one game manager exists.
  */
 public class GameManager {
+    /** Carries display name and control type for one seat. */
+    public static final class PlayerSetup {
+        private final String name;
+        private final PlayerType type;
+
+        public PlayerSetup(String name, PlayerType type) {
+            this.name = name == null || name.trim().isEmpty() ? "Player" : name.trim();
+            this.type = type == null ? PlayerType.HUMAN : type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public PlayerType getType() {
+            return type;
+        }
+    }
+
     /** Singleton instance of the GameManager. */
     private static GameManager instance;
 
@@ -63,9 +83,7 @@ public class GameManager {
      * @param displayNames one name per player in seat order
      */
     public void initGame(int count, List<String> displayNames) {
-        players.clear();
-        gameOver = false;
-
+        List<PlayerSetup> setups = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String name = "Player " + (i + 1);
             if (displayNames != null && i < displayNames.size()) {
@@ -74,16 +92,47 @@ public class GameManager {
                     name = custom.trim();
                 }
             }
-            players.add(new Player(String.valueOf(i + 1), name));
+            setups.add(new PlayerSetup(name, PlayerType.HUMAN));
         }
+        initGameWithSetups(setups);
+    }
+
+    /**
+     * Initialize a game with explicit human/AI seat configuration.
+     * @param playerSetups one setup per seat (2-5 players)
+     */
+    public void initGameWithSetups(List<PlayerSetup> playerSetups) {
+        if (playerSetups == null || playerSetups.size() < 2 || playerSetups.size() > 5) {
+            throw new IllegalArgumentException("Monopoly Deal supports 2 to 5 players.");
+        }
+
+        players.clear();
+        gameOver = false;
+
+        for (int i = 0; i < playerSetups.size(); i++) {
+            PlayerSetup setup = playerSetups.get(i);
+            Player player = new Player(String.valueOf(i + 1), setup.getName());
+            player.setPlayerType(setup.getType());
+            players.add(player);
+        }
+
         Deck deck = Deck.getInstance();
         deck.shuffle();
-        // Deal 5 cards to each player at game start
         for (Player p : players) {
             p.getHand().getCards().addAll(deck.draw(5));
         }
         turn = 0;
-        notifyAllObservers("Game initialized with " + count + " players.");
+        notifyAllObservers("Game initialized with " + playerSetups.size() + " players.");
+    }
+
+    /** @return true when at least one seat is AI controlled */
+    public boolean hasAiPlayers() {
+        for (Player player : players) {
+            if (player.isAI()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
