@@ -2,6 +2,7 @@ package com.monopolydeal.gui;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -14,6 +15,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
@@ -303,19 +305,23 @@ public final class ThemedDialog {
     }
 
     private static void centerOnOwner(Stage dialog, Window owner) {
-        double ownerX = 0;
-        double ownerY = 0;
+        double ownerX;
+        double ownerY;
         double ownerW;
         double ownerH;
 
-        if (owner != null) {
-            ownerX = owner.getX();
-            ownerY = owner.getY();
-            ownerW = owner.getWidth();
-            ownerH = owner.getHeight();
+        if (owner instanceof Stage && ((Stage) owner).isShowing()) {
+            Stage ownerStage = (Stage) owner;
+            ownerX = ownerStage.getX();
+            ownerY = ownerStage.getY();
+            ownerW = ownerStage.getWidth();
+            ownerH = ownerStage.getHeight();
         } else {
-            ownerW = dialog.getWidth();
-            ownerH = dialog.getHeight();
+            Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+            ownerX = bounds.getMinX();
+            ownerY = bounds.getMinY();
+            ownerW = bounds.getWidth();
+            ownerH = bounds.getHeight();
         }
 
         double dialogW = dialog.getWidth() > 0 ? dialog.getWidth() : dialog.getScene().getWidth();

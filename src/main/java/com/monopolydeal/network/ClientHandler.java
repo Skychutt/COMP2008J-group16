@@ -7,111 +7,130 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * A processing thread for each player connection on the server.
- *
- *   Continuously read JSON messages sent by the client
- *   Forward the operation request to GameServer for processing
- *   Provide a method for sending messages to the client
+ * Per-client connection thread on the LAN server.
  */
 public class ClientHandler implements Runnable {
 
-    private final Socket socket;          //TCP connection with the client
-    private final GameServer server;      //Game server
-    private final int playerIndex;        //Player ID corresponding to this client
+    private final Socket socket;
+    private final GameServer server;
 
     private PrintWriter out;
     private BufferedReader in;
     private volatile boolean running = true;
+    private volatile int playerIndex = -1;
 
-    public ClientHandler(Socket socket, GameServer server, int playerIndex) {
+    public ClientHandler(Socket socket, GameServer server) {
         this.socket = socket;
         this.server = server;
-        this.playerIndex = playerIndex;
+    }
+
+    public void startReaderThread() {
+        Thread t = new Thread(this, "ClientHandler-" + socket.getRemoteSocketAddress());
+        t.setDaemon(true);
+        t.start();
+    }
+
+    void assignPlayerIndex(int index) {
+        this.playerIndex = index;
     }
 
     @Override
     public void run() {
         try {
             out = new PrintWriter(socket.getOutputStream(), true);
-            in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // Send a welcome message to the client
-            send(new NetworkMessage(NetworkMessage.WELCOME,
-                    "{\"playerIndex\":" + playerIndex + "}"));
+            String firstLine = in.readLine();
+            if (firstLine == null) {
+                return;
+            }
+            NetworkMessage joinMsg = NetworkMessage.fromJson(firstLine.trim());
+            if (!NetworkMessage.JOIN.equals(joinMsg.getType())) {
+                send(new NetworkMessage(NetworkMessage.JOIN_REJECTED, "First message must be JOIN."));
+                return;
+            }
 
-            //Read a welcome message to the client
+            GameServer.JoinResult result = server.handleJoin(this, joinMsg.getData());
+            if (!result.accepted) {
+                send(new NetworkMessage(NetworkMessage.JOIN_REJECTED, result.reason));
+                return;
+            }
+
+            send(new NetworkMessage(NetworkMessage.WELCOME, result.welcomeJson()));
+            server.onClientWelcomed(this);
+
             String line;
             while (running && (line = in.readLine()) != null) {
                 NetworkMessage msg = NetworkMessage.fromJson(line.trim());
                 handleMessage(msg);
             }
-
         } catch (IOException e) {
             if (running) {
-                System.out.println("[Server] Player " + (playerIndex + 1) + " disconnected: " + e.getMessage());
+                System.out.println("[Server] Client disconnected: " + e.getMessage());
             }
         } finally {
             close();
-            server.onClientDisconnected(playerIndex);
+            if (playerIndex >= 0) {
+                server.onClientDisconnected(playerIndex);
+            }
         }
     }
 
-    /**
-     *
-     * Route client requests to the method corresponding to GameServer.
-     */
     private void handleMessage(NetworkMessage msg) {
         switch (msg.getType()) {
-
             case NetworkMessage.PLAY_CARD:
-                handleIntCommand(msg.getData(), cardId ->
-                        server.requestPlayCard(playerIndex, cardId));
+                handleInt(msg.getData(), id -> server.submitPlayCard(playerIndex, id));
                 break;
-
+            case NetworkMessage.PLAY_ON_TARGET:
+                handlePlayOnTarget(msg.getData());
+                break;
             case NetworkMessage.BANK_CARD:
-                handleIntCommand(msg.getData(), cardId ->
-                        server.requestBankCard(playerIndex, cardId));
+                handleInt(msg.getData(), id -> server.submitBankCard(playerIndex, id));
                 break;
-
             case NetworkMessage.PLACE_PROP:
-                server.requestPlaceProperty(playerIndex, msg.getData());
+                server.submitPlaceProperty(playerIndex, msg.getData());
                 break;
-
             case NetworkMessage.END_TURN:
-                server.requestEndTurn(playerIndex);
+                server.submitEndTurn(playerIndex);
                 break;
-
             case NetworkMessage.DISCARD:
-                handleIntCommand(msg.getData(), cardId ->
-                        server.requestDiscard(playerIndex, cardId));
+                handleInt(msg.getData(), id -> server.submitDiscard(playerIndex, id));
                 break;
-
+            case NetworkMessage.DECISION_RESPONSE:
+                server.receiveDecisionResponse(playerIndex, msg.getData());
+                break;
             case NetworkMessage.PING:
                 send(new NetworkMessage(NetworkMessage.PONG, ""));
                 break;
-
-            case NetworkMessage.PONG:
-                break; // client echoed back, no action needed
-
             default:
-                send(new NetworkMessage(NetworkMessage.EVENT,
-                        "Unknown command: " + msg.getType()));
+                send(new NetworkMessage(NetworkMessage.EVENT, "Unknown command: " + msg.getType()));
                 break;
         }
     }
 
-    private void handleIntCommand(String data, java.util.function.IntConsumer action) {
+    private void handlePlayOnTarget(String data) {
+        String[] parts = data.split(",", 2);
+        if (parts.length < 2) {
+            send(new NetworkMessage(NetworkMessage.EVENT, "Invalid PLAY_ON_TARGET payload."));
+            return;
+        }
         try {
-            action.accept(Integer.parseInt(data.trim()));
+            int cardId = Integer.parseInt(parts[0].trim());
+            int targetIdx = Integer.parseInt(parts[1].trim());
+            server.submitPlayOnTarget(playerIndex, cardId, targetIdx);
         } catch (NumberFormatException e) {
-            send(new NetworkMessage(NetworkMessage.EVENT,
-                    "Invalid card ID: \"" + data + "\""));
+            send(new NetworkMessage(NetworkMessage.EVENT, "Invalid PLAY_ON_TARGET numbers."));
         }
     }
 
-    /**
-     *Prevent output disorder
-     */
+    private void handleInt(String data, java.util.function.IntConsumer action) {
+        try {
+            action.accept(Integer.parseInt(data.trim()));
+        } catch (NumberFormatException e) {
+            send(new NetworkMessage(NetworkMessage.EVENT, "Invalid number: \"" + data + "\""));
+        }
+    }
+
     public synchronized void send(NetworkMessage msg) {
         if (out != null && !socket.isClosed()) {
             out.println(msg.toJson());
@@ -124,8 +143,11 @@ public class ClientHandler implements Runnable {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
     }
 
-    public int getPlayerIndex() { return playerIndex; }
+    public int getPlayerIndex() {
+        return playerIndex;
+    }
 }

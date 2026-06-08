@@ -28,12 +28,12 @@ public class ControlPanel extends VBox {
     private static final int CARD_W = 108;
     private static final int CARD_H = 162;
 
-    private final GameFrame mainFrame;
+    private final GamePanelHost mainFrame;
     private final Label lblBankTotal;
     private final VBox cardList;
     private final ScrollPane scrollPane;
 
-    public ControlPanel(GameFrame mainFrame) {
+    public ControlPanel(GamePanelHost mainFrame) {
         this.mainFrame = mainFrame;
 
         setSpacing(10);

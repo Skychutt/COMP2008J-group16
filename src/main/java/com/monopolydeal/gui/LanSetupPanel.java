@@ -1,6 +1,9 @@
 package com.monopolydeal.gui;
 
+import com.monopolydeal.network.GameServer;
+
 import javafx.geometry.Insets;
+import javafx.stage.Window;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -9,21 +12,19 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * LAN Online Setup Panel
+ * LAN online setup: host creates a room; joiners enter IP, port, room code, and their name.
  */
 public class LanSetupPanel extends VBox {
 
     public interface LanSetupListener {
         void onBack();
-        void onHost(int playerCount, List<String> playerNames, int port);
-        void onJoin(String host, int port);
+        void onHost(int playerCount, String hostName, int port);
+        void onJoin(String host, int port, String roomCode, String playerName);
     }
 
-    private static final int DEFAULT_PORT = 12345;
+    public static final int DEFAULT_PORT = GameServer.DEFAULT_PORT;
 
     private final LanSetupListener listener;
 
@@ -32,16 +33,16 @@ public class LanSetupPanel extends VBox {
 
     private int selectedCount = 2;
     private final Label lblCount;
-    private final VBox namesContainer;
-    private final List<TextField> nameFields = new ArrayList<>();
+    private final TextField txtHostName;
     private final TextField txtHostPort;
 
     private final TextField txtJoinIp;
     private final TextField txtJoinPort;
+    private final TextField txtRoomCode;
+    private final TextField txtJoinName;
 
     private final VBox hostPane;
     private final VBox joinPane;
-
     private final Button btnAction;
 
     public LanSetupPanel(LanSetupListener listener) {
@@ -91,9 +92,15 @@ public class LanSetupPanel extends VBox {
         countRow.getChildren().addAll(lblPlayers, btnDec, lblCount, btnInc);
         hostPane.getChildren().add(countRow);
 
-        namesContainer = new VBox(8);
-        namesContainer.setAlignment(Pos.CENTER);
-        hostPane.getChildren().add(namesContainer);
+        HBox hostNameRow = new HBox(10);
+        hostNameRow.setAlignment(Pos.CENTER);
+        Label lblHostName = new Label("Your name:");
+        UITheme.styleSetupLabel(lblHostName);
+        txtHostName = new TextField("Host");
+        UITheme.styleSetupField(txtHostName);
+        txtHostName.setPrefColumnCount(16);
+        hostNameRow.getChildren().addAll(lblHostName, txtHostName);
+        hostPane.getChildren().add(hostNameRow);
 
         HBox portHostRow = new HBox(10);
         portHostRow.setAlignment(Pos.CENTER);
@@ -104,6 +111,15 @@ public class LanSetupPanel extends VBox {
         txtHostPort.setPrefColumnCount(8);
         portHostRow.getChildren().addAll(lblHostPort, txtHostPort);
         hostPane.getChildren().add(portHostRow);
+
+        Label hostHint = new Label(
+                "After you host, a waiting window will show your\n"
+                        + "Room Code and IP — share those with other players.");
+        hostHint.setWrapText(true);
+        hostHint.setMaxWidth(420);
+        hostHint.setAlignment(Pos.CENTER);
+        UITheme.styleSetupLabel(hostHint);
+        hostPane.getChildren().add(hostHint);
 
         joinPane = new VBox(12);
         joinPane.setAlignment(Pos.CENTER);
@@ -128,7 +144,35 @@ public class LanSetupPanel extends VBox {
         txtJoinPort.setPrefColumnCount(8);
         portJoinRow.getChildren().addAll(lblJoinPort, txtJoinPort);
 
-        joinPane.getChildren().addAll(ipRow, portJoinRow);
+        HBox codeRow = new HBox(10);
+        codeRow.setAlignment(Pos.CENTER);
+        Label lblCode = new Label("Room code:");
+        UITheme.styleSetupLabel(lblCode);
+        txtRoomCode = new TextField();
+        UITheme.styleSetupField(txtRoomCode);
+        txtRoomCode.setPrefColumnCount(10);
+        txtRoomCode.setPromptText("6-digit code from host");
+        codeRow.getChildren().addAll(lblCode, txtRoomCode);
+
+        HBox joinNameRow = new HBox(10);
+        joinNameRow.setAlignment(Pos.CENTER);
+        Label lblJoinName = new Label("Your name:");
+        UITheme.styleSetupLabel(lblJoinName);
+        txtJoinName = new TextField("Player");
+        UITheme.styleSetupField(txtJoinName);
+        txtJoinName.setPrefColumnCount(16);
+        joinNameRow.getChildren().addAll(lblJoinName, txtJoinName);
+
+        Label joinHint = new Label(
+                "Ask the host for three things from their waiting screen:\n"
+                        + "Server IP, Port, and 6-digit Room Code.\n"
+                        + "Same computer? Use IP: localhost");
+        joinHint.setWrapText(true);
+        joinHint.setMaxWidth(420);
+        joinHint.setAlignment(Pos.CENTER);
+        UITheme.styleSetupLabel(joinHint);
+
+        joinPane.getChildren().addAll(joinHint, ipRow, portJoinRow, codeRow, joinNameRow);
 
         Button btnBack = new Button("Back");
         btnAction = new Button("Host Game");
@@ -149,8 +193,6 @@ public class LanSetupPanel extends VBox {
         btnInc.setOnAction(e -> adjustCount(+1));
         btnBack.setOnAction(e -> listener.onBack());
         btnAction.setOnAction(e -> onActionClicked());
-
-        rebuildNameFields();
     }
 
     private void switchMode(boolean hostMode) {
@@ -164,43 +206,35 @@ public class LanSetupPanel extends VBox {
     private void adjustCount(int delta) {
         selectedCount = Math.max(2, Math.min(5, selectedCount + delta));
         lblCount.setText(selectedCount + " Players");
-        rebuildNameFields();
-    }
-
-    private void rebuildNameFields() {
-        namesContainer.getChildren().clear();
-        nameFields.clear();
-        for (int i = 0; i < selectedCount; i++) {
-            HBox row = new HBox(10);
-            row.setAlignment(Pos.CENTER);
-            Label lbl = new Label("Player " + (i + 1) + ":");
-            UITheme.styleSetupLabel(lbl);
-            lbl.setMinWidth(78);
-            TextField tf = new TextField("Player " + (i + 1));
-            UITheme.styleSetupField(tf);
-            tf.setPrefColumnCount(16);
-            nameFields.add(tf);
-            row.getChildren().addAll(lbl, tf);
-            namesContainer.getChildren().add(row);
-        }
     }
 
     private void onActionClicked() {
         if (rbHost.isSelected()) {
             int port = parsePort(txtHostPort.getText(), DEFAULT_PORT);
-            List<String> names = new ArrayList<>();
-            for (int i = 0; i < nameFields.size(); i++) {
-                String txt = nameFields.get(i).getText().trim();
-                names.add(txt.isEmpty() ? "Player " + (i + 1) : txt);
+            String hostName = txtHostName.getText().trim();
+            if (hostName.isEmpty()) {
+                hostName = "Host";
             }
-            listener.onHost(selectedCount, names, port);
+            listener.onHost(selectedCount, hostName, port);
         } else {
             String ip = txtJoinIp.getText().trim();
             if (ip.isEmpty()) {
                 ip = "localhost";
             }
+            String roomCode = txtRoomCode.getText().trim();
+            String playerName = txtJoinName.getText().trim();
+            if (roomCode.isEmpty()) {
+                showSetupWarning("Room Code Required",
+                        "Enter the 6-digit Room Code from the host's waiting window.\n\n"
+                                + "You also need the host's Server IP and Port (shown there too).");
+                return;
+            }
+            if (playerName.isEmpty()) {
+                showSetupWarning("Name Required", "Enter your player name.");
+                return;
+            }
             int port = parsePort(txtJoinPort.getText(), DEFAULT_PORT);
-            listener.onJoin(ip, port);
+            listener.onJoin(ip, port, roomCode, playerName);
         }
     }
 
@@ -209,7 +243,11 @@ public class LanSetupPanel extends VBox {
         switchMode(true);
         selectedCount = 2;
         lblCount.setText("2 Players");
-        rebuildNameFields();
+    }
+
+    private void showSetupWarning(String title, String message) {
+        Window owner = getScene() != null ? getScene().getWindow() : null;
+        ThemedDialog.showWarning(owner, title, message);
     }
 
     private static int parsePort(String text, int fallback) {

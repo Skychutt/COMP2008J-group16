@@ -30,6 +30,7 @@ public class ActionHandler {
     private final GameLogic gameLogic;
     private Scanner scanner;
     private boolean useDialogInput;
+    private boolean useRemoteDecisions;
     private Window dialogOwner;
     private DecisionResolver decisionResolver;
     private Player activeDecisionPlayer;
@@ -54,6 +55,11 @@ public class ActionHandler {
     /** @return true when dialogs are used for player decisions */
     public boolean isUseDialogInput() {
         return useDialogInput;
+    }
+
+    /** LAN server: route human decisions to remote clients instead of stdin/dialogs. */
+    public void setUseRemoteDecisions(boolean useRemoteDecisions) {
+        this.useRemoteDecisions = useRemoteDecisions;
     }
 
     /** Parent window for themed in-game choice dialogs. */
@@ -243,23 +249,13 @@ public class ActionHandler {
             }
 
             int needDiscard = player.getHand().size() - Player.MAX_HAND_SIZE;
-            int index;
-            if (player.isAI() && decisionResolver != null) {
-                index = decisionResolver.chooseOption(
-                        player,
-                        "Discard To 7 Cards",
-                        player.getName() + " must discard " + needDiscard + " more card(s):",
-                        options,
-                        false
-                );
-            } else {
-                index = chooseOption(
-                        "Discard To 7 Cards",
-                        player.getName() + " must discard " + needDiscard + " more card(s):",
-                        options,
-                        false
-                );
-            }
+            int index = chooseOptionFor(
+                    player,
+                    "Discard To 7 Cards",
+                    player.getName() + " must discard " + needDiscard + " more card(s):",
+                    options,
+                    false
+            );
 
             if (index < 0 || index >= handCards.size()) {
                 index = 0;
@@ -350,7 +346,7 @@ public class ActionHandler {
             String prompt = payer.getName() + " pays " + receiver.getName()
                     + " for " + reason + ". Owed: " + requiredAmount + "M, selected: " + paid + "M.";
 
-            int index = chooseOption("Choose Payment Card", prompt, options, true);
+            int index = chooseOptionFor(payer, "Choose Payment Card", prompt, options, true);
             if (index < 0) {
                 break;
             }
@@ -1079,7 +1075,8 @@ public class ActionHandler {
             return -1;
         }
 
-        if (decisionPlayer != null && decisionPlayer.isAI() && decisionResolver != null) {
+        if (decisionResolver != null && decisionPlayer != null
+                && (decisionPlayer.isAI() || useRemoteDecisions)) {
             return decisionResolver.chooseOption(decisionPlayer, title, prompt, options, allowCancel);
         }
 

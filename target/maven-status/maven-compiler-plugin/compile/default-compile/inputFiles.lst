@@ -6,6 +6,7 @@ C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\Con
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\CardImageResolver.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\GameVolumeControl.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\GameStateSnapshot.java
+C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\NetworkDecisionResolver.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\OpponentsPanel.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\AssetTransferManager.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\OpponentSeatPane.java
@@ -35,6 +36,7 @@ C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\TableSurfacePanel.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\PlayerPanel.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\TurnManager.java
+C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\NetworkJson.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\GameLogic.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\MonopolyDealGUIApp.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\card\MoneyCard.java
@@ -44,6 +46,7 @@ C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\interfa
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\GameFrame.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\PropertyArea.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\ai\AIActionStrategy.java
+C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\GamePanelHost.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\RentCalculator.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\ThemedDialog.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\NetworkLobbyFrame.java
@@ -57,6 +60,7 @@ C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\Mai
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\GameClient.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\card\Card.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\enums\ActionType.java
+C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\ClientGameMirror.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\GameStateParser.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\model\BankArea.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\LocalGameSetupPanel.java
@@ -66,6 +70,7 @@ C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\enums\P
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\MainMenuFrame.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\NetworkPlayerPanel.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\logic\RuleValidator.java
+C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\network\DecisionPayload.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\enums\PropertyType.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\ai\AIPlayerBrain.java
 C:\Users\Lenovo\Desktop\COMP2008J-group16\src\main\java\com\monopolydeal\gui\UITheme.java

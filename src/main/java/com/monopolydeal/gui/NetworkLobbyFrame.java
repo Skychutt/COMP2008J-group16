@@ -36,18 +36,20 @@ public class NetworkLobbyFrame {
     private final VBox playerListBox;
     private final TextArea txtLog;
     private final GameServer server;
-    private final List<String> playerNames;
+    private final Stage homeStage;
+    private final Runnable homeCallback;
 
-    public NetworkLobbyFrame(GameServer server, List<String> playerNames, Stage homeStage) {
-        this.server      = server;
-        this.playerNames = playerNames;
+    public NetworkLobbyFrame(GameServer server, Stage homeStage, Runnable homeCallback) {
+        this.server = server;
+        this.homeStage = homeStage;
+        this.homeCallback = homeCallback;
 
         stage = new Stage();
         stage.setTitle("LAN Game — Waiting Hall");
         stage.setResizable(true);
         stage.setOnCloseRequest(e -> {
             e.consume();
-            cancelAndReturn(homeStage);
+            cancelAndReturn();
         });
 
         VBox content = new VBox(16);
@@ -55,40 +57,11 @@ public class NetworkLobbyFrame {
         content.setPadding(new Insets(24, 32, 20, 32));
         content.setStyle("-fx-background-color: " + UITheme.toCssHex(UITheme.PAGE_BG) + ";");
 
-        // ── Title ──
         Label title = new Label("Waiting for Players...");
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
         title.setTextFill(Color.rgb(250, 241, 209));
 
-        // ── IP address block ──
-        List<String> ips = LanAddressUtil.localIpv4Addresses();
-        VBox ipBlock = new VBox(4);
-        ipBlock.setAlignment(Pos.CENTER);
-        ipBlock.setStyle(
-            "-fx-background-color: rgba(0,0,0,0.28);" +
-            "-fx-border-color: " + UITheme.toCssHex(UITheme.ACCENT_DARK) + ";" +
-            "-fx-border-width: 1px; -fx-border-radius: 6px; -fx-background-radius: 6px;" +
-            "-fx-padding: 10 20 10 20;"
-        );
-
-        Label lblIpHeader = new Label("Share one of these addresses with your teammates:");
-        lblIpHeader.setFont(UITheme.FONT_BODY);
-        lblIpHeader.setTextFill(Color.rgb(210, 220, 195));
-        ipBlock.getChildren().add(lblIpHeader);
-
-        if (ips.isEmpty()) {
-            Label fallback = new Label("localhost   (no network adapters detected)");
-            fallback.setFont(Font.font("Monospaced", FontWeight.BOLD, 14));
-            fallback.setTextFill(UITheme.ACCENT);
-            ipBlock.getChildren().add(fallback);
-        } else {
-            for (String ip : ips) {
-                Label lblIp = new Label(ip + "   :   " + server.getPort());
-                lblIp.setFont(Font.font("Monospaced", FontWeight.BOLD, 15));
-                lblIp.setTextFill(UITheme.ACCENT);
-                ipBlock.getChildren().add(lblIp);
-            }
-        }
+        VBox ipBlock = buildJoinInfoBlock(server);
 
         // ── Player count status ──
         lblStatus = new Label("Connected: 0 / " + server.getPlayerCount());
@@ -142,15 +115,15 @@ public class NetworkLobbyFrame {
         Button btnCancel = new Button("Cancel");
         UITheme.styleMenuButton(btnCancel);
         btnCancel.setPrefWidth(140);
-        btnCancel.setOnAction(e -> cancelAndReturn(homeStage));
+        btnCancel.setOnAction(e -> cancelAndReturn());
 
+        middleRow.setMaxHeight(220);
         content.getChildren().addAll(title, ipBlock, lblStatus, middleRow, btnCancel);
-        VBox.setVgrow(middleRow, Priority.ALWAYS);
 
-        Scene scene = new Scene(content, 560, 480);
+        Scene scene = new Scene(content, 640, 580);
         stage.setScene(scene);
-        stage.setMinWidth(480);
-        stage.setMinHeight(400);
+        stage.setMinWidth(560);
+        stage.setMinHeight(500);
 
         // ── Server callbacks ──
         server.setStatusListener(new GameServer.ServerStatusListener() {
@@ -194,9 +167,18 @@ public class NetworkLobbyFrame {
 
                 CountDownLatch hostReady = new CountDownLatch(1);
                 Platform.runLater(() -> {
-                    appendLog("[" + timestamp() + "] Port open. Host joining as Player 1 ("
-                            + playerNames.get(0) + ")...");
-                    NetworkGameFrame.openAsClient("localhost", server.getPort(), homeStage);
+                    appendLog("[" + timestamp() + "] Port open. Room code: " + server.getRoomCode());
+                    appendLog("[" + timestamp() + "] Host joining as "
+                            + server.getPlayerNameAt(0) + "...");
+                    NetworkGameFrame.openAsClient(
+                            "localhost",
+                            server.getPort(),
+                            server.getRoomCode(),
+                            server.getPlayerNameAt(0),
+                            homeStage,
+                            false,
+                            homeCallback
+                    );
                     hostReady.countDown();
                 });
                 hostReady.await();
@@ -214,6 +196,73 @@ public class NetworkLobbyFrame {
 
     public void show() {
         stage.show();
+        stage.toFront();
+        stage.requestFocus();
+    }
+
+    private static VBox buildJoinInfoBlock(GameServer server) {
+        VBox ipBlock = new VBox(10);
+        ipBlock.setAlignment(Pos.CENTER_LEFT);
+        ipBlock.setFillWidth(true);
+        ipBlock.setMaxWidth(Double.MAX_VALUE);
+        ipBlock.setStyle(
+                "-fx-background-color: rgba(0,0,0,0.42);" +
+                "-fx-border-color: " + UITheme.toCssHex(UITheme.ACCENT) + ";" +
+                "-fx-border-width: 2px; -fx-border-radius: 8px; -fx-background-radius: 8px;" +
+                "-fx-padding: 16 24 16 24;"
+        );
+
+        Label lblJoinTitle = new Label("Share these with players (Join a game):");
+        lblJoinTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 17));
+        lblJoinTitle.setTextFill(Color.rgb(255, 244, 210));
+        ipBlock.getChildren().add(lblJoinTitle);
+
+        ipBlock.getChildren().add(infoLine("Server IP:", LanAddressUtil.primaryAddress()));
+        ipBlock.getChildren().add(infoLine("Port:", String.valueOf(server.getPort())));
+        ipBlock.getChildren().add(infoLine("Room Code:", server.getRoomCode()));
+
+        Label lblIpTitle = new Label("Server IP options:");
+        lblIpTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
+        lblIpTitle.setTextFill(Color.rgb(248, 233, 191));
+        lblIpTitle.setPadding(new Insets(6, 0, 0, 0));
+        ipBlock.getChildren().add(lblIpTitle);
+
+        List<String> ips = LanAddressUtil.joinAddressesForDisplay();
+        for (String ip : ips) {
+            String note = "localhost".equals(ip) ? "  (same computer only)" : "  (other computers on your Wi‑Fi/LAN)";
+            Label lblIp = new Label("  •  " + ip + note);
+            lblIp.setFont(Font.font("Consolas", FontWeight.BOLD, 17));
+            lblIp.setTextFill(Color.rgb(255, 220, 120));
+            lblIp.setWrapText(true);
+            lblIp.setMaxWidth(560);
+            ipBlock.getChildren().add(lblIp);
+        }
+
+        if (LanAddressUtil.localIpv4Addresses().isEmpty()) {
+            Label hint = new Label(
+                    "  If no LAN IP appears above, other PCs may not connect.\n"
+                            + "  Same-PC test: use localhost. Check firewall / Wi‑Fi.");
+            hint.setFont(UITheme.FONT_BODY);
+            hint.setTextFill(Color.rgb(210, 220, 195));
+            hint.setWrapText(true);
+            ipBlock.getChildren().add(hint);
+        }
+        return ipBlock;
+    }
+
+    private static HBox infoLine(String label, String value) {
+        Label lbl = new Label(label);
+        lbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
+        lbl.setTextFill(Color.rgb(220, 230, 210));
+        lbl.setMinWidth(120);
+
+        Label val = new Label(value);
+        val.setFont(Font.font("Consolas", FontWeight.BOLD, 20));
+        val.setTextFill(Color.rgb(255, 220, 120));
+
+        HBox row = new HBox(8, lbl, val);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -224,7 +273,7 @@ public class NetworkLobbyFrame {
     }
 
     private HBox buildSlot(int index, String connectedName) {
-        String slotLabel = "Slot " + (index + 1) + ":  " + playerNames.get(index);
+        String slotLabel = "Slot " + (index + 1) + ":  " + server.getPlayerNameAt(index);
         boolean filled = connectedName != null;
 
         Label dot = new Label(filled ? "●" : "○");
@@ -249,10 +298,12 @@ public class NetworkLobbyFrame {
         txtLog.appendText(text + "\n");
     }
 
-    private void cancelAndReturn(Stage homeStage) {
+    private void cancelAndReturn() {
         server.stop();
         stage.hide();
-        if (homeStage != null) {
+        if (homeCallback != null) {
+            homeCallback.run();
+        } else if (homeStage != null) {
             homeStage.show();
             homeStage.toFront();
         }

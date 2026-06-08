@@ -216,6 +216,16 @@ public class GameManager {
         System.out.println("======================");
     }
 
+    /**
+     * Updates turn/game-over flags when rebuilding client-side mirror state from a LAN snapshot.
+     */
+    public void applyMirrorFlags(int turnIndex, boolean over) {
+        if (players != null && !players.isEmpty()) {
+            this.turn = Math.floorMod(turnIndex, players.size());
+        }
+        this.gameOver = over;
+    }
+
     /** @return the player whose turn it currently is */
     public Player getCurrentPlayer() {
         return players.get(turn);

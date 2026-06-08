@@ -20,7 +20,7 @@ import javafx.stage.Stage;
 /**
  * Main local game window.
  */
-public class GameFrame implements IGameObserver {
+public class GameFrame implements IGameObserver, GamePanelHost {
 
     private final Stage stage;
     private final GameManager gameManager;
@@ -403,17 +403,16 @@ public class GameFrame implements IGameObserver {
 
     /** Ask for confirmation, then return to the main menu (local / vs-AI modes). */
     public void requestExitToHome() {
-        boolean confirmed = ThemedConfirmDialog.show(
-                stage,
+        board.showConfirmDialog(
                 "Exit Game",
                 "Leave this game and return to the main menu?\nYour current progress will be lost.",
                 "Leave",
-                "Stay"
+                "Stay",
+                () -> {
+                    returnToHomeScreen();
+                    stage.close();
+                }
         );
-        if (confirmed) {
-            returnToHomeScreen();
-            stage.close();
-        }
     }
 
     public void showPropertyPreview(Player player) {
@@ -478,7 +477,8 @@ public class GameFrame implements IGameObserver {
         return chosen;
     }
 
-    private Player getViewPlayer() {
+    @Override
+    public Player getViewPlayer() {
         Player current = gameManager.getCurrentPlayer();
         if (!vsAiMode || current == null || current.isHuman()) {
             return current;

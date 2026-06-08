@@ -5,9 +5,12 @@ import com.monopolydeal.network.GameStateParser;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -77,10 +80,16 @@ public class GameBoardPane extends StackPane {
     private final VBox topLeftControls;
     private final List<Region> opponentSeats = new ArrayList<>();
     private final GameFrame localFrame;
+    private final NetworkGameFrame networkFrame;
     private final StackPane propertyPreviewLayer;
     private final Label propertyPreviewName;
     private final StackPane winnerLayer;
     private final Label winnerLabel;
+    private final StackPane confirmOverlay;
+    private Label confirmTitleLabel;
+    private Label confirmMessageLabel;
+    private Button confirmActionButton;
+    private Button confirmCancelButton;
 
     public GameBoardPane(GameFrame owner,
                          TopStatusPanel topPanel,
@@ -89,6 +98,7 @@ public class GameBoardPane extends StackPane {
                          ControlPanel controlPanel,
                          RecentLogPanel recentLogPanel) {
         this.localFrame = owner;
+        this.networkFrame = null;
         setStyle("-fx-background-color: " + UITheme.toCssHex(UITheme.PAGE_BG) + ";");
 
         boardLayer = buildBoardLayer();
@@ -128,6 +138,7 @@ public class GameBoardPane extends StackPane {
         playerPanel.setMaxSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
 
         topLeftControls = buildTopLeftControls(owner);
+        confirmOverlay = buildConfirmOverlay();
 
         propertyPreviewLayer.getChildren().add(propertyPreviewName);
         winnerLayer.getChildren().add(winnerLabel);
@@ -138,16 +149,14 @@ public class GameBoardPane extends StackPane {
         finishSetup();
     }
 
-    public GameBoardPane(TopStatusPanel topPanel,
+    public GameBoardPane(NetworkGameFrame networkFrame,
+                         TopStatusPanel topPanel,
+                         PropertyAreaPanel propertyPanel,
                          PlayerPanel playerPanel,
-                         ControlPanel controlPanel) {
-        this(topPanel, (Region) playerPanel, (Region) controlPanel);
-    }
-
-    public GameBoardPane(TopStatusPanel topPanel,
-                         Region playerPanel,
-                         Region controlPanel) {
+                         ControlPanel controlPanel,
+                         RecentLogPanel recentLogPanel) {
         this.localFrame = null;
+        this.networkFrame = networkFrame;
         setStyle("-fx-background-color: " + UITheme.toCssHex(UITheme.PAGE_BG) + ";");
 
         boardLayer = buildBoardLayer();
@@ -156,26 +165,45 @@ public class GameBoardPane extends StackPane {
         winnerLayer = buildWinnerLayer();
         winnerLabel = buildWinnerLabel();
 
-        topPanel.setLayoutX(NETWORK_CENTER_X);
-        topPanel.setLayoutY(NETWORK_CENTER_Y);
-        topPanel.setPrefWidth(NETWORK_CENTER_W);
-        boardLayer.getChildren().add(topPanel);
+        topPanel.setLayoutX(LOCAL_TOP_X);
+        topPanel.setLayoutY(LOCAL_TOP_Y);
+        topPanel.setPrefWidth(LOCAL_TOP_W);
+        topPanel.setMinWidth(LOCAL_TOP_W);
+        topPanel.setMaxWidth(LOCAL_TOP_W);
 
-        controlPanel.setLayoutX(NETWORK_CTRL_X);
-        controlPanel.setLayoutY(NETWORK_CTRL_Y);
-        controlPanel.setPrefWidth(140);
-        boardLayer.getChildren().add(controlPanel);
+        controlPanel.setLayoutX(LOCAL_BANK_X);
+        controlPanel.setLayoutY(LOCAL_BANK_Y);
+        controlPanel.setPrefSize(LOCAL_BANK_W, LOCAL_BANK_H);
+        controlPanel.setMinSize(LOCAL_BANK_W, LOCAL_BANK_H);
+        controlPanel.setMaxSize(LOCAL_BANK_W, LOCAL_BANK_H);
 
-        playerPanel.setLayoutX(155);
-        playerPanel.setLayoutY(NETWORK_PLAYER_Y);
-        playerPanel.setPrefWidth(BOARD_W - 155);
-        playerPanel.setPrefHeight(NETWORK_PLAYER_H);
-        boardLayer.getChildren().add(playerPanel);
+        recentLogPanel.setLayoutX(LOCAL_LOG_X);
+        recentLogPanel.setLayoutY(LOCAL_LOG_Y);
+        recentLogPanel.setPrefSize(LOCAL_LOG_W, LOCAL_LOG_H);
+        recentLogPanel.setMinSize(LOCAL_LOG_W, LOCAL_LOG_H);
+        recentLogPanel.setMaxSize(LOCAL_LOG_W, LOCAL_LOG_H);
 
-        topLeftControls = buildTopLeftControls(null);
+        propertyPanel.setLayoutX(LOCAL_PROP_X);
+        propertyPanel.setLayoutY(LOCAL_PROP_Y);
+        propertyPanel.setPrefSize(LOCAL_PROP_W, LOCAL_PROP_H);
+        propertyPanel.setMinSize(LOCAL_PROP_W, LOCAL_PROP_H);
+        propertyPanel.setMaxSize(LOCAL_PROP_W, LOCAL_PROP_H);
+
+        playerPanel.setLayoutX(LOCAL_PLAYER_X);
+        playerPanel.setLayoutY(LOCAL_PLAYER_Y);
+        playerPanel.setPrefSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
+        playerPanel.setMinSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
+        playerPanel.setMaxSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
+
+        topLeftControls = buildNetworkTopLeftControls(networkFrame);
+        confirmOverlay = buildConfirmOverlay();
+
+        propertyPreviewLayer.getChildren().add(propertyPreviewName);
         winnerLayer.getChildren().add(winnerLabel);
-        boardLayer.getChildren().addAll(winnerLayer, topLeftControls);
-
+        boardLayer.getChildren().addAll(
+                topPanel, controlPanel, recentLogPanel,
+                propertyPanel, propertyPreviewLayer, playerPanel, winnerLayer,
+                topLeftControls);
         finishSetup();
     }
 
@@ -208,6 +236,15 @@ public class GameBoardPane extends StackPane {
                         localFrame::showPropertyPreview,
                         localFrame::clearPropertyPreview
                 );
+            } else if (networkFrame != null) {
+                seat = new OpponentSeatPane(
+                        opponent,
+                        resolver,
+                        cardId -> networkFrame.canTargetOpponentWithCard(cardId, opponent),
+                        cardId -> networkFrame.playCardOnTarget(opponent, cardId),
+                        null,
+                        null
+                );
             } else {
                 seat = new OpponentSeatPane(opponent, resolver);
             }
@@ -220,7 +257,7 @@ public class GameBoardPane extends StackPane {
     }
 
     public void updateFromSnapshot(GameStateParser.Snapshot snap, int myIndex,
-                                   CardImageResolver resolver) {
+                                   CardImageResolver resolver, NetworkGameFrame networkFrame) {
         boardLayer.getChildren().removeAll(opponentSeats);
         opponentSeats.clear();
 
@@ -243,8 +280,14 @@ public class GameBoardPane extends StackPane {
             SeatLayout layout = layouts[i];
             boolean isTurn = opponents.get(i).index == snap.turn;
 
-            NetworkOpponentSeatPane seat =
-                    new NetworkOpponentSeatPane(opponents.get(i), resolver, isTurn);
+            GameStateParser.PlayerInfo opp = opponents.get(i);
+            NetworkOpponentSeatPane seat = new NetworkOpponentSeatPane(
+                    opp,
+                    resolver,
+                    isTurn,
+                    networkFrame == null ? null : cardId -> networkFrame.canTargetOpponentWithCard(cardId, opp.index),
+                    networkFrame == null ? null : cardId -> networkFrame.playCardOnTarget(opp.index, cardId)
+            );
             applySeatLayout(seat, layout);
             opponentSeats.add(seat);
             boardLayer.getChildren().add(seat);
@@ -314,8 +357,100 @@ public class GameBoardPane extends StackPane {
         }
     }
 
+    /**
+     * In-scene confirmation — avoids JavaFX modal-stage issues during gameplay.
+     */
+    public void showConfirmDialog(String title,
+                                  String message,
+                                  String confirmLabel,
+                                  String cancelLabel,
+                                  Runnable onConfirm) {
+        confirmTitleLabel.setText(title);
+        confirmMessageLabel.setText(message);
+        confirmActionButton.setText(confirmLabel);
+        confirmCancelButton.setText(cancelLabel);
+        confirmActionButton.setOnAction(e -> {
+            hideConfirmOverlay();
+            if (onConfirm != null) {
+                onConfirm.run();
+            }
+        });
+        confirmCancelButton.setOnAction(e -> hideConfirmOverlay());
+        confirmOverlay.setMouseTransparent(false);
+        confirmOverlay.setPickOnBounds(false);
+        confirmOverlay.setVisible(true);
+        confirmOverlay.setManaged(true);
+        confirmOverlay.toFront();
+    }
+
+    private void hideConfirmOverlay() {
+        confirmOverlay.setVisible(false);
+        confirmOverlay.setManaged(false);
+        confirmOverlay.setMouseTransparent(true);
+        topLeftControls.toFront();
+    }
+
+    private StackPane buildConfirmOverlay() {
+        Region accentBar = new Region();
+        accentBar.setPrefHeight(4);
+        accentBar.setMaxHeight(4);
+        accentBar.setStyle(
+                "-fx-background-color: linear-gradient(to right, "
+                        + UITheme.toCssHex(UITheme.ACCENT_DARK) + ", "
+                        + UITheme.toCssHex(UITheme.ACCENT) + ", "
+                        + UITheme.toCssHex(UITheme.ACCENT_DARK) + ");"
+                        + "-fx-background-radius: 2px;"
+        );
+
+        confirmTitleLabel = new Label();
+        confirmTitleLabel.setFont(UITheme.FONT_TITLE);
+        confirmTitleLabel.setTextFill(UITheme.TEXT_MAIN);
+
+        confirmMessageLabel = new Label();
+        confirmMessageLabel.setFont(UITheme.FONT_BODY);
+        confirmMessageLabel.setTextFill(UITheme.TEXT_SUB);
+        confirmMessageLabel.setWrapText(true);
+        confirmMessageLabel.setMaxWidth(400);
+
+        confirmCancelButton = new Button("Stay");
+        UITheme.styleDialogCancelButton(confirmCancelButton);
+
+        confirmActionButton = new Button("Leave");
+        UITheme.styleDialogConfirmButton(confirmActionButton);
+
+        HBox actions = new HBox(12, confirmCancelButton, confirmActionButton);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox card = new VBox(12, accentBar, confirmTitleLabel, confirmMessageLabel, actions);
+        card.setAlignment(Pos.TOP_LEFT);
+        card.setPadding(new Insets(22, 26, 20, 26));
+        card.setMaxWidth(420);
+        card.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        card.setStyle(
+                "-fx-background-color: " + UITheme.toCssRgba(UITheme.PANEL_BG) + ";" +
+                "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
+                "-fx-border-width: 2px;" +
+                "-fx-border-radius: 12px;" +
+                "-fx-background-radius: 12px;"
+        );
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(22);
+        shadow.setOffsetY(6);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.45));
+        card.setEffect(shadow);
+
+        StackPane overlay = new StackPane(card);
+        overlay.setAlignment(Pos.CENTER);
+        overlay.setStyle("-fx-background-color: transparent;");
+        overlay.setVisible(false);
+        overlay.setManaged(false);
+        overlay.setMouseTransparent(true);
+        overlay.setPickOnBounds(false);
+        return overlay;
+    }
+
     private void finishSetup() {
-        getChildren().add(boardLayer);
+        getChildren().addAll(boardLayer, confirmOverlay);
         StackPane.setAlignment(boardLayer, Pos.CENTER);
 
         NumberBinding scale = Bindings.min(
@@ -380,6 +515,23 @@ public class GameBoardPane extends StackPane {
                 "-fx-effect: dropshadow(gaussian, rgba(24,16,8,0.72), 18, 0.35, 0, 4);"
         );
         return label;
+    }
+
+    private static VBox buildNetworkTopLeftControls(NetworkGameFrame networkFrame) {
+        VBox box = new VBox(8);
+        box.setAlignment(Pos.CENTER);
+        box.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        box.setPickOnBounds(false);
+        box.setLayoutX(LOCAL_EXIT_X);
+        box.setLayoutY(LOCAL_EXIT_Y);
+        if (networkFrame != null) {
+            Button exit = new Button("Exit");
+            UITheme.styleExitButton(exit);
+            exit.setOnAction(e -> networkFrame.requestExitToHome());
+            box.getChildren().add(exit);
+        }
+        box.getChildren().add(new GameVolumeControl());
+        return box;
     }
 
     private static VBox buildTopLeftControls(GameFrame owner) {

@@ -49,7 +49,7 @@ public class PlayerPanel extends BorderPane {
     private static final int DOCK_W = 132;
     private static final int DOCK_H = 56;
 
-    private final GameFrame mainFrame;
+    private final GamePanelHost mainFrame;
     private final Label lblActionsTitle;
     private final Label lblActions;
     private final Label lblSetsTitle;
@@ -70,7 +70,7 @@ public class PlayerPanel extends BorderPane {
     private boolean discardMode = false;
     private boolean interactive = true;
 
-    public PlayerPanel(GameFrame mainFrame) {
+    public PlayerPanel(GamePanelHost mainFrame) {
         this.mainFrame = mainFrame;
         setStyle("-fx-background-color: transparent; -fx-border-width: 0;");
         setPadding(new Insets(8, 0, 0, 0));
@@ -396,11 +396,11 @@ public class PlayerPanel extends BorderPane {
         }
         try {
             int cardId = Integer.parseInt(data.trim());
-            Player current = mainFrame.getGameManager().getCurrentPlayer();
-            if (current == null) {
+            Player viewPlayer = mainFrame.getViewPlayer();
+            if (viewPlayer == null) {
                 return null;
             }
-            return current.getHand().findCard(cardId);
+            return viewPlayer.getHand().findCard(cardId);
         } catch (NumberFormatException e) {
             return null;
         }

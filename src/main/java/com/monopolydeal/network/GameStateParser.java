@@ -12,6 +12,8 @@ public class GameStateParser {
         public int turn;
         public String currentPlayer;
         public int deckSize;
+        public int discardSize;
+        public CardInfo discardTop;
         public boolean gameOver;
 
         public List<PlayerInfo> players;
@@ -69,6 +71,8 @@ public class GameStateParser {
             snap.turn          = parseInt(json, "turn");
             snap.currentPlayer = parseStr(json, "currentPlayer");
             snap.deckSize      = parseInt(json, "deckSize");
+            snap.discardSize   = parseInt(json, "discardSize");
+            snap.discardTop    = parseDiscardTop(json);
             snap.gameOver      = parseBool(json, "gameOver");
 
             snap.players = new ArrayList<>();
@@ -89,6 +93,31 @@ public class GameStateParser {
             System.err.println("[GameStateParser] Parse error: " + e.getMessage());
             return null;
         }
+    }
+
+    private static CardInfo parseDiscardTop(String json) {
+        String marker = "\"discardTop\":";
+        int start = json.indexOf(marker);
+        if (start < 0) {
+            return null;
+        }
+        start = json.indexOf('{', start);
+        if (start < 0) {
+            return null;
+        }
+        int depth = 0;
+        for (int i = start; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    return parseCard(json.substring(start, i + 1));
+                }
+            }
+        }
+        return null;
     }
 
     private static PlayerInfo parsePlayer(String json) {

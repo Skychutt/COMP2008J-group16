@@ -72,16 +72,17 @@ public class MainMenuFrame {
                     }
 
                     @Override
-                    public void onHost(int playerCount, List<String> playerNames, int port) {
+                    public void onHost(int playerCount, String hostName, int port) {
                         com.monopolydeal.network.GameServer server =
-                                new com.monopolydeal.network.GameServer(port, playerCount, playerNames);
-                        NetworkLobbyFrame lobby = new NetworkLobbyFrame(server, playerNames, stage);
+                                new com.monopolydeal.network.GameServer(port, playerCount, hostName);
+                        NetworkLobbyFrame lobby = new NetworkLobbyFrame(server, stage, MainMenuFrame.this::showHomeAgain);
                         lobby.show();
                     }
 
                     @Override
-                    public void onJoin(String host, int port) {
-                        NetworkGameFrame.openAsClient(host, port, stage);
+                    public void onJoin(String host, int port, String roomCode, String playerName) {
+                        NetworkGameFrame.openAsClient(
+                                host, port, roomCode, playerName, stage, true, MainMenuFrame.this::showHomeAgain);
                     }
                 })
             );

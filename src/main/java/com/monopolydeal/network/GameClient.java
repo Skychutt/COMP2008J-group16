@@ -10,14 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * LAN gaming client
- *
- *   Connect to GameServer
- *   Notify the UI layer to update the display
- *   Provide a method for sending operation instructions to the server
- *
- * Does not contain any game logic, only performs network I/O
- * The display of game status is handled by NetworkGameFrame (GUI)
+ * LAN game client: connects with room code + player name, relays UI actions, handles remote decisions.
  */
 public class GameClient {
 
@@ -31,30 +24,27 @@ public class GameClient {
     private ScheduledExecutorService heartbeat;
 
     private volatile int myPlayerIndex = -1;
+    private volatile String myPlayerName = "";
+    private volatile String roomCode = "";
 
-    // Receive messages pushed by the server
     private MessageListener messageListener;
+    private DecisionListener decisionListener;
 
-    /**
-     * Message monitoring interface
-     */
     public interface MessageListener {
-        /** Successfully connected, myIndex is the player's ID number */
-        void onConnected(int myIndex);
-        /** Received game status update */
+        void onConnected(int myIndex, String playerName, String roomCode);
+        void onJoinRejected(String reason);
+        void onLobbyState(String json);
         void onGameState(String stateJson);
-        /** It's our player's turn to take action */
         void onYourTurn(String message);
-        /** Waiting for other players */
         void onWait(String message);
-        /** In-game event notifications */
         void onEvent(String event);
-        /** Game start */
         void onGameStart(String message);
-        /** Game over */
         void onGameOver(String winner);
-        /** Connection disconnected or error occurred */
         void onDisconnected(String reason);
+    }
+
+    public interface DecisionListener {
+        int onDecisionRequested(DecisionPayload payload);
     }
 
     public GameClient(String host, int port) {
@@ -66,33 +56,59 @@ public class GameClient {
         this.messageListener = listener;
     }
 
-    /**
-     * Connect to the server and start the receiving thread
-     */
-    public void connect() throws IOException {
+    public void setDecisionListener(DecisionListener listener) {
+        this.decisionListener = listener;
+    }
+
+    public void connect(String joinRoomCode, String playerName) throws IOException {
         socket = new Socket(host, port);
-        socket.setSoTimeout(60_000); // 60 s read timeout — heartbeat keeps it alive
+        socket.setSoTimeout(120_000);
         out = new PrintWriter(socket.getOutputStream(), true);
-        in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        String joinJson = "{"
+                + "\"roomCode\":\"" + NetworkJson.esc(joinRoomCode) + "\","
+                + "\"playerName\":\"" + NetworkJson.esc(playerName) + "\""
+                + "}";
+        out.println(new NetworkMessage(NetworkMessage.JOIN, joinJson).toJson());
+
+        String firstLine = in.readLine();
+        if (firstLine == null) {
+            throw new IOException("Server closed connection during join.");
+        }
+        NetworkMessage first = NetworkMessage.fromJson(firstLine.trim());
+        if (NetworkMessage.JOIN_REJECTED.equals(first.getType())) {
+            throw new IOException(first.getData());
+        }
+        if (!NetworkMessage.WELCOME.equals(first.getType())) {
+            throw new IOException("Unexpected server response: " + first.getType());
+        }
+
+        myPlayerIndex = NetworkJson.num(first.getData(), "playerIndex");
+        myPlayerName = NetworkJson.str(first.getData(), "playerName");
+        roomCode = NetworkJson.str(first.getData(), "roomCode");
         running = true;
 
-        // start the receiving thread
+        if (messageListener != null) {
+            messageListener.onConnected(myPlayerIndex, myPlayerName, roomCode);
+        }
+
         Thread receiver = new Thread(this::receiveLoop, "NetworkReceiver");
         receiver.setDaemon(true);
         receiver.start();
 
-        // Heartbeat: send PING every 15 s (modelled after ENG-19 LanGameClient)
         heartbeat = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "NetworkHeartbeat");
             t.setDaemon(true);
             return t;
         });
         heartbeat.scheduleAtFixedRate(() -> {
-            if (running) send(new NetworkMessage(NetworkMessage.PING, ""));
+            if (running) {
+                send(new NetworkMessage(NetworkMessage.PING, ""));
+            }
         }, 15, 15, TimeUnit.SECONDS);
     }
 
-    /** Disconnect */
     public void disconnect() {
         running = false;
         if (heartbeat != null) {
@@ -103,87 +119,103 @@ public class GameClient {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
     }
 
     private void receiveLoop() {
         try {
             String line;
             while (running && (line = in.readLine()) != null) {
-                NetworkMessage msg = NetworkMessage.fromJson(line.trim());
-                dispatch(msg);
+                dispatch(NetworkMessage.fromJson(line.trim()));
             }
         } catch (IOException e) {
             if (running) {
-                notify_disconnected("Connection lost: " + e.getMessage());
+                notifyDisconnected("Connection lost: " + e.getMessage());
             }
         }
         running = false;
     }
 
-    /** Call the corresponding method */
     private void dispatch(NetworkMessage msg) {
-        if (messageListener == null) return;
+        if (messageListener == null && !NetworkMessage.DECISION_REQUEST.equals(msg.getType())) {
+            return;
+        }
 
         switch (msg.getType()) {
-
-            case NetworkMessage.WELCOME:
-                int idx = extractInt(msg.getData(), "playerIndex");
-                myPlayerIndex = idx;
-                messageListener.onConnected(idx);
+            case NetworkMessage.LOBBY_STATE:
+                if (messageListener != null) {
+                    messageListener.onLobbyState(msg.getData());
+                }
                 break;
-
             case NetworkMessage.GAME_START:
-                messageListener.onGameStart(msg.getData());
+                if (messageListener != null) {
+                    messageListener.onGameStart(msg.getData());
+                }
                 break;
-
             case NetworkMessage.GAME_STATE:
-                messageListener.onGameState(msg.getData());
+                if (messageListener != null) {
+                    messageListener.onGameState(msg.getData());
+                }
                 break;
-
             case NetworkMessage.YOUR_TURN:
-                messageListener.onYourTurn(msg.getData());
+                if (messageListener != null) {
+                    messageListener.onYourTurn(msg.getData());
+                }
                 break;
-
             case NetworkMessage.WAIT:
-                messageListener.onWait(msg.getData());
+                if (messageListener != null) {
+                    messageListener.onWait(msg.getData());
+                }
                 break;
-
             case NetworkMessage.EVENT:
-                messageListener.onEvent(msg.getData());
+                if (messageListener != null) {
+                    messageListener.onEvent(msg.getData());
+                }
                 break;
-
             case NetworkMessage.GAME_OVER:
-                messageListener.onGameOver(msg.getData());
+                if (messageListener != null) {
+                    messageListener.onGameOver(msg.getData());
+                }
                 break;
-
+            case NetworkMessage.DECISION_REQUEST:
+                handleDecisionRequest(msg.getData());
+                break;
             case NetworkMessage.PONG:
-                break; // heartbeat acknowledged
-
+                break;
             default:
                 break;
         }
     }
 
-    private void notify_disconnected(String reason) {
+    private void handleDecisionRequest(String json) {
+        DecisionPayload payload = DecisionPayload.fromJson(json);
+        int choice = -1;
+        if (decisionListener != null) {
+            choice = decisionListener.onDecisionRequested(payload);
+        }
+        send(new NetworkMessage(NetworkMessage.DECISION_RESPONSE,
+                DecisionPayload.responseJson(payload.requestId, choice)));
+    }
+
+    private void notifyDisconnected(String reason) {
         if (messageListener != null) {
             messageListener.onDisconnected(reason);
         }
     }
 
-    /** Play a card  */
     public void sendPlayCard(int cardId) {
         send(new NetworkMessage(NetworkMessage.PLAY_CARD, String.valueOf(cardId)));
     }
 
-    /** Deposit a card into the bank */
+    public void sendPlayOnTarget(int cardId, int targetPlayerIndex) {
+        send(new NetworkMessage(NetworkMessage.PLAY_ON_TARGET, cardId + "," + targetPlayerIndex));
+    }
+
     public void sendBankCard(int cardId) {
         send(new NetworkMessage(NetworkMessage.BANK_CARD, String.valueOf(cardId)));
     }
 
-    /**
-     * Place attribute card
-     */
     public void sendPlaceProperty(int cardId, String colorName) {
         String data = (colorName == null || colorName.isEmpty())
                 ? String.valueOf(cardId)
@@ -191,12 +223,10 @@ public class GameClient {
         send(new NetworkMessage(NetworkMessage.PLACE_PROP, data));
     }
 
-    /** End this round */
     public void sendEndTurn() {
         send(new NetworkMessage(NetworkMessage.END_TURN, ""));
     }
 
-    /** Abandoned cards */
     public void sendDiscard(int cardId) {
         send(new NetworkMessage(NetworkMessage.DISCARD, String.valueOf(cardId)));
     }
@@ -207,23 +237,19 @@ public class GameClient {
         }
     }
 
-    private static int extractInt(String json, String key) {
-        String marker = "\"" + key + "\":";
-        int start = json.indexOf(marker);
-        if (start < 0) return -1;
-        start += marker.length();
-        int end = start;
-        while (end < json.length() && (Character.isDigit(json.charAt(end)) || json.charAt(end) == '-')) {
-            end++;
-        }
-        try {
-            return Integer.parseInt(json.substring(start, end));
-        } catch (NumberFormatException e) {
-            return -1;
-        }
+    public int getMyPlayerIndex() {
+        return myPlayerIndex;
     }
 
-    // ── Getters ──────────────────────────────────────────────────
-    public int getMyPlayerIndex() { return myPlayerIndex; }
-    public boolean isConnected() { return running && socket != null && !socket.isClosed(); }
+    public String getMyPlayerName() {
+        return myPlayerName;
+    }
+
+    public String getRoomCode() {
+        return roomCode;
+    }
+
+    public boolean isConnected() {
+        return running && socket != null && !socket.isClosed();
+    }
 }

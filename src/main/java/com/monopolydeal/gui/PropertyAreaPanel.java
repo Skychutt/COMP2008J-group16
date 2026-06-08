@@ -34,14 +34,14 @@ public class PropertyAreaPanel extends HBox {
     private static final int CARD_H = 82;
     private static final int CARD_STEP_Y = CARD_H / 3;
 
-    private final GameFrame mainFrame;
+    private final GamePanelHost mainFrame;
     private final List<LanePane> lanes = new ArrayList<>();
     private final List<FadeTransition> rentFlashes = new ArrayList<>();
 
     private Player currentPlayer;
     private boolean interactive;
 
-    public PropertyAreaPanel(GameFrame mainFrame) {
+    public PropertyAreaPanel(GamePanelHost mainFrame) {
         this.mainFrame = mainFrame;
 
         setSpacing(6);

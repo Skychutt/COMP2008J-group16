@@ -132,9 +132,13 @@ public class TopStatusPanel extends BorderPane {
 
         lblActions.setText("Steps Left: " + (current != null ? current.actions : 0));
         lblDrawCount.setText(String.valueOf(snap.deckSize));
-        lblDiscardCount.setText("0");
+        lblDiscardCount.setText(String.valueOf(snap.discardSize));
         ivDrawTop.setImage(resolver.getFallbackIcon(82, 124));
-        ivDiscardTop.setImage(resolver.getFallbackIcon(82, 124));
+        if (snap.discardTop != null) {
+            ivDiscardTop.setImage(resolver.getCardIconFromInfo(snap.discardTop, 82, 124));
+        } else {
+            ivDiscardTop.setImage(resolver.getFallbackIcon(82, 124));
+        }
         if (!myTurn) {
             refreshDropZoneStyle(false);
         } else {

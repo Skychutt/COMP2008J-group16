@@ -29,6 +29,11 @@ public class PropertyArea {
         return new ArrayList<>(sets.values());
     }
 
+    /** Clears all property sets (used when rebuilding LAN client mirror state). */
+    public void clearAll() {
+        sets.clear();
+    }
+
     /**
      * Get the property set for a specific color.
      * @param color the color group to look up

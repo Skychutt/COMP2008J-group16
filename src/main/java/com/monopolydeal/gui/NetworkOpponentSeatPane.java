@@ -6,41 +6,57 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 /**
- * Opponent seat displayed on the circular table in LAN mode.
- * Mirrors OpponentSeatPane visually but is driven by a GameStateParser.PlayerInfo
- * snapshot instead of a live Player object.
+ * Opponent seat in LAN mode — snapshot-driven, supports targeted card drops.
  */
 public class NetworkOpponentSeatPane extends VBox {
+
+    private static final String NORMAL_STYLE =
+            "-fx-background-color: rgba(12,38,22,0.95);" +
+            "-fx-border-color: rgba(210,165,70,0.88);" +
+            "-fx-border-width: 2px; -fx-border-radius: 8px; -fx-background-radius: 8px;" +
+            "-fx-padding: 6 10 5 10;";
+
+    private static final String ACTIVE_DROP_STYLE =
+            "-fx-background-color: rgba(28,62,36,0.97);" +
+            "-fx-border-color: rgba(255,222,120,0.98);" +
+            "-fx-border-width: 3px; -fx-border-radius: 8px; -fx-background-radius: 8px;" +
+            "-fx-padding: 6 10 5 10;";
 
     public NetworkOpponentSeatPane(GameStateParser.PlayerInfo player,
                                    CardImageResolver resolver,
                                    boolean isCurrentTurn) {
+        this(player, resolver, isCurrentTurn, null, null);
+    }
+
+    public NetworkOpponentSeatPane(GameStateParser.PlayerInfo player,
+                                   CardImageResolver resolver,
+                                   boolean isCurrentTurn,
+                                   IntPredicate dropValidator,
+                                   IntConsumer dropHandler) {
         double zoneW = OpponentSeatPane.ZONE_W;
         double zoneH = OpponentSeatPane.ZONE_H;
         setPrefSize(zoneW, zoneH);
         setMaxSize(zoneW, zoneH);
-
-        String borderColor = isCurrentTurn ? "rgba(238,190,82,0.95)" : "rgba(210,165,70,0.88)";
-        int borderWidth    = isCurrentTurn ? 3 : 2;
-        setStyle(
-            "-fx-background-color: rgba(12,38,22,0.95);" +
-            "-fx-border-color: " + borderColor + ";" +
-            "-fx-border-width: " + borderWidth + "px;" +
-            "-fx-border-radius: 8px; -fx-background-radius: 8px;" +
-            "-fx-padding: 6 10 5 10;"
-        );
+        setStyle(isCurrentTurn
+                ? "-fx-background-color: rgba(12,38,22,0.95);" +
+                "-fx-border-color: rgba(238,190,82,0.95);" +
+                "-fx-border-width: 3px; -fx-border-radius: 8px; -fx-background-radius: 8px;" +
+                "-fx-padding: 6 10 5 10;"
+                : NORMAL_STYLE);
         setSpacing(4);
         setAlignment(Pos.TOP_CENTER);
 
-        // Name
         String nameText = (isCurrentTurn ? "▶ " : "") + player.name;
         Label name = new Label(nameText);
         name.setFont(UITheme.FONT_TITLE);
@@ -50,7 +66,6 @@ public class NetworkOpponentSeatPane extends VBox {
             "-fx-padding: 1 8; -fx-background-radius: 4;"
         );
 
-        // Stats
         Label stats = new Label(
             "Hand: " + player.handSize +
             "   Bank: " + player.bank + "M" +
@@ -59,18 +74,14 @@ public class NetworkOpponentSeatPane extends VBox {
         stats.setFont(UITheme.FONT_SUBTITLE);
         stats.setStyle("-fx-text-fill: #b8e8c0;");
 
-        // Face-down hand cards
         HBox handRow = buildHandRow(player.handSize, resolver);
-
-        // Property card previews
         List<GameStateParser.CardInfo> props = collectProps(player);
         FlowPane propRow = new FlowPane(3, 0);
         propRow.setAlignment(Pos.CENTER);
         int maxShow = Math.min(props.size(), 6);
         for (int i = 0; i < maxShow; i++) {
             GameStateParser.CardInfo c = props.get(i);
-            javafx.scene.image.Image img = resolver.getCardIconFromInfo(c, 26, 40);
-            ImageView iv = new ImageView(img);
+            ImageView iv = new ImageView(resolver.getCardIconFromInfo(c, 26, 40));
             iv.setFitWidth(26);
             iv.setFitHeight(40);
             Tooltip.install(iv, new Tooltip(c.name));
@@ -90,6 +101,55 @@ public class NetworkOpponentSeatPane extends VBox {
         }
 
         getChildren().addAll(name, stats, handRow, propRow);
+        wireDropTarget(dropValidator, dropHandler);
+    }
+
+    private void wireDropTarget(IntPredicate dropValidator, IntConsumer dropHandler) {
+        if (dropValidator == null || dropHandler == null) {
+            return;
+        }
+
+        setOnDragOver(e -> {
+            if (!e.getDragboard().hasString()) {
+                e.consume();
+                return;
+            }
+            int cardId = parseCardId(e.getDragboard().getString());
+            boolean ok = cardId >= 0 && dropValidator.test(cardId);
+            if (ok) {
+                e.acceptTransferModes(TransferMode.COPY);
+                setStyle(ACTIVE_DROP_STYLE);
+            }
+            e.consume();
+        });
+
+        setOnDragExited(e -> {
+            setStyle(NORMAL_STYLE);
+            e.consume();
+        });
+
+        setOnDragDropped(e -> {
+            setStyle(NORMAL_STYLE);
+            boolean success = false;
+            int cardId = parseCardId(e.getDragboard().getString());
+            if (cardId >= 0 && dropValidator.test(cardId)) {
+                dropHandler.accept(cardId);
+                success = true;
+            }
+            e.setDropCompleted(success);
+            e.consume();
+        });
+    }
+
+    private static int parseCardId(String rawCardId) {
+        if (rawCardId == null) {
+            return -1;
+        }
+        try {
+            return Integer.parseInt(rawCardId.trim());
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
     }
 
     private static HBox buildHandRow(int count, CardImageResolver resolver) {
@@ -122,7 +182,9 @@ public class NetworkOpponentSeatPane extends VBox {
         List<GameStateParser.CardInfo> cards = new ArrayList<>();
         if (player.propertySets != null) {
             for (GameStateParser.PropertySetInfo psi : player.propertySets) {
-                if (psi.cards != null) cards.addAll(psi.cards);
+                if (psi.cards != null) {
+                    cards.addAll(psi.cards);
+                }
             }
         }
         return cards;
