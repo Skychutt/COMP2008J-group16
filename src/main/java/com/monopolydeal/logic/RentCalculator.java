@@ -35,19 +35,16 @@ public class RentCalculator {
         return set.getRent();
     }
 
+    /**
+     * Sums the rent bonuses from any attached House/Hotel upgrades.
+     * Delegates to each card's {@link PropertyCard#getTotalRent()},
+     * which walks the Decorator chain when available and falls back to the
+     * legacy upgrade list otherwise.
+     */
     private static int getBuildingBonus(PropertySet set) {
         int bonus = 0;
         for (PropertyCard pc : set.getCards()) {
-            for (Card u : pc.getUpgrades()) {
-                if (u instanceof ActionCard) {
-                    ActionType t = ((ActionCard) u).getType();
-                    if (t == ActionType.HOUSE) {
-                        bonus += HOUSE_BONUS;
-                    } else if (t == ActionType.HOTEL) {
-                        bonus += HOTEL_BONUS;
-                    }
-                }
-            }
+            bonus += pc.getTotalRent();
         }
         return bonus;
     }
