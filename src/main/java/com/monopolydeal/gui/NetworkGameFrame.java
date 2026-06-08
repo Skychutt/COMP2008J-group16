@@ -6,7 +6,6 @@ import com.monopolydeal.network.GameClient;
 import com.monopolydeal.network.GameStateParser;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -78,12 +77,11 @@ public class NetworkGameFrame {
                 Platform.runLater(() -> frame.stage.show());
             } catch (Exception e) {
                 Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Connection Failed");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Cannot connect to server:\n" + e.getMessage());
-                    if (homeStage != null) alert.initOwner(homeStage);
-                    alert.showAndWait();
+                    ThemedDialog.showError(
+                            homeStage,
+                            "Connection Failed",
+                            "Cannot connect to server:\n" + e.getMessage()
+                    );
                     returnToHome(homeStage);
                 });
             }
@@ -195,12 +193,11 @@ public class NetworkGameFrame {
             public void onDisconnected(String reason) {
                 Platform.runLater(() -> {
                     if (!gameOverShown) {
-                        Alert alert = new Alert(Alert.AlertType.WARNING);
-                        alert.setTitle("Connection Lost");
-                        alert.setHeaderText(null);
-                        alert.setContentText("Disconnected: " + reason);
-                        alert.initOwner(stage);
-                        alert.showAndWait();
+                        ThemedDialog.showWarning(
+                                stage,
+                                "Connection Lost",
+                                "Disconnected: " + reason
+                        );
                         stage.close();
                     }
                 });

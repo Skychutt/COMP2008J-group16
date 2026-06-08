@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 import java.io.PrintWriter;
@@ -76,14 +75,14 @@ public class MonopolyDealGUIApp extends Application {
             homeFrame.getStage().toFront();
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Failed to start game");
-            alert.setHeaderText(e.getClass().getSimpleName() + ": " + e.getMessage());
-            alert.setContentText(sw.toString().length() > 800
+            String details = sw.toString().length() > 800
                     ? sw.toString().substring(0, 800) + "..."
-                    : sw.toString());
-            alert.initOwner(homeFrame.getStage());
-            alert.showAndWait();
+                    : sw.toString();
+            ThemedDialog.showError(
+                    homeFrame.getStage(),
+                    "Failed to start game",
+                    e.getClass().getSimpleName() + ": " + e.getMessage() + "\n\n" + details
+            );
         }
     }
 
@@ -131,14 +130,14 @@ public class MonopolyDealGUIApp extends Application {
             homeFrame.getStage().toFront();
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Failed to start AI game");
-            alert.setHeaderText(e.getClass().getSimpleName() + ": " + e.getMessage());
-            alert.setContentText(sw.toString().length() > 800
+            String details = sw.toString().length() > 800
                     ? sw.toString().substring(0, 800) + "..."
-                    : sw.toString());
-            alert.initOwner(homeFrame.getStage());
-            alert.showAndWait();
+                    : sw.toString();
+            ThemedDialog.showError(
+                    homeFrame.getStage(),
+                    "Failed to start AI game",
+                    e.getClass().getSimpleName() + ": " + e.getMessage() + "\n\n" + details
+            );
         }
     }
 }

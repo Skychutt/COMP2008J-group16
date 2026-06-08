@@ -14,7 +14,6 @@ import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -96,6 +95,7 @@ public class GameFrame implements IGameObserver {
         stage.setMinHeight(700);
         stage.setOnCloseRequest(e -> returnToHomeScreen());
 
+        gameLogic.getActionHandler().setDialogOwner(stage);
         gameManager.attach(this);
         refreshUI();
     }
@@ -470,7 +470,7 @@ public class GameFrame implements IGameObserver {
         if (current != null && current.isAI() && aiBrain != null) {
             chosen = aiBrain.choosePropertyColor(current, card);
         } else {
-            chosen = PropertyColorChooser.prompt(null, card);
+            chosen = PropertyColorChooser.prompt(stage, card);
         }
         if (card.needsColorChoiceOnPlacement() && chosen == null) {
             return null;
@@ -538,12 +538,7 @@ public class GameFrame implements IGameObserver {
     }
 
     private void reportProblem(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.initOwner(stage);
-        alert.showAndWait();
+        ThemedDialog.showWarning(stage, title, message);
         gameManager.notifyAllObservers(message);
     }
 

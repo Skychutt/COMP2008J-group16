@@ -67,7 +67,8 @@ class ActionHandlerTest {
         System.setIn(new ByteArrayInputStream("1\n1\n".getBytes()));
         handler.refreshScanner();
 
-        handler.handleBirthday(initiator);
+        ActionCard birthday = new ActionCard("It's My Birthday", 2, ActionType.BIRTHDAY, true);
+        handler.handleBirthday(initiator, birthday);
 
         assertTrue(initiator.getBankArea().total() > bankBefore,
                 "Initiator's bank must grow after Birthday");
@@ -158,6 +159,54 @@ class ActionHandlerTest {
         boolean blocked = handler.handleJustSayNo(defender, attacker, slyDeal);
 
         assertFalse(blocked, "Just Say No must fail when defender does not have the card");
+    }
+
+    @Test
+    void testJustSayNoBlocksDebtCollector() {
+        Player attacker = gm.getPlayers().get(0);
+        Player defender = gm.getPlayers().get(1);
+        attacker.getHand().getCards().clear();
+        defender.getHand().getCards().clear();
+
+        ActionCard jsn = new ActionCard("Just Say No", 4, ActionType.JUST_SAY_NO, false);
+        defender.getHand().add(jsn);
+        ActionCard debt = new ActionCard("Debt Collector", 3, ActionType.DEBT_DEAL, true);
+        defender.getBankArea().add(new MoneyCard("5M", 5, 5));
+
+        System.setIn(new ByteArrayInputStream("1\n".getBytes()));
+        handler.refreshScanner();
+
+        boolean blocked = handler.handleJustSayNo(defender, attacker, debt);
+
+        assertTrue(blocked);
+        assertNull(defender.getHand().findCard(jsn.getId()));
+    }
+
+    @Test
+    void testJustSayNoBlocksBirthdayPayment() {
+        Player initiator = gm.getPlayers().get(0);
+        Player defender = gm.getPlayers().get(1);
+        Player other = gm.getPlayers().get(2);
+        initiator.getHand().getCards().clear();
+        defender.getHand().getCards().clear();
+        other.getHand().getCards().clear();
+
+        ActionCard jsn = new ActionCard("Just Say No", 4, ActionType.JUST_SAY_NO, false);
+        defender.getHand().add(jsn);
+        ActionCard birthday = new ActionCard("It's My Birthday", 2, ActionType.BIRTHDAY, true);
+        defender.getBankArea().add(new MoneyCard("5M", 5, 5));
+        other.getBankArea().add(new MoneyCard("5M", 5, 5));
+        int bankBefore = initiator.getBankArea().total();
+
+        // Defender blocks Birthday; other opponent still pays.
+        System.setIn(new ByteArrayInputStream("1\n1\n1\n".getBytes()));
+        handler.refreshScanner();
+
+        handler.handleBirthday(initiator, birthday);
+
+        assertNull(defender.getHand().findCard(jsn.getId()));
+        assertTrue(initiator.getBankArea().total() > bankBefore,
+                "Initiator should still collect from opponents who did not block");
     }
 
     @Test

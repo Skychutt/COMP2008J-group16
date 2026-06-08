@@ -10,11 +10,12 @@ import com.monopolydeal.model.card.ActionCard;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import javafx.scene.control.ChoiceDialog;
+import com.monopolydeal.gui.ThemedDialog;
+
+import javafx.stage.Window;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -29,6 +30,7 @@ public class ActionHandler {
     private final GameLogic gameLogic;
     private Scanner scanner;
     private boolean useDialogInput;
+    private Window dialogOwner;
     private DecisionResolver decisionResolver;
     private Player activeDecisionPlayer;
     private Player preferredTargetPlayer;
@@ -52,6 +54,11 @@ public class ActionHandler {
     /** @return true when dialogs are used for player decisions */
     public boolean isUseDialogInput() {
         return useDialogInput;
+    }
+
+    /** Parent window for themed in-game choice dialogs. */
+    public void setDialogOwner(Window dialogOwner) {
+        this.dialogOwner = dialogOwner;
     }
 
     /** Registers the AI decision resolver used during automated choices. */
@@ -93,10 +100,10 @@ public class ActionHandler {
                 handlePassGo(player);
                 return true;
             case BIRTHDAY:
-                handleBirthday(player);
+                handleBirthday(player, card);
                 return true;
             case DEBT_DEAL:
-                return handleDebtCollector(player);
+                return handleDebtCollector(player, card);
             case SLY_DEAL:
                 return handleSlyDeal(player, card);
             case FORCED_DEAL:
@@ -199,7 +206,8 @@ public class ActionHandler {
         options.add("Use Just Say No");
         options.add("Do Not Use");
 
-        int choice = chooseOption(
+        int choice = chooseOptionFor(
+                responder,
                 "Just Say No",
                 prompt,
                 options,
@@ -274,9 +282,12 @@ public class ActionHandler {
         gameLogic.getGameManager().notifyAllObservers(r.getMessage());
     }
 
-    public void handleBirthday(Player initiator) {
+    public void handleBirthday(Player initiator, ActionCard played) {
         GameManager gm = gameLogic.getGameManager();
         for (Player other : getOpponents(initiator)) {
+            if (played != null && handleJustSayNo(other, initiator, played)) {
+                continue;
+            }
             AssetTransferManager.PaymentResult r = processPaymentWithChoice(
                     other,
                     initiator,
@@ -371,7 +382,7 @@ public class ActionHandler {
         return "[Bank] " + card.getName() + " - " + card.getValue() + "M";
     }
 
-    private boolean handleDebtCollector(Player collector) {
+    private boolean handleDebtCollector(Player collector, ActionCard played) {
         GameManager gm = gameLogic.getGameManager();
         List<Player> others = getOpponents(collector);
 
@@ -382,6 +393,9 @@ public class ActionHandler {
         if (preferredTargetPlayer != null) {
             if (!others.contains(preferredTargetPlayer)) {
                 return cancel(gm, collector.getName() + " cancelled Debt Collector.");
+            }
+            if (played != null && handleJustSayNo(preferredTargetPlayer, collector, played)) {
+                return true;
             }
             AssetTransferManager.PaymentResult r = processPaymentWithChoice(
                     preferredTargetPlayer,
@@ -411,6 +425,9 @@ public class ActionHandler {
         }
 
         Player victim = others.get(index);
+        if (played != null && handleJustSayNo(victim, collector, played)) {
+            return true;
+        }
         AssetTransferManager.PaymentResult r = processPaymentWithChoice(
                 victim,
                 collector,
@@ -1050,12 +1067,20 @@ public class ActionHandler {
      * Presents options and returns selected index (0-based), or -1 when cancelled.
      */
     private int chooseOption(String title, String prompt, List<String> options, boolean allowCancel) {
+        return chooseOptionFor(activeDecisionPlayer, title, prompt, options, allowCancel);
+    }
+
+    /**
+     * Presents options for a specific deciding player (e.g. JSN defender during an AI attack).
+     */
+    private int chooseOptionFor(Player decisionPlayer, String title, String prompt,
+                              List<String> options, boolean allowCancel) {
         if (options == null || options.isEmpty()) {
             return -1;
         }
 
-        if (activeDecisionPlayer != null && activeDecisionPlayer.isAI() && decisionResolver != null) {
-            return decisionResolver.chooseOption(activeDecisionPlayer, title, prompt, options, allowCancel);
+        if (decisionPlayer != null && decisionPlayer.isAI() && decisionResolver != null) {
+            return decisionResolver.chooseOption(decisionPlayer, title, prompt, options, allowCancel);
         }
 
         if (!useDialogInput) {
@@ -1076,26 +1101,7 @@ public class ActionHandler {
             return choice - 1;
         }
 
-        List<String> dialogOptions = new ArrayList<>(options);
-        if (allowCancel) {
-            dialogOptions.add("Cancel");
-        }
-
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(dialogOptions.get(0), dialogOptions);
-        dialog.setTitle(title);
-        dialog.setHeaderText(null);
-        dialog.setContentText(prompt);
-
-        Optional<String> result = dialog.showAndWait();
-        if (!result.isPresent()) {
-            return -1;
-        }
-        String chosen = result.get();
-        if (allowCancel && "Cancel".equals(chosen)) {
-            return -1;
-        }
-        int idx = options.indexOf(chosen);
-        return idx < 0 ? -1 : idx;
+        return ThemedDialog.showChoice(dialogOwner, title, prompt, options, allowCancel);
     }
 
     // ============================= INPUT HELPER =============================

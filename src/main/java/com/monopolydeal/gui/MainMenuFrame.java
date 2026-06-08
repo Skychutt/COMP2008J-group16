@@ -2,7 +2,6 @@ package com.monopolydeal.gui;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 import java.util.List;
@@ -108,12 +107,11 @@ public class MainMenuFrame {
     }
 
     private void showComingSoon(String modeName) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(modeName);
-        alert.setHeaderText(null);
-        alert.setContentText(modeName + " is not available yet.\nPlease use Local Game for now.");
-        alert.initOwner(stage);
-        alert.showAndWait();
+        ThemedDialog.showInfo(
+                stage,
+                modeName,
+                modeName + " is not available yet.\nPlease use Local Game for now."
+        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────

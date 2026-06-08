@@ -4,7 +4,165 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a75a9462-56fe-4223-9887-ca7ff601f4b8" name="更改" comment="" />
+    <list default="true" id="a75a9462-56fe-4223-9887-ca7ff601f4b8" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/Main.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/MonopolyDealConsole$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/MonopolyDealConsole.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/enums/ActionType.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/enums/PropertyType.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/factory/CardFactory.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/factory/PremiumCardFactory$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/factory/PremiumCardFactory.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/factory/StandardCardFactory$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/factory/StandardCardFactory.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/BackgroundUtil.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/ButtonDropZone.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/CardImageResolver.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/ControlPanel.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/GameFrame$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/GameFrame.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/GameRulesDialog.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/ImageActionButton$VisualState.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/ImageActionButton.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/ImageScaleUtil.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/LocalGameSetupPanel$SetupListener.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/LocalGameSetupPanel.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/MainMenuFrame$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/MainMenuFrame.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/MainMenuPanel.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/MonopolyDealGUIApp.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/OpponentsPanel.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/PlayerPanel$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/PlayerPanel$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/PlayerPanel$BankDropTransferHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/PlayerPanel$CardDragTransferHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/PlayerPanel$PropertyDropTransferHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/PlayerPanel.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/PropertyColorChooser$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/PropertyColorChooser.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/TableSurfacePanel.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/TopStatusPanel$CardDropTransferHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/TopStatusPanel.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/gui/UITheme.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/interfaces/IGameObserver.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/interfaces/IPlayable.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/interfaces/ISubject.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/interfaces/ITargetable.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/interfaces/IUpgradable.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/ActionHandler$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/ActionHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/AssetTransferManager$PaymentChooser.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/AssetTransferManager$PaymentMode.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/AssetTransferManager$PaymentResult.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/AssetTransferManager.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/GameLogic.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/RentCalculator.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/RuleValidator$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/RuleValidator.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/TurnManager.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/logic/VictoryChecker.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/BankArea.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/CardHolder.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/Deck.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/GameManager.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/Hand.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/Player.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/PropertyArea$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/PropertyArea.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/PropertySet$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/PropertySet.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/WildcardArtOrientation.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/card/ActionCard.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/card/Card.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/card/MoneyCard.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/COMP2008J-group16/com/monopolydeal/model/card/PropertyCard.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/GameFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/GameFrame.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/MainMenuFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/MainMenuFrame.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/MonopolyDealGUIApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/MonopolyDealGUIApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/NetworkGameFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/NetworkGameFrame.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/PropertyColorChooser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/PropertyColorChooser.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/ThemedConfirmDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/ThemedConfirmDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/logic/ActionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/logic/ActionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/monopolydeal/ActionHandlerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/monopolydeal/ActionHandlerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/MonopolyDealConsole$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/MonopolyDealConsole$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/MonopolyDealConsole.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/MonopolyDealConsole.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/ai/AIAction$Type.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/ai/AIAction$Type.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/ai/AIPlayerBrain$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/ai/AITurnExecutor$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/ai/AITurnExecutor.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/ai/AITurnExecutor.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/enums/ActionType.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/enums/ActionType.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/enums/PlayerType.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/enums/PlayerType.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/enums/PropertyType.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/enums/PropertyType.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/factory/PremiumCardFactory.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/factory/PremiumCardFactory.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/factory/StandardCardFactory.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/factory/StandardCardFactory.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/BackgroundMusicManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/BackgroundMusicManager.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/CardImageResolver.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/CardImageResolver.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/ControlPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/ControlPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameBoardPane.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameBoardPane.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameFrame$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameFrame.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameFrame.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameRulesDialog.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameRulesDialog.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameVolumeControl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/GameVolumeControl.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/ImageActionButton$VisualState.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/ImageActionButton$VisualState.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/ImageActionButton.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/ImageActionButton.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/LanSetupPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/LanSetupPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/LocalGameSetupPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/LocalGameSetupPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuFrame$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuFrame$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuFrame$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuFrame$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuFrame$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuFrame$3.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuFrame.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuFrame.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MainMenuPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MonopolyDealGUIApp.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/MonopolyDealGUIApp.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkControlPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkControlPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkGameFrame$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkGameFrame$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkGameFrame.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkGameFrame.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkLobbyFrame$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkLobbyFrame$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkLobbyFrame.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkLobbyFrame.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkOpponentSeatPane.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkOpponentSeatPane.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkOpponentsPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkOpponentsPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkPlayerPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/NetworkPlayerPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/OpponentSeatPane.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/OpponentSeatPane.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/OpponentsPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/OpponentsPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PlayerPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PlayerPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PropertyAreaPanel$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PropertyAreaPanel$LanePane.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PropertyAreaPanel$LanePane.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PropertyAreaPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PropertyAreaPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PropertyColorChooser.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/PropertyColorChooser.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/RecentLogPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/RecentLogPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/SinglePlayerSetupPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/SinglePlayerSetupPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/TableSurfacePanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/TableSurfacePanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/ThemedConfirmDialog.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/ThemedConfirmDialog.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/TopStatusPanel$DeckSlot.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/TopStatusPanel$DeckSlot.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/TopStatusPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/TopStatusPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/UITheme.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/UITheme.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/ActionHandler$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/ActionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/ActionHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/AssetTransferManager$PaymentMode.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/AssetTransferManager$PaymentMode.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/AssetTransferManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/AssetTransferManager.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/GameLogic.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/GameLogic.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/RuleValidator.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/RuleValidator.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/BankArea.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/BankArea.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/GameManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/GameManager.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/Hand.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/Hand.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/Player.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/Player.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertyArea.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertyArea.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertySet.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertySet.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/ActionCard.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/ActionCard.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/Card.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/Card.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/MoneyCard.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/MoneyCard.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/PropertyCard.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/PropertyCard.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/ClientHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/ClientHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameClient.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameServer$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameServer$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameServer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameServer.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameStateParser.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameStateParser.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameStateSnapshot.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameStateSnapshot.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/NetworkMessage.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/NetworkMessage.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -36,6 +194,12 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.GameManagerTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.KnownBugsTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.PlayerTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.RentCalculatorTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TurnManagerTest.executor&quot;: &quot;Run&quot;,
     &quot;Maven.monopoly-deal [javafx:run].executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
@@ -44,6 +208,10 @@
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;org.find.dps.bug.settings.CodeAssistSettingsConfigurable&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
     &quot;应用程序.Main.executor&quot;: &quot;Run&quot;
@@ -87,6 +255,14 @@
       <method v="2" />
     </configuration>
   </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.25557.131" />
+        <option value="bundled-js-predefined-d6986cc7102b-b598e85cdad2-JavaScript-IU-252.25557.131" />
+      </set>
+    </attachedChunks>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="默认任务">
       <changelist id="a75a9462-56fe-4223-9887-ca7ff601f4b8" name="更改" comment="" />
@@ -96,6 +272,8 @@
       <updated>1780749328315</updated>
       <workItem from="1780829370071" duration="19000" />
       <workItem from="1780829413858" duration="5000" />
+      <workItem from="1780902291046" duration="215000" />
+      <workItem from="1780903665114" duration="1667000" />
     </task>
     <servers />
   </component>
