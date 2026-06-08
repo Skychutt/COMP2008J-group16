@@ -137,7 +137,7 @@ public class PlayerPanel extends BorderPane {
         btnEndTurn.setImageOffsetX(-1);
         btnEndTurn.setOnAction(e -> {
             if (!gameOver && endTurnHandler != null) {
-                endTurnHandler.run();
+            endTurnHandler.run();
             }
         });
 

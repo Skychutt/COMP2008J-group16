@@ -151,9 +151,9 @@ public class ActionHandler {
             }
 
             boolean useCounter;
-            if (responder.isAI() && decisionResolver instanceof com.monopolydeal.ai.AIActionStrategy) {
-                useCounter = ((com.monopolydeal.ai.AIActionStrategy) decisionResolver)
-                        .shouldUseJustSayNo(responder);
+            if (responder.isAI() && decisionResolver instanceof com.monopolydeal.ai.BotDecisionPolicy) {
+                useCounter = ((com.monopolydeal.ai.BotDecisionPolicy) decisionResolver)
+                        .wantsJustSayNoCounter(responder);
             } else {
                 useCounter = askUseJustSayNo(responder, attackCard, blocked, challenger);
             }

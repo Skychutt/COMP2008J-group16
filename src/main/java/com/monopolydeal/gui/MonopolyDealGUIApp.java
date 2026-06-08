@@ -1,6 +1,6 @@
 package com.monopolydeal.gui;
 
-import com.monopolydeal.ai.AIPlayerBrain;
+import com.monopolydeal.ai.BotPlayerController;
 import com.monopolydeal.enums.PlayerType;
 import com.monopolydeal.logic.GameLogic;
 import com.monopolydeal.model.Deck;
@@ -109,17 +109,17 @@ public class MonopolyDealGUIApp extends Application {
         GameManager gameManager = GameManager.getInstance();
         gameManager.initGameWithSetups(setups);
 
-        AIPlayerBrain aiBrain = new AIPlayerBrain();
+        BotPlayerController botController = new BotPlayerController();
         GameLogic logic = new GameLogic(gameManager);
         logic.getActionHandler().setUseDialogInput(true);
-        logic.getActionHandler().setDecisionResolver(aiBrain);
+        logic.getActionHandler().setDecisionResolver(botController);
 
         Stage gameStage = new Stage();
         Runnable homeCallback = homeFrame::showHomeAgain;
 
         try {
             GameFrame gameFrame = new GameFrame(
-                    gameManager, logic, gameStage, homeCallback, true, aiBrain);
+                    gameManager, logic, gameStage, homeCallback, true, botController);
             gameFrame.show();
             homeFrame.getStage().hide();
             logic.startGame();

@@ -309,7 +309,7 @@ public class NetworkGameFrame implements GamePanelHost {
         }
 
         if (!mirrorReady) {
-            topStatusPanel.updateFromSnapshot(snap, imageResolver, myTurn, discardMode, discardRemaining);
+        topStatusPanel.updateFromSnapshot(snap, imageResolver, myTurn, discardMode, discardRemaining);
             board.updateFromSnapshot(snap, myPlayerIndex, imageResolver, this);
             return;
         }
@@ -380,12 +380,12 @@ public class NetworkGameFrame implements GamePanelHost {
                 if (chosen == null) {
                     return;
                 }
-                client.sendPlaceProperty(cardId, chosen.name());
+                    client.sendPlaceProperty(cardId, chosen.name());
+                } else {
+                    client.sendPlaceProperty(cardId, null);
+                }
             } else {
-                client.sendPlaceProperty(cardId, null);
-            }
-        } else {
-            client.sendPlayCard(cardId);
+                client.sendPlayCard(cardId);
         }
     }
 

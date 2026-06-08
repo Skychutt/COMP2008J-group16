@@ -11,81 +11,81 @@ import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 
 /**
- * Runs AI turns on the JavaFX thread with short delays between actions.
+ * Runs bot turns on the JavaFX thread with short delays between actions.
  */
-public class AITurnExecutor {
+public class BotTurnScheduler {
     private static final long ACTION_DELAY_MS = 1800;
 
-    private final AIActionStrategy brain;
+    private final BotDecisionPolicy policy;
     private final GameLogic gameLogic;
     private final ActionHandler actionHandler;
     private final Runnable refreshCallback;
 
-    private Player aiPlayer;
+    private Player activeBot;
     private boolean running;
 
-    public AITurnExecutor(AIActionStrategy brain, GameLogic gameLogic,
-                          ActionHandler actionHandler, Runnable refreshCallback) {
-        this.brain = brain;
+    public BotTurnScheduler(BotDecisionPolicy policy, GameLogic gameLogic,
+                            ActionHandler actionHandler, Runnable refreshCallback) {
+        this.policy = policy;
         this.gameLogic = gameLogic;
         this.actionHandler = actionHandler;
         this.refreshCallback = refreshCallback;
     }
 
-    public void startTurn(Player aiPlayer) {
-        if (running && this.aiPlayer == aiPlayer) {
+    public void beginTurn(Player botPlayer) {
+        if (running && this.activeBot == botPlayer) {
             return;
         }
-        this.aiPlayer = aiPlayer;
+        this.activeBot = botPlayer;
         this.running = true;
-        scheduleNextAction();
+        queueNextChoice();
     }
 
-    public void stop() {
+    public void halt() {
         running = false;
     }
 
-    private void scheduleNextAction() {
+    private void queueNextChoice() {
         GameManager gameManager = gameLogic.getGameManager();
         if (!running || gameManager.isGameOver()) {
             return;
         }
-        if (gameManager.getCurrentPlayer() != aiPlayer) {
+        if (gameManager.getCurrentPlayer() != activeBot) {
             running = false;
             return;
         }
 
-        AIAction action = brain.decideNextAction(aiPlayer, gameLogic);
-        executeAction(action);
+        BotTurnChoice choice = policy.pickTurnChoice(activeBot, gameLogic);
+        applyChoice(choice);
     }
 
-    private void executeAction(AIAction action) {
-        if (!running || action == null) {
+    private void applyChoice(BotTurnChoice choice) {
+        if (!running || choice == null) {
             return;
         }
 
         GameManager gameManager = gameLogic.getGameManager();
-        actionHandler.setActiveDecisionPlayer(aiPlayer);
+        actionHandler.setActiveDecisionPlayer(activeBot);
 
         try {
-            switch (action.getType()) {
+            switch (choice.getKind()) {
                 case PLAY_CARD:
-                    playCard(action);
+                    playChosenCard(choice);
                     break;
                 case DEPOSIT_TO_BANK:
-                    deposit(action.getCardId());
+                    depositToBank(choice.getTargetCardId());
                     break;
                 case DISCARD:
-                    gameLogic.discardCard(aiPlayer, action.getCardId());
+                    gameLogic.discardCard(activeBot, choice.getTargetCardId());
                     break;
                 case END_TURN:
-                    finishTurn();
+                    endTurnSequence();
                     return;
                 default:
                     break;
             }
         } catch (Exception ex) {
-            gameManager.notifyAllObservers("[AI] Action failed: " + ex.getMessage());
+            gameManager.notifyAllObservers("[Bot] Action failed: " + ex.getMessage());
         } finally {
             actionHandler.clearActiveDecisionPlayer();
         }
@@ -99,38 +99,38 @@ public class AITurnExecutor {
         }
 
         PauseTransition delay = new PauseTransition(Duration.millis(ACTION_DELAY_MS));
-        delay.setOnFinished(e -> scheduleNextAction());
+        delay.setOnFinished(e -> queueNextChoice());
         delay.play();
     }
 
-    private void playCard(AIAction action) {
-        Card card = aiPlayer.getHand().findCard(action.getCardId());
+    private void playChosenCard(BotTurnChoice choice) {
+        Card card = activeBot.getHand().findCard(choice.getTargetCardId());
         if (card == null) {
             return;
         }
         if (card instanceof PropertyCard) {
-            gameLogic.placeProperty(aiPlayer, (PropertyCard) card, action.getChosenColor());
+            gameLogic.placeProperty(activeBot, (PropertyCard) card, choice.getWildColor());
         } else {
-            gameLogic.playCard(aiPlayer, card);
+            gameLogic.playCard(activeBot, card);
         }
     }
 
-    private void deposit(int cardId) {
-        Card card = aiPlayer.getHand().findCard(cardId);
+    private void depositToBank(int cardId) {
+        Card card = activeBot.getHand().findCard(cardId);
         if (card == null) {
             return;
         }
-        aiPlayer.putMoneyInBank(cardId);
+        activeBot.putMoneyInBank(cardId);
         gameLogic.checkGameOver();
     }
 
-    private void finishTurn() {
-        while (gameLogic.getRequiredDiscardCount(aiPlayer) > 0) {
-            AIAction discard = brain.decideNextAction(aiPlayer, gameLogic);
-            if (discard.getType() != AIAction.Type.DISCARD) {
+    private void endTurnSequence() {
+        while (gameLogic.getRequiredDiscardCount(activeBot) > 0) {
+            BotTurnChoice discard = policy.pickTurnChoice(activeBot, gameLogic);
+            if (discard.getKind() != BotTurnChoice.Kind.DISCARD) {
                 break;
             }
-            gameLogic.discardCard(aiPlayer, discard.getCardId());
+            gameLogic.discardCard(activeBot, discard.getTargetCardId());
         }
         running = false;
         gameLogic.endTurn();

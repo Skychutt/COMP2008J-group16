@@ -1,7 +1,7 @@
 package com.monopolydeal.gui;
 
-import com.monopolydeal.ai.AIPlayerBrain;
-import com.monopolydeal.ai.AITurnExecutor;
+import com.monopolydeal.ai.BotPlayerController;
+import com.monopolydeal.ai.BotTurnScheduler;
 import com.monopolydeal.enums.ActionType;
 import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.interfaces.IGameObserver;
@@ -41,8 +41,8 @@ public class GameFrame implements IGameObserver, GamePanelHost {
     private int discardRemaining = 0;
     private Player propertyPreviewPlayer;
     private final boolean vsAiMode;
-    private final AIPlayerBrain aiBrain;
-    private AITurnExecutor aiExecutor;
+    private final BotPlayerController botController;
+    private BotTurnScheduler botScheduler;
 
     public GameFrame(GameManager gameManager, GameLogic gameLogic,
                      Stage stage, Runnable homeCallback) {
@@ -51,19 +51,19 @@ public class GameFrame implements IGameObserver, GamePanelHost {
 
     public GameFrame(GameManager gameManager, GameLogic gameLogic,
                      Stage stage, Runnable homeCallback,
-                     boolean vsAiMode, AIPlayerBrain aiBrain) {
+                     boolean vsAiMode, BotPlayerController botController) {
         this.gameManager = gameManager;
         this.gameLogic = gameLogic;
         this.stage = stage;
         this.homeCallback = homeCallback;
         this.vsAiMode = vsAiMode;
-        this.aiBrain = aiBrain;
+        this.botController = botController;
         this.imageResolver = new CardImageResolver();
 
-        if (vsAiMode && aiBrain != null) {
-            gameLogic.getActionHandler().setDecisionResolver(aiBrain);
-            aiExecutor = new AITurnExecutor(
-                    aiBrain,
+        if (vsAiMode && botController != null) {
+            gameLogic.getActionHandler().setDecisionResolver(botController);
+            botScheduler = new BotTurnScheduler(
+                    botController,
                     gameLogic,
                     gameLogic.getActionHandler(),
                     this::refreshUI
@@ -129,7 +129,7 @@ public class GameFrame implements IGameObserver, GamePanelHost {
         controlPanel.updateSelfAssets(viewPlayer);
         board.setWinnerBanner(gameManager.isGameOver() ? findWinnerBannerText() : null);
 
-        scheduleAiIfNeeded();
+        scheduleBotTurnIfNeeded();
     }
 
     public void playCard(Card card) {
@@ -466,8 +466,8 @@ public class GameFrame implements IGameObserver, GamePanelHost {
     private PropertyType resolvePlacementColor(PropertyCard card) {
         Player current = gameManager.getCurrentPlayer();
         PropertyType chosen;
-        if (current != null && current.isAI() && aiBrain != null) {
-            chosen = aiBrain.choosePropertyColor(current, card);
+        if (current != null && current.isAI() && botController != null) {
+            chosen = botController.choosePropertyColor(current, card);
         } else {
             chosen = PropertyColorChooser.prompt(stage, card);
         }
@@ -518,13 +518,13 @@ public class GameFrame implements IGameObserver, GamePanelHost {
         return current != null && current.isHuman();
     }
 
-    private void scheduleAiIfNeeded() {
-        if (!vsAiMode || aiExecutor == null || gameManager.isGameOver()) {
+    private void scheduleBotTurnIfNeeded() {
+        if (!vsAiMode || botScheduler == null || gameManager.isGameOver()) {
             return;
         }
         Player current = gameManager.getCurrentPlayer();
         if (current != null && current.isAI()) {
-            aiExecutor.startTurn(current);
+            botScheduler.beginTurn(current);
         }
     }
 
@@ -609,8 +609,8 @@ public class GameFrame implements IGameObserver, GamePanelHost {
             return;
         }
         returnedHome = true;
-        if (aiExecutor != null) {
-            aiExecutor.stop();
+        if (botScheduler != null) {
+            botScheduler.halt();
         }
         gameManager.detach(this);
         if (homeCallback != null) {

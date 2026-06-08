@@ -258,7 +258,7 @@ public class CardImageResolver {
             }
 
             default:
-                return null;
+            return null;
         }
     }
 
@@ -335,8 +335,8 @@ public class CardImageResolver {
                 default:                   return ActionType.DOUBLE_RENT; // rent cards reuse DOUBLE_RENT
             }
         }
-        return null;
-    }
+            return null;
+        }
 
     private static PropertyType parseColor(String color) {
         if (color == null || color.isEmpty()) return null;

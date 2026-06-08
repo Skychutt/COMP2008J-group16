@@ -235,6 +235,34 @@ public final class UITheme {
         btn.setOnMouseExited(e -> btn.setStyle(DIALOG_CANCEL_NORMAL));
     }
 
+    /** Equal-weight choice buttons in option dialogs (all options share one look). */
+    public static void styleDialogOptionButton(Button btn) {
+        btn.setFont(FONT_MENU_BUTTON);
+        btn.setStyle(DIALOG_OPTION_NORMAL);
+        btn.setOnMouseEntered(e -> btn.setStyle(DIALOG_OPTION_HOVER));
+        btn.setOnMouseExited(e -> btn.setStyle(DIALOG_OPTION_NORMAL));
+    }
+
+    private static final String DIALOG_OPTION_NORMAL =
+            "-fx-background-color: " + toCssRgba(PANEL_SOFT_BG) + ";" +
+            "-fx-text-fill: " + toCssHex(TEXT_MAIN) + ";" +
+            "-fx-border-color: " + toCssHex(BORDER) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 11 22 11 22;" +
+            "-fx-cursor: hand;";
+
+    private static final String DIALOG_OPTION_HOVER =
+            "-fx-background-color: rgba(255,255,255,0.98);" +
+            "-fx-text-fill: " + toCssHex(TEXT_MAIN) + ";" +
+            "-fx-border-color: " + toCssHex(ACCENT_DARK) + ";" +
+            "-fx-border-width: 2px;" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-padding: 11 22 11 22;" +
+            "-fx-cursor: hand;";
+
     public static void styleLogArea(TextArea logArea) {
         logArea.setFont(FONT_BODY);
         logArea.setStyle(

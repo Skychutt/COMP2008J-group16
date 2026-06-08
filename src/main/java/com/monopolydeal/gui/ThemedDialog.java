@@ -129,11 +129,7 @@ public final class ThemedDialog {
         for (int i = 0; i < options.size(); i++) {
             final int index = i;
             Button optionBtn = new Button(options.get(i));
-            if (i == 0) {
-                UITheme.styleDialogConfirmButton(optionBtn);
-            } else {
-                UITheme.styleDialogCancelButton(optionBtn);
-            }
+            UITheme.styleDialogOptionButton(optionBtn);
             optionBtn.setMaxWidth(Double.MAX_VALUE);
             optionBtn.setOnAction(e -> {
                 selectedIndex[0] = index;
