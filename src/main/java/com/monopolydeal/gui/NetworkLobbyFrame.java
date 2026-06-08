@@ -196,8 +196,6 @@ public class NetworkLobbyFrame {
 
     public void show() {
         stage.show();
-        stage.toFront();
-        stage.requestFocus();
     }
 
     private static VBox buildJoinInfoBlock(GameServer server) {

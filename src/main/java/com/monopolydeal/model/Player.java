@@ -23,6 +23,7 @@ public class Player implements ISubject {
     private PropertyArea propertyArea;          // Player's property area for property sets
     private List<IGameObserver> observers;      // Registered observers for event notifications
     private PlayerType playerType = PlayerType.HUMAN;
+    private int reportedHandSize = -1;
 
     /** Maximum cards allowed in hand at end of turn. */
     public static final int MAX_HAND_SIZE = 7;
@@ -89,6 +90,20 @@ public class Player implements ISubject {
     /** @return the player's hand */
     public Hand getHand() {
         return hand;
+    }
+
+    /** LAN client: opponent hand count from server snapshot (hidden cards). */
+    public void setReportedHandSize(int handSize) {
+        this.reportedHandSize = Math.max(0, handSize);
+    }
+
+    public void clearReportedHandSize() {
+        this.reportedHandSize = -1;
+    }
+
+    /** Hand size shown in UI — uses real hand for self, server count for opponents. */
+    public int getVisibleHandSize() {
+        return reportedHandSize >= 0 ? reportedHandSize : hand.size();
     }
 
     /** @return the player's bank area */

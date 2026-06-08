@@ -32,6 +32,20 @@ public abstract class Card {
         return id;
     }
 
+    /**
+     * LAN client mirror: apply the authoritative id from a server snapshot
+     * so drag/drop sends the same id the server expects.
+     */
+    public void syncIdFromNetwork(int networkId) {
+        if (networkId <= 0) {
+            return;
+        }
+        this.id = networkId;
+        if (networkId >= idCounter) {
+            idCounter = networkId + 1;
+        }
+    }
+
     /** @return the monetary value of this card */
     public int getValue() {
         return value;

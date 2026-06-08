@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.monopolydeal.ActionHandlerTest" time="0.086" tests="13" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.monopolydeal.ActionHandlerTest" time="0.095" tests="13" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -16,7 +16,7 @@
     <property name="user.country" value="CN"/>
     <property name="session.topDirectory" value="C:\Users\Lenovo\Desktop\COMP2008J-group16"/>
     <property name="sun.boot.library.path" value="D:\jdk17\bin"/>
-    <property name="sun.java.command" value="C:\Users\Lenovo\AppData\Local\Temp\surefire6156765779564954943\surefirebooter-20260608182258025_3.jar C:\Users\Lenovo\AppData\Local\Temp\surefire6156765779564954943 2026-06-08T18-22-57_920-jvmRun1 surefire-20260608182258025_1tmp surefire_0-20260608182258025_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\Lenovo\AppData\Local\Temp\surefire1005317864541951445\surefirebooter-20260608183757188_3.jar C:\Users\Lenovo\AppData\Local\Temp\surefire1005317864541951445 2026-06-08T18-37-57_103-jvmRun1 surefire-20260608183757188_1tmp surefire_0-20260608183757188_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="C:\Users\Lenovo\Desktop\COMP2008J-group16\target\test-classes;C:\Users\Lenovo\Desktop\COMP2008J-group16\target\classes;D:\maven\mavenrep\org\openjfx\javafx-controls\21\javafx-controls-21.jar;D:\maven\mavenrep\org\openjfx\javafx-controls\21\javafx-controls-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-fxml\21\javafx-fxml-21.jar;D:\maven\mavenrep\org\openjfx\javafx-fxml\21\javafx-fxml-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-swing\21\javafx-swing-21.jar;D:\maven\mavenrep\org\openjfx\javafx-swing\21\javafx-swing-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-graphics\21\javafx-graphics-21.jar;D:\maven\mavenrep\org\openjfx\javafx-graphics\21\javafx-graphics-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-base\21\javafx-base-21.jar;D:\maven\mavenrep\org\openjfx\javafx-base\21\javafx-base-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-media\21\javafx-media-21.jar;D:\maven\mavenrep\org\openjfx\javafx-media\21\javafx-media-21-win.jar;D:\maven\mavenrep\junit\junit\4.13.1\junit-4.13.1.jar;D:\maven\mavenrep\org\hamcrest\hamcrest-core\1.3\hamcrest-core-1.3.jar;D:\maven\mavenrep\org\junit\jupiter\junit-jupiter\5.8.1\junit-jupiter-5.8.1.jar;D:\maven\mavenrep\org\junit\jupiter\junit-jupiter-api\5.8.1\junit-jupiter-api-5.8.1.jar;D:\maven\mavenrep\org\opentest4j\opentest4j\1.2.0\opentest4j-1.2.0.jar;D:\maven\mavenrep\org\junit\platform\junit-platform-commons\1.8.1\junit-platform-commons-1.8.1.jar;D:\maven\mavenrep\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;D:\maven\mavenrep\org\junit\jupiter\junit-jupiter-params\5.8.1\junit-jupiter-params-5.8.1.jar;D:\maven\mavenrep\org\junit\jupiter\junit-jupiter-engine\5.8.1\junit-jupiter-engine-5.8.1.jar;D:\maven\mavenrep\org\junit\platform\junit-platform-engine\1.8.1\junit-platform-engine-1.8.1.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -31,7 +31,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\Lenovo\AppData\Local\Temp\surefire6156765779564954943\surefirebooter-20260608182258025_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\Lenovo\AppData\Local\Temp\surefire1005317864541951445\surefirebooter-20260608183757188_3.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="17.0.17+10-LTS"/>
@@ -59,8 +59,8 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="61.0"/>
   </properties>
-  <testcase name="testTryAttachHouseSucceedsOnCompleteSet" classname="com.monopolydeal.ActionHandlerTest" time="0.027"/>
-  <testcase name="testJustSayNoBlocksAttack" classname="com.monopolydeal.ActionHandlerTest" time="0.007">
+  <testcase name="testTryAttachHouseSucceedsOnCompleteSet" classname="com.monopolydeal.ActionHandlerTest" time="0.029"/>
+  <testcase name="testJustSayNoBlocksAttack" classname="com.monopolydeal.ActionHandlerTest" time="0.008">
     <system-out><![CDATA[
 === Just Say No ===
 Player 2: Player 1 played [Sly Deal]. Use Just Say No?
@@ -68,10 +68,10 @@ Player 2: Player 1 played [Sly Deal]. Use Just Say No?
   2. Do Not Use
 Enter choice (1-2): ]]></system-out>
   </testcase>
-  <testcase name="testPassGoDrawsTwoExtraCards" classname="com.monopolydeal.ActionHandlerTest" time="0.003"/>
+  <testcase name="testPassGoDrawsTwoExtraCards" classname="com.monopolydeal.ActionHandlerTest" time="0.004"/>
   <testcase name="testJustSayNoFailsAgainstUndefendableCard" classname="com.monopolydeal.ActionHandlerTest" time="0.001"/>
   <testcase name="testTryAttachHouseFailsWithNoCompleteSet" classname="com.monopolydeal.ActionHandlerTest" time="0.003"/>
-  <testcase name="testJustSayNoDeclinedByDefender" classname="com.monopolydeal.ActionHandlerTest" time="0.003">
+  <testcase name="testJustSayNoDeclinedByDefender" classname="com.monopolydeal.ActionHandlerTest" time="0.002">
     <system-out><![CDATA[
 === Just Say No ===
 Player 2: Player 1 played [Sly Deal]. Use Just Say No?
@@ -80,7 +80,7 @@ Player 2: Player 1 played [Sly Deal]. Use Just Say No?
 Enter choice (1-2): ]]></system-out>
   </testcase>
   <testcase name="testJustSayNoFailsWhenNotInHand" classname="com.monopolydeal.ActionHandlerTest" time="0.001"/>
-  <testcase name="testHandleRentTransfersCorrectAmount" classname="com.monopolydeal.ActionHandlerTest" time="0.012">
+  <testcase name="testHandleRentTransfersCorrectAmount" classname="com.monopolydeal.ActionHandlerTest" time="0.013">
     <system-out><![CDATA[
 === Choose Payment Card ===
 Player 2 pays Player 1 for Rent. Owed: 5M, selected: 0M.
@@ -101,7 +101,7 @@ Player 3 pays Player 1 for Birthday. Owed: 2M, selected: 0M.
   0. Cancel
 Enter choice (0-1): ]]></system-out>
   </testcase>
-  <testcase name="testDebtCollectorChargesFiveM" classname="com.monopolydeal.ActionHandlerTest" time="0.002">
+  <testcase name="testDebtCollectorChargesFiveM" classname="com.monopolydeal.ActionHandlerTest" time="0.001">
     <system-out><![CDATA[
 === Debt Collector ===
 Choose one player to charge 5M:
@@ -115,7 +115,7 @@ Player 2 pays Player 1 for Debt Collector. Owed: 5M, selected: 0M.
   0. Cancel
 Enter choice (0-1): ]]></system-out>
   </testcase>
-  <testcase name="testBirthdayCollectsFromAllOtherPlayers" classname="com.monopolydeal.ActionHandlerTest" time="0.001">
+  <testcase name="testBirthdayCollectsFromAllOtherPlayers" classname="com.monopolydeal.ActionHandlerTest" time="0.002">
     <system-out><![CDATA[
 === Choose Payment Card ===
 Player 2 pays Player 1 for Birthday. Owed: 2M, selected: 0M.
@@ -128,7 +128,7 @@ Player 3 pays Player 1 for Birthday. Owed: 2M, selected: 0M.
   0. Cancel
 Enter choice (0-1): ]]></system-out>
   </testcase>
-  <testcase name="testJustSayNoBlocksDebtCollector" classname="com.monopolydeal.ActionHandlerTest" time="0.001">
+  <testcase name="testJustSayNoBlocksDebtCollector" classname="com.monopolydeal.ActionHandlerTest" time="0.002">
     <system-out><![CDATA[
 === Just Say No ===
 Player 2: Player 1 played [Debt Collector]. Use Just Say No?
@@ -136,7 +136,7 @@ Player 2: Player 1 played [Debt Collector]. Use Just Say No?
   2. Do Not Use
 Enter choice (1-2): ]]></system-out>
   </testcase>
-  <testcase name="testJustSayNoChaining" classname="com.monopolydeal.ActionHandlerTest" time="0.001">
+  <testcase name="testJustSayNoChaining" classname="com.monopolydeal.ActionHandlerTest" time="0.002">
     <system-out><![CDATA[
 === Just Say No ===
 Player 2: Player 1 played [Sly Deal]. Use Just Say No?

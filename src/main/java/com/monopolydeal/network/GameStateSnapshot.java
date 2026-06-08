@@ -89,7 +89,7 @@ public class GameStateSnapshot {
         List<PropertyCard> cards = set.getCards();
         for (int i = 0; i < cards.size(); i++) {
             if (i > 0) sb.append(",");
-            appendCardBrief(sb, cards.get(i));
+            appendCardDetail(sb, cards.get(i));
         }
         sb.append("]}");
     }

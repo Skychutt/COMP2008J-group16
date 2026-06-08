@@ -54,15 +54,16 @@ public class OpponentSeatPane extends VBox {
         );
 
         int sets = player.getPropertyArea().countCompleteSets();
+        int visibleHand = player.getVisibleHandSize();
         Label stats = new Label(
-                "Hand: " + player.getHand().size() +
+                "Hand: " + visibleHand +
                         "   Bank: " + player.getBankArea().total() + "M" +
                         "   Sets: " + sets + "/3"
         );
         stats.setFont(UITheme.FONT_SUBTITLE);
         stats.setStyle("-fx-text-fill: #b8e8c0;");
 
-        HBox handRow = buildHandRow(player.getHand().size(), resolver);
+        HBox handRow = buildHandRow(visibleHand, resolver);
         getChildren().addAll(name, stats, handRow);
         wireDropTarget(dropValidator, dropHandler);
         wireHoverPreview(player, hoverHandler, exitHandler);

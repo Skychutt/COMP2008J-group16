@@ -16,7 +16,7 @@
     <property name="user.country" value="CN"/>
     <property name="session.topDirectory" value="C:\Users\Lenovo\Desktop\COMP2008J-group16"/>
     <property name="sun.boot.library.path" value="D:\jdk17\bin"/>
-    <property name="sun.java.command" value="C:\Users\Lenovo\AppData\Local\Temp\surefire6156765779564954943\surefirebooter-20260608182258025_3.jar C:\Users\Lenovo\AppData\Local\Temp\surefire6156765779564954943 2026-06-08T18-22-57_920-jvmRun1 surefire-20260608182258025_1tmp surefire_0-20260608182258025_2tmp"/>
+    <property name="sun.java.command" value="C:\Users\Lenovo\AppData\Local\Temp\surefire1005317864541951445\surefirebooter-20260608183757188_3.jar C:\Users\Lenovo\AppData\Local\Temp\surefire1005317864541951445 2026-06-08T18-37-57_103-jvmRun1 surefire-20260608183757188_1tmp surefire_0-20260608183757188_2tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="C:\Users\Lenovo\Desktop\COMP2008J-group16\target\test-classes;C:\Users\Lenovo\Desktop\COMP2008J-group16\target\classes;D:\maven\mavenrep\org\openjfx\javafx-controls\21\javafx-controls-21.jar;D:\maven\mavenrep\org\openjfx\javafx-controls\21\javafx-controls-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-fxml\21\javafx-fxml-21.jar;D:\maven\mavenrep\org\openjfx\javafx-fxml\21\javafx-fxml-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-swing\21\javafx-swing-21.jar;D:\maven\mavenrep\org\openjfx\javafx-swing\21\javafx-swing-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-graphics\21\javafx-graphics-21.jar;D:\maven\mavenrep\org\openjfx\javafx-graphics\21\javafx-graphics-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-base\21\javafx-base-21.jar;D:\maven\mavenrep\org\openjfx\javafx-base\21\javafx-base-21-win.jar;D:\maven\mavenrep\org\openjfx\javafx-media\21\javafx-media-21.jar;D:\maven\mavenrep\org\openjfx\javafx-media\21\javafx-media-21-win.jar;D:\maven\mavenrep\junit\junit\4.13.1\junit-4.13.1.jar;D:\maven\mavenrep\org\hamcrest\hamcrest-core\1.3\hamcrest-core-1.3.jar;D:\maven\mavenrep\org\junit\jupiter\junit-jupiter\5.8.1\junit-jupiter-5.8.1.jar;D:\maven\mavenrep\org\junit\jupiter\junit-jupiter-api\5.8.1\junit-jupiter-api-5.8.1.jar;D:\maven\mavenrep\org\opentest4j\opentest4j\1.2.0\opentest4j-1.2.0.jar;D:\maven\mavenrep\org\junit\platform\junit-platform-commons\1.8.1\junit-platform-commons-1.8.1.jar;D:\maven\mavenrep\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;D:\maven\mavenrep\org\junit\jupiter\junit-jupiter-params\5.8.1\junit-jupiter-params-5.8.1.jar;D:\maven\mavenrep\org\junit\jupiter\junit-jupiter-engine\5.8.1\junit-jupiter-engine-5.8.1.jar;D:\maven\mavenrep\org\junit\platform\junit-platform-engine\1.8.1\junit-platform-engine-1.8.1.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -31,7 +31,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\Lenovo\AppData\Local\Temp\surefire6156765779564954943\surefirebooter-20260608182258025_3.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\Lenovo\AppData\Local\Temp\surefire1005317864541951445\surefirebooter-20260608183757188_3.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="17.0.17+10-LTS"/>
@@ -62,10 +62,10 @@
   <testcase name="testIncompleteSetReturnsPartialRent" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
   <testcase name="testHotelBonusAddsFourToRent" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
   <testcase name="testDoubleRentOnIncompleteSetDoubles" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
-  <testcase name="testHouseBonusAddsThreeToRent" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
+  <testcase name="testHouseBonusAddsThreeToRent" classname="com.monopolydeal.RentCalculatorTest" time="0.001"/>
   <testcase name="testBaseRentForCompleteBlueSet" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
-  <testcase name="testCanCollectRentOnIncompleteSet" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
-  <testcase name="testDoubleRentMultipliesBaseRentByTwo" classname="com.monopolydeal.RentCalculatorTest" time="0.001"/>
+  <testcase name="testCanCollectRentOnIncompleteSet" classname="com.monopolydeal.RentCalculatorTest" time="0.001"/>
+  <testcase name="testDoubleRentMultipliesBaseRentByTwo" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
   <testcase name="testBaseRentForCompleteBrownSet" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
   <testcase name="testCanCollectRentOnCompleteSet" classname="com.monopolydeal.RentCalculatorTest" time="0.0"/>
   <testcase name="testCannotCollectRentOnNull" classname="com.monopolydeal.RentCalculatorTest" time="0.001"/>

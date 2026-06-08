@@ -56,6 +56,7 @@ public class NetworkGameFrame implements GamePanelHost {
     private boolean gameOverShown = false;
     private boolean mirrorReady = false;
     private volatile boolean exiting = false;
+    private Player propertyPreviewPlayer;
 
     private NetworkGameFrame(GameClient client, Stage homeStage, Runnable homeCallback, boolean hideHomeOnConnect) {
         this.client = client;
@@ -97,8 +98,9 @@ public class NetworkGameFrame implements GamePanelHost {
             try {
                 client.connect(roomCode, playerName);
                 Platform.runLater(() -> {
-                    frame.stage.show();
-                    frame.stage.toFront();
+                    if (!frame.stage.isShowing()) {
+                        frame.stage.show();
+                    }
                     if (hideHomeOnConnect) {
                         frame.hideHomeIfNeeded();
                     }
@@ -165,7 +167,9 @@ public class NetworkGameFrame implements GamePanelHost {
                 Platform.runLater(() -> {
                     recentLogPanel.logEvent(message);
                     hideHomeIfNeeded();
-                    stage.toFront();
+                    if (!stage.isShowing()) {
+                        stage.show();
+                    }
                 });
             }
 
@@ -185,7 +189,6 @@ public class NetworkGameFrame implements GamePanelHost {
                     if (!stage.isShowing()) {
                         stage.show();
                     }
-                    stage.toFront();
                     refreshFromSnapshot(snap);
                 });
             }
@@ -317,9 +320,18 @@ public class NetworkGameFrame implements GamePanelHost {
             return;
         }
 
+        GameStateParser.PlayerInfo meInfo = snap.getMyInfo(myPlayerIndex);
+        if (meInfo != null) {
+            viewPlayer.setActions(meInfo.actions);
+        }
+        GameStateParser.PlayerInfo turnInfo = findPlayerInfo(snap, snap.turn);
+        if (turnInfo != null && current.getActions() != turnInfo.actions) {
+            current.setActions(turnInfo.actions);
+        }
+
         topStatusPanel.updateTableCenter(current, imageResolver, snap.gameOver, discardMode, discardRemaining);
         playerPanel.updatePlayerView(viewPlayer, snap.gameOver, discardMode, discardRemaining, myTurn);
-        propertyPanel.updatePropertyArea(viewPlayer, myTurn, 1);
+        refreshPropertyPanelOnly(viewPlayer);
         controlPanel.updateSelfAssets(viewPlayer);
         board.updateOpponents(mirrorManager.getPlayers(), viewPlayer, imageResolver);
         if (!snap.gameOver) {
@@ -355,7 +367,7 @@ public class NetworkGameFrame implements GamePanelHost {
             reportProblem("Play Failed", "Drag this card onto an opponent.");
             return;
         }
-        String reason = mirrorLogic.getRuleValidator().explainPlayCardFailure(getMirrorCurrentPlayer(), card);
+        String reason = mirrorLogic.getRuleValidator().explainPlayCardFailure(getViewPlayer(), card);
         if (reason != null) {
             reportProblem("Play Failed", reason);
             return;
@@ -393,7 +405,7 @@ public class NetworkGameFrame implements GamePanelHost {
             return;
         }
         PropertyCard propertyCard = (PropertyCard) card;
-        if (mirrorLogic.getRuleValidator().explainPlayCardFailure(getMirrorCurrentPlayer(), propertyCard) != null) {
+        if (mirrorLogic.getRuleValidator().explainPlayCardFailure(getViewPlayer(), propertyCard) != null) {
             return;
         }
         if (propertyCard.needsColorChoiceOnPlacement()) {
@@ -434,7 +446,7 @@ public class NetworkGameFrame implements GamePanelHost {
         if (card == null || requiresTargetedDrop(card)) {
             return false;
         }
-        return mirrorLogic.getRuleValidator().canPlayCard(getMirrorCurrentPlayer(), card);
+        return mirrorLogic.getRuleValidator().canPlayCard(getViewPlayer(), card);
     }
 
     @Override
@@ -552,6 +564,45 @@ public class NetworkGameFrame implements GamePanelHost {
         }
     }
 
+    public void showPropertyPreview(Player player) {
+        if (player == null || player == getViewPlayer()) {
+            return;
+        }
+        propertyPreviewPlayer = player;
+        refreshPropertyPanelOnly(getViewPlayer());
+    }
+
+    public void clearPropertyPreview() {
+        if (propertyPreviewPlayer == null) {
+            return;
+        }
+        propertyPreviewPlayer = null;
+        refreshPropertyPanelOnly(getViewPlayer());
+    }
+
+    private void refreshPropertyPanelOnly(Player viewPlayer) {
+        if (viewPlayer == null) {
+            return;
+        }
+        Player propertyOwner = resolvePropertyOwner(viewPlayer);
+        boolean canEdit = myTurn && propertyOwner == viewPlayer && !snapshot.gameOver;
+        propertyPanel.updatePropertyArea(propertyOwner, canEdit, 1);
+        board.setPropertyPreviewName(propertyOwner == viewPlayer ? null : propertyOwner.getName());
+    }
+
+    private Player resolvePropertyOwner(Player viewPlayer) {
+        if (propertyPreviewPlayer == null || mirrorManager == null) {
+            return viewPlayer;
+        }
+        for (Player player : mirrorManager.getPlayers()) {
+            if (player == propertyPreviewPlayer) {
+                return player;
+            }
+        }
+        propertyPreviewPlayer = null;
+        return viewPlayer;
+    }
+
     public void requestExitToHome() {
         board.showConfirmDialog(
                 "Exit Game",
@@ -576,6 +627,18 @@ public class NetworkGameFrame implements GamePanelHost {
         return mirrorManager.getCurrentPlayer();
     }
 
+    private static GameStateParser.PlayerInfo findPlayerInfo(GameStateParser.Snapshot snap, int index) {
+        if (snap == null || snap.players == null) {
+            return null;
+        }
+        for (GameStateParser.PlayerInfo info : snap.players) {
+            if (info.index == index) {
+                return info;
+            }
+        }
+        return null;
+    }
+
     private Player findMirrorPlayer(int index) {
         if (index < 0 || index >= mirrorManager.getPlayers().size()) {
             return null;
@@ -584,7 +647,7 @@ public class NetworkGameFrame implements GamePanelHost {
     }
 
     private Card findMirrorCard(int cardId) {
-        Player me = getMirrorCurrentPlayer();
+        Player me = getViewPlayer();
         if (me == null) {
             return null;
         }

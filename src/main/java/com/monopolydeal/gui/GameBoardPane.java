@@ -242,8 +242,8 @@ public class GameBoardPane extends StackPane {
                         resolver,
                         cardId -> networkFrame.canTargetOpponentWithCard(cardId, opponent),
                         cardId -> networkFrame.playCardOnTarget(opponent, cardId),
-                        null,
-                        null
+                        networkFrame::showPropertyPreview,
+                        networkFrame::clearPropertyPreview
                 );
             } else {
                 seat = new OpponentSeatPane(opponent, resolver);
