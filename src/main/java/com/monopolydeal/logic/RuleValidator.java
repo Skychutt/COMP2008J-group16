@@ -96,6 +96,8 @@ public class RuleValidator {
                                 ? null
                                 : "Cannot play [Double The Rent] because there is no rent card and matching property set to boost this turn.";
                     }
+                    return null;
+                case RENT:
                     if (isRentCard(actionCard)) {
                         return hasRentableSetForCard(player, actionCard)
                                 ? null
@@ -118,8 +120,7 @@ public class RuleValidator {
 
     private boolean isRentCard(ActionCard card) {
         return card != null
-                && card.getType() == ActionType.DOUBLE_RENT
-                && !"Double The Rent".equals(card.getName());
+                && card.getType() == ActionType.RENT;
     }
 
     private boolean canUseDoubleRentNow(Player player) {

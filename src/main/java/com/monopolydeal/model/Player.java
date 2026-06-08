@@ -205,12 +205,6 @@ public class Player implements ISubject {
 
         hand.removeCard(cardId);
         propertyArea.add(propertyCard, chosenColor);
-        PropertyCard reclaimedWild = propertyArea.tryReclaimWildcardAfterPlacement(propertyCard);
-        if (reclaimedWild != null) {
-            hand.add(reclaimedWild);
-            notifyAllObservers(name + " replaced a wildcard with [" + propertyCard.getName()
-                    + "] and took [" + reclaimedWild.getName() + "] back to hand.");
-        }
         actions--;
         notifyAllObservers(name + " placed [" + card.getName() + "]. Complete sets: " + propertyArea.countCompleteSets());
         return true;

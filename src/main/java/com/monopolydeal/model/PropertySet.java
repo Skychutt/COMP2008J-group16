@@ -55,7 +55,17 @@ public class PropertySet {
 
     /** @return true if this set has enough cards to be considered complete */
     public boolean isComplete() {
-        return need > 0 && cards.size() >= need;
+        return need > 0 && cards.size() >= need && hasStandardProperty();
+    }
+
+    /** A complete set must include at least one standard property card. */
+    public boolean hasStandardProperty() {
+        for (PropertyCard card : cards) {
+            if (!card.isWild()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -36,7 +36,6 @@ public class GameFrame implements IGameObserver {
     private final ControlPanel controlPanel;
     private final RecentLogPanel recentLogPanel;
 
-    private boolean gameOverDialogShown = false;
     private boolean returnedHome = false;
     private String latestEvent = "Welcome to Monopoly Deal.";
     private boolean discardMode = false;
@@ -128,18 +127,9 @@ public class GameFrame implements IGameObserver {
         refreshPropertyPanelOnly(viewPlayer, canControl);
         board.updateOpponents(gameManager.getPlayers(), viewPlayer, imageResolver);
         controlPanel.updateSelfAssets(viewPlayer);
+        board.setWinnerBanner(gameManager.isGameOver() ? findWinnerBannerText() : null);
 
         scheduleAiIfNeeded();
-
-        if (gameManager.isGameOver() && !gameOverDialogShown) {
-            gameOverDialogShown = true;
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Game Over");
-            alert.setHeaderText(null);
-            alert.setContentText("Game over! Check the recent log for the winner.");
-            alert.initOwner(stage);
-            alert.showAndWait();
-        }
     }
 
     public void playCard(Card card) {
@@ -387,6 +377,7 @@ public class GameFrame implements IGameObserver {
                 return hasSwappableProperty(current) && hasSwappableProperty(target);
             case DEAL_BREAKER:
                 return hasCompleteSet(target);
+            case RENT:
             case DOUBLE_RENT:
                 return isAnyRentCard(actionCard);
             default:
@@ -537,6 +528,15 @@ public class GameFrame implements IGameObserver {
         }
     }
 
+    private String findWinnerBannerText() {
+        for (Player player : gameManager.getPlayers()) {
+            if (player.getPropertyArea().countCompleteSets() >= 3) {
+                return player.getName() + " win";
+            }
+        }
+        return null;
+    }
+
     private void reportProblem(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(title);
@@ -559,6 +559,7 @@ public class GameFrame implements IGameObserver {
             case FORCED_DEAL:
             case DEAL_BREAKER:
                 return true;
+            case RENT:
             case DOUBLE_RENT:
                 return isAnyRentCard(actionCard);
             default:
@@ -568,7 +569,7 @@ public class GameFrame implements IGameObserver {
 
     private boolean isAnyRentCard(ActionCard actionCard) {
         return actionCard != null
-                && actionCard.getType() == ActionType.DOUBLE_RENT
+                && actionCard.getType() == ActionType.RENT
                 && actionCard.getName() != null
                 && actionCard.getName().contains("Any");
     }

@@ -186,12 +186,7 @@ public class NetworkGameFrame {
                 Platform.runLater(() -> {
                     if (!gameOverShown) {
                         gameOverShown = true;
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                        alert.setTitle("Game Over!");
-                        alert.setHeaderText(null);
-                        alert.setContentText(winner);
-                        alert.initOwner(stage);
-                        alert.showAndWait();
+                        board.setWinnerBanner(normalizeWinnerBannerText(winner));
                     }
                 });
             }
@@ -300,6 +295,19 @@ public class NetworkGameFrame {
             color = PropertyType.RAINBOW;
         }
         return new PropertyCard(info.name, info.value, color, true);
+    }
+
+    private String normalizeWinnerBannerText(String winner) {
+        if (winner == null) {
+            return null;
+        }
+        String normalized = winner.trim();
+        normalized = normalized.replaceFirst("\\s+wins the game!?$", "");
+        normalized = normalized.replaceFirst("\\s+wins!?$", "");
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        return normalized + " win";
     }
 
     private void returnHome() {

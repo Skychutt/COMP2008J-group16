@@ -74,6 +74,8 @@ public class GameBoardPane extends StackPane {
     private final GameFrame localFrame;
     private final StackPane propertyPreviewLayer;
     private final Label propertyPreviewName;
+    private final StackPane winnerLayer;
+    private final Label winnerLabel;
 
     public GameBoardPane(GameFrame owner,
                          TopStatusPanel topPanel,
@@ -87,6 +89,8 @@ public class GameBoardPane extends StackPane {
         boardLayer = buildBoardLayer();
         propertyPreviewLayer = buildPropertyPreviewLayer();
         propertyPreviewName = buildPropertyPreviewName();
+        winnerLayer = buildWinnerLayer();
+        winnerLabel = buildWinnerLabel();
 
         topPanel.setLayoutX(LOCAL_TOP_X);
         topPanel.setLayoutY(LOCAL_TOP_Y);
@@ -121,8 +125,10 @@ public class GameBoardPane extends StackPane {
         VBox topLeftControls = buildTopLeftControls(owner);
 
         propertyPreviewLayer.getChildren().add(propertyPreviewName);
+        winnerLayer.getChildren().add(winnerLabel);
         boardLayer.getChildren().addAll(
-                topLeftControls, topPanel, controlPanel, recentLogPanel, propertyPanel, propertyPreviewLayer, playerPanel);
+                topLeftControls, topPanel, controlPanel, recentLogPanel,
+                propertyPanel, propertyPreviewLayer, playerPanel, winnerLayer);
         finishSetup();
     }
 
@@ -141,6 +147,8 @@ public class GameBoardPane extends StackPane {
         boardLayer = buildBoardLayer();
         propertyPreviewLayer = buildPropertyPreviewLayer();
         propertyPreviewName = buildPropertyPreviewName();
+        winnerLayer = buildWinnerLayer();
+        winnerLabel = buildWinnerLabel();
 
         topPanel.setLayoutX(NETWORK_CENTER_X);
         topPanel.setLayoutY(NETWORK_CENTER_Y);
@@ -160,6 +168,8 @@ public class GameBoardPane extends StackPane {
 
         VBox topLeftControls = buildTopLeftControls(null);
         boardLayer.getChildren().add(topLeftControls);
+        winnerLayer.getChildren().add(winnerLabel);
+        boardLayer.getChildren().add(winnerLayer);
 
         finishSetup();
     }
@@ -287,6 +297,16 @@ public class GameBoardPane extends StackPane {
         propertyPreviewLayer.setManaged(visible);
     }
 
+    public void setWinnerBanner(String winnerText) {
+        boolean visible = winnerText != null && !winnerText.isBlank();
+        winnerLabel.setText(visible ? winnerText : "");
+        winnerLayer.setVisible(visible);
+        winnerLayer.setManaged(visible);
+        if (visible) {
+            winnerLayer.toFront();
+        }
+    }
+
     private void finishSetup() {
         getChildren().add(boardLayer);
         StackPane.setAlignment(boardLayer, Pos.CENTER);
@@ -324,6 +344,34 @@ public class GameBoardPane extends StackPane {
         label.setFont(Font.font("Segoe UI", FontWeight.EXTRA_BOLD, 60));
         label.setTextFill(Color.rgb(210, 48, 48, 0.52));
         label.setStyle("-fx-background-color: transparent;");
+        return label;
+    }
+
+    private StackPane buildWinnerLayer() {
+        StackPane layer = new StackPane();
+        layer.setVisible(false);
+        layer.setManaged(false);
+        layer.setMouseTransparent(true);
+        layer.setLayoutX(0);
+        layer.setLayoutY(0);
+        layer.setPrefSize(BOARD_W, BOARD_H);
+        layer.setMinSize(BOARD_W, BOARD_H);
+        layer.setMaxSize(BOARD_W, BOARD_H);
+        layer.setAlignment(Pos.CENTER);
+        layer.setStyle("-fx-background-color: transparent;");
+        return layer;
+    }
+
+    private Label buildWinnerLabel() {
+        Label label = new Label();
+        label.setMouseTransparent(true);
+        label.setAlignment(Pos.CENTER);
+        label.setFont(Font.font("Segoe UI", FontWeight.EXTRA_BOLD, 76));
+        label.setTextFill(Color.rgb(255, 246, 208, 0.96));
+        label.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-effect: dropshadow(gaussian, rgba(24,16,8,0.72), 18, 0.35, 0, 4);"
+        );
         return label;
     }
 

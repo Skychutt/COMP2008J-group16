@@ -1,6 +1,9 @@
 package com.monopolydeal.gui;
 
+import com.monopolydeal.enums.ActionType;
+import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.model.Player;
+import com.monopolydeal.model.card.ActionCard;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
@@ -10,6 +13,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.ClipboardContent;
@@ -26,6 +30,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -251,6 +256,7 @@ public class PlayerPanel extends BorderPane {
                 "-fx-border-radius: 4px;" +
                 "-fx-background-color: rgba(255,255,255,0.02);"
         );
+        Tooltip.install(wrapper, buildCardTooltip(card));
 
         if (!draggable) {
             wrapper.setOpacity(0.55);
@@ -453,5 +459,108 @@ public class PlayerPanel extends BorderPane {
         popup.setAutoFix(true);
         popup.setHideOnEscape(true);
         return popup;
+    }
+
+    private Tooltip buildCardTooltip(Card card) {
+        Tooltip tooltip = new Tooltip(cardUsageHint(card));
+        tooltip.setWrapText(true);
+        tooltip.setMaxWidth(250);
+        tooltip.setShowDelay(Duration.millis(120));
+        tooltip.setShowDuration(Duration.seconds(10));
+        tooltip.setHideDelay(Duration.millis(120));
+        tooltip.setStyle(
+                "-fx-background-color: rgba(248,243,229,0.97);" +
+                "-fx-text-fill: " + UITheme.toCssHex(UITheme.TEXT_MAIN) + ";" +
+                "-fx-border-color: rgba(96,74,42,0.75);" +
+                "-fx-border-width: 1px;" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-font-size: 15px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 10 12 10 12;"
+        );
+        return tooltip;
+    }
+
+    private String cardUsageHint(Card card) {
+        if (card instanceof PropertyCard) {
+            return propertyUsageHint((PropertyCard) card);
+        }
+        if (card instanceof ActionCard) {
+            return actionUsageHint((ActionCard) card);
+        }
+        return "Bank or pay " + card.getValue() + "M.";
+    }
+
+    private String propertyUsageHint(PropertyCard card) {
+        if (card.isFullColorWild()) {
+            return "Place in any color set.";
+        }
+        if (card.isWild()) {
+            List<PropertyType> colors = card.getNameColorOrder();
+            if (colors.size() >= 2) {
+                return "Place in " + colorName(colors.get(0)) + " or " + colorName(colors.get(1)) + ".";
+            }
+            return "Place in either matching color set.";
+        }
+        return "Place in " + colorName(card.getColor()) + ".";
+    }
+
+    private String actionUsageHint(ActionCard card) {
+        ActionType type = card.getType();
+        if (type == null) {
+            return "Play for its action or bank for " + card.getValue() + "M.";
+        }
+
+        switch (type) {
+            case GO_PASS:
+                return "Play to draw 2 cards.";
+            case RENT:
+                if (card.getName() != null && card.getName().contains("Any")) {
+                    return "Charge rent for one of your sets.";
+                }
+                return "Charge rent for the shown colors.";
+            case DOUBLE_RENT:
+                return "Play with a Rent card to double it.";
+            case BIRTHDAY:
+                return "All opponents pay you 2M.";
+            case JUST_SAY_NO:
+                return "Block an action played against you.";
+            case DEAL_BREAKER:
+                return "Steal one complete property set.";
+            case SLY_DEAL:
+                return "Steal one property from an incomplete set.";
+            case FORCED_DEAL:
+                return "Swap one property with an opponent.";
+            case DEBT_DEAL:
+                return "Choose one opponent to pay you 5M.";
+            case HOUSE:
+                return "Add to a complete set for +3 rent.";
+            case HOTEL:
+                return "Add on a house for +4 rent.";
+            default:
+                return "Play for its action or bank for " + card.getValue() + "M.";
+        }
+    }
+
+    private String colorName(PropertyType color) {
+        if (color == null) {
+            return "a matching color set";
+        }
+        switch (color) {
+            case LIGHTBLUE:
+                return "Light Blue";
+            case PURPLE:
+                return "Pink";
+            case BLUE:
+                return "Dark Blue";
+            case BLACK:
+                return "Railroad";
+            case LIGHTGREEN:
+                return "Utility";
+            default:
+                String raw = color.name().toLowerCase().replace('_', ' ');
+                return Character.toUpperCase(raw.charAt(0)) + raw.substring(1);
+        }
     }
 }

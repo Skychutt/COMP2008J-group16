@@ -19,6 +19,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
@@ -158,7 +159,9 @@ public class PropertyAreaPanel extends HBox {
 
     private final class LanePane extends VBox {
         private final PropertyType color;
+        private final Label lblColor;
         private final Pane cardsPane;
+        private final StackPane cardsFrame;
         private final Label lblRent;
 
         private LanePane(PropertyType color) {
@@ -169,10 +172,10 @@ public class PropertyAreaPanel extends HBox {
             setPrefWidth(76);
             setMinWidth(76);
             setPadding(new Insets(5, 4, 5, 4));
-            setStyle(UITheme.softPanelStyle());
+            setStyle(laneStyle(false));
 
-            Label lblColor = new Label(displayName(color));
-            lblColor.setFont(UITheme.FONT_SMALL);
+            lblColor = new Label(titleText(null));
+            lblColor.setFont(Font.font("Segoe UI", 9));
             lblColor.setTextFill(textColor(color));
             lblColor.setWrapText(true);
             lblColor.setAlignment(Pos.CENTER);
@@ -182,13 +185,9 @@ public class PropertyAreaPanel extends HBox {
             cardsPane.setPrefSize(CARD_W + 8, CARD_H + (CARD_STEP_Y * 2));
             cardsPane.setMinSize(CARD_W + 8, CARD_H + (CARD_STEP_Y * 2));
 
-            StackPane cardsFrame = new StackPane(cardsPane);
+            cardsFrame = new StackPane(cardsPane);
             cardsFrame.setPrefSize(CARD_W + 12, CARD_H + (CARD_STEP_Y * 2) + 8);
-            cardsFrame.setStyle(
-                    "-fx-background-color: rgba(255,255,255,0.55);" +
-                    "-fx-border-color: " + UITheme.toCssHex(UITheme.BORDER) + ";" +
-                    "-fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;"
-            );
+            cardsFrame.setStyle(frameStyle(false));
 
             lblRent = new Label("0M");
             lblRent.setFont(UITheme.FONT_SUBTITLE);
@@ -200,6 +199,11 @@ public class PropertyAreaPanel extends HBox {
 
         private void update(PropertySet set, int rentMultiplier) {
             cardsPane.getChildren().clear();
+            boolean complete = set != null && set.isComplete();
+            lblColor.setText(titleText(set));
+            setStyle(laneStyle(complete));
+            cardsFrame.setStyle(frameStyle(complete));
+            lblRent.setTextFill(complete ? Color.rgb(170, 120, 24) : UITheme.TEXT_MAIN);
 
             int rent = 0;
             if (set != null) {
@@ -242,6 +246,11 @@ public class PropertyAreaPanel extends HBox {
             return total;
         }
 
+        private String titleText(PropertySet set) {
+            int have = set == null ? 0 : set.getCards().size();
+            return displayName(color) + " " + have + "/" + requiredCount(color);
+        }
+
         private void wireDropTarget(StackPane cardsFrame) {
             cardsFrame.setOnDragOver(e -> {
                 if (e.getDragboard().hasString()
@@ -250,20 +259,21 @@ public class PropertyAreaPanel extends HBox {
                     setStyle(
                             "-fx-background-color: rgba(255,252,240,0.96);" +
                             "-fx-border-color: " + UITheme.toCssHex(UITheme.BANK_ZONE_BORDER) + ";" +
-                            "-fx-border-width: 2px; -fx-border-radius: 4px; -fx-background-radius: 4px;" +
-                            "-fx-padding: 6 4 6 4;"
+                            "-fx-border-width: 1px; -fx-border-radius: 6px; -fx-background-radius: 6px;" +
+                            "-fx-padding: 5 4 5 4;" +
+                            "-fx-effect: dropshadow(gaussian, rgba(96,150,80,0.28), 8, 0.2, 0, 0);"
                     );
                 }
                 e.consume();
             });
 
             cardsFrame.setOnDragExited(e -> {
-                setStyle(UITheme.softPanelStyle());
+                restoreLaneStyle();
                 e.consume();
             });
 
             cardsFrame.setOnDragDropped(e -> {
-                setStyle(UITheme.softPanelStyle());
+                restoreLaneStyle();
                 boolean success = false;
                 if (e.getDragboard().hasString() && canAcceptPropertyDrop(e.getDragboard().getString(), color)) {
                     try {
@@ -276,6 +286,60 @@ public class PropertyAreaPanel extends HBox {
                 e.setDropCompleted(success);
                 e.consume();
             });
+        }
+
+        private void restoreLaneStyle() {
+            PropertySet set = currentPlayer == null ? null : currentPlayer.getPropertyArea().getSet(color);
+            boolean complete = set != null && set.isComplete();
+            setStyle(laneStyle(complete));
+            cardsFrame.setStyle(frameStyle(complete));
+        }
+
+        private String laneStyle(boolean complete) {
+            String border = complete ? "rgba(244,210,92,1.0)" : UITheme.toCssHex(UITheme.BORDER);
+            String background = complete ? "rgba(255,249,232,0.94)" : "rgba(252,247,232,0.90)";
+            String effect = complete
+                    ? "-fx-effect: dropshadow(gaussian, rgba(236,198,62,0.36), 10, 0.28, 0, 0);"
+                    : "-fx-effect: none;";
+            return "-fx-background-color: " + background + ";" +
+                    "-fx-border-color: " + border + ";" +
+                    "-fx-border-width: 1px;" +
+                    "-fx-border-radius: 6px; -fx-background-radius: 6px;" +
+                    "-fx-padding: 5 4 5 4;" +
+                    effect;
+        }
+
+        private String frameStyle(boolean complete) {
+            String border = complete ? "rgba(235,194,58,1.0)" : UITheme.toCssHex(UITheme.BORDER);
+            String background = complete ? "rgba(255,248,224,0.90)" : "rgba(255,255,255,0.55)";
+            String effect = complete
+                    ? "-fx-effect: dropshadow(gaussian, rgba(236,198,62,0.28), 8, 0.24, 0, 0);"
+                    : "-fx-effect: none;";
+            return "-fx-background-color: " + background + ";" +
+                    "-fx-border-color: " + border + ";" +
+                    "-fx-border-width: 1px;" +
+                    "-fx-border-radius: 4px; -fx-background-radius: 4px;" +
+                    effect;
+        }
+    }
+
+    private static int requiredCount(PropertyType color) {
+        switch (color) {
+            case BROWN:
+            case BLUE:
+            case LIGHTGREEN:
+                return 2;
+            case LIGHTBLUE:
+            case PURPLE:
+            case ORANGE:
+            case RED:
+            case YELLOW:
+            case GREEN:
+                return 3;
+            case BLACK:
+                return 4;
+            default:
+                return 0;
         }
     }
 }

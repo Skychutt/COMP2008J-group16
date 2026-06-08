@@ -24,6 +24,7 @@ com\monopolydeal\gui\PropertyColorChooser.class
 com\monopolydeal\gui\LanSetupPanel.class
 com\monopolydeal\gui\OpponentSeatPane.class
 com\monopolydeal\interfaces\IGameObserver.class
+com\monopolydeal\gui\PlayerPanel$1.class
 com\monopolydeal\logic\ActionHandler$1.class
 com\monopolydeal\interfaces\ISubject.class
 com\monopolydeal\ai\AIPlayerBrain$1.class
@@ -40,7 +41,6 @@ com\monopolydeal\gui\ImageScaleUtil.class
 com\monopolydeal\gui\NetworkOpponentSeatPane.class
 com\monopolydeal\gui\PlayerPanel.class
 com\monopolydeal\network\GameClient.class
-com\monopolydeal\logic\AssetTransferManager$1.class
 com\monopolydeal\network\GameServer$ServerStatusListener.class
 com\monopolydeal\gui\MainMenuPanel.class
 com\monopolydeal\gui\NetworkLobbyFrame$1.class
@@ -59,7 +59,6 @@ com\monopolydeal\logic\AssetTransferManager$PaymentResult.class
 com\monopolydeal\gui\MainMenuFrame$2.class
 com\monopolydeal\logic\RentCalculator.class
 com\monopolydeal\logic\TurnManager.class
-com\monopolydeal\gui\ImageActionButton$1.class
 com\monopolydeal\model\GameManager.class
 com\monopolydeal\Main.class
 com\monopolydeal\interfaces\ITargetable.class
