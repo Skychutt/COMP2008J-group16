@@ -37,14 +37,14 @@ public class GameBoardPane extends StackPane {
     private static final double LOCAL_EXIT_Y = 32;
 
     private static final double LOCAL_BANK_X = 18;
-    private static final double LOCAL_BANK_Y = 172;
+    private static final double LOCAL_BANK_Y = 218;
     private static final double LOCAL_BANK_W = 175;
-    private static final double LOCAL_BANK_H = 396;
+    private static final double LOCAL_BANK_H = 350;
 
     private static final double LOCAL_LOG_X = 1088;
-    private static final double LOCAL_LOG_Y = 172;
+    private static final double LOCAL_LOG_Y = 218;
     private static final double LOCAL_LOG_W = 175;
-    private static final double LOCAL_LOG_H = 396;
+    private static final double LOCAL_LOG_H = 350;
 
     private static final double LOCAL_PROP_X = 224;
     private static final double LOCAL_PROP_Y = 386;
@@ -65,11 +65,16 @@ public class GameBoardPane extends StackPane {
     private static final double NETWORK_PLAYER_H = 265;
 
     private static final double OPP_W = OpponentSeatPane.ZONE_W;
-    private static final double OPP_Y = 32;
-    private static final double OPP_GAP = 30;
-    private static final double OPP_MAX_TILT = 15.0;
+    private static final double OPP_H = OpponentSeatPane.ZONE_H;
+    private static final double TABLE_CX = BOARD_W / 2.0;
+
+    private static final double SEAT_LEFT_SAFE = 205;
+    private static final double SEAT_RIGHT_SAFE = LOCAL_LOG_X - 12;
+    private static final double SEAT_TOP_SAFE = 24;
+    private static final double SEAT_GAP = 14;
 
     private final Pane boardLayer;
+    private final VBox topLeftControls;
     private final List<Region> opponentSeats = new ArrayList<>();
     private final GameFrame localFrame;
     private final StackPane propertyPreviewLayer;
@@ -122,13 +127,14 @@ public class GameBoardPane extends StackPane {
         playerPanel.setMinSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
         playerPanel.setMaxSize(LOCAL_PLAYER_W, LOCAL_PLAYER_H);
 
-        VBox topLeftControls = buildTopLeftControls(owner);
+        topLeftControls = buildTopLeftControls(owner);
 
         propertyPreviewLayer.getChildren().add(propertyPreviewName);
         winnerLayer.getChildren().add(winnerLabel);
         boardLayer.getChildren().addAll(
-                topLeftControls, topPanel, controlPanel, recentLogPanel,
-                propertyPanel, propertyPreviewLayer, playerPanel, winnerLayer);
+                topPanel, controlPanel, recentLogPanel,
+                propertyPanel, propertyPreviewLayer, playerPanel, winnerLayer,
+                topLeftControls);
         finishSetup();
     }
 
@@ -166,10 +172,9 @@ public class GameBoardPane extends StackPane {
         playerPanel.setPrefHeight(NETWORK_PLAYER_H);
         boardLayer.getChildren().add(playerPanel);
 
-        VBox topLeftControls = buildTopLeftControls(null);
-        boardLayer.getChildren().add(topLeftControls);
+        topLeftControls = buildTopLeftControls(null);
         winnerLayer.getChildren().add(winnerLabel);
-        boardLayer.getChildren().add(winnerLayer);
+        boardLayer.getChildren().addAll(winnerLayer, topLeftControls);
 
         finishSetup();
     }
@@ -188,12 +193,10 @@ public class GameBoardPane extends StackPane {
             return;
         }
 
-        double[] xPositions = computeXPositions(opponents.size());
-        int n = opponents.size();
-        for (int i = 0; i < n; i++) {
+        SeatLayout[] layouts = computeArcLayouts(opponents.size());
+        for (int i = 0; i < opponents.size(); i++) {
             Player opponent = opponents.get(i);
-            double normalizedPos = (n > 1) ? (2.0 * i / (n - 1) - 1.0) : 0.0;
-            double rotation = normalizedPos * OPP_MAX_TILT;
+            SeatLayout layout = layouts[i];
 
             OpponentSeatPane seat;
             if (localFrame != null) {
@@ -209,12 +212,11 @@ public class GameBoardPane extends StackPane {
                 seat = new OpponentSeatPane(opponent, resolver);
             }
 
-            seat.setLayoutX(xPositions[i]);
-            seat.setLayoutY(OPP_Y);
-            seat.setRotate(rotation);
+            applySeatLayout(seat, layout);
             opponentSeats.add(seat);
             boardLayer.getChildren().add(seat);
         }
+        topLeftControls.toFront();
     }
 
     public void updateFromSnapshot(GameStateParser.Snapshot snap, int myIndex,
@@ -236,21 +238,26 @@ public class GameBoardPane extends StackPane {
             return;
         }
 
-        double[] xPositions = computeXPositions(opponents.size());
-        int n = opponents.size();
-        for (int i = 0; i < n; i++) {
-            double normalizedPos = (n > 1) ? (2.0 * i / (n - 1) - 1.0) : 0.0;
-            double rotation = normalizedPos * OPP_MAX_TILT;
+        SeatLayout[] layouts = computeArcLayouts(opponents.size());
+        for (int i = 0; i < opponents.size(); i++) {
+            SeatLayout layout = layouts[i];
             boolean isTurn = opponents.get(i).index == snap.turn;
 
             NetworkOpponentSeatPane seat =
                     new NetworkOpponentSeatPane(opponents.get(i), resolver, isTurn);
-            seat.setLayoutX(xPositions[i]);
-            seat.setLayoutY(OPP_Y);
-            seat.setRotate(rotation);
+            applySeatLayout(seat, layout);
             opponentSeats.add(seat);
             boardLayer.getChildren().add(seat);
         }
+        topLeftControls.toFront();
+    }
+
+    private void applySeatLayout(Region seat, SeatLayout layout) {
+        seat.setLayoutX(layout.x);
+        seat.setLayoutY(layout.y);
+        seat.setScaleX(layout.scale);
+        seat.setScaleY(layout.scale);
+        seat.setRotate(layout.rotation);
     }
 
     private Pane buildBoardLayer() {
@@ -392,13 +399,84 @@ public class GameBoardPane extends StackPane {
         return box;
     }
 
-    private double[] computeXPositions(int n) {
-        double totalW = n * OPP_W + (n - 1) * OPP_GAP;
-        double startX = (BOARD_W - totalW) / 2.0;
-        double[] xs = new double[n];
-        for (int i = 0; i < n; i++) {
-            xs[i] = startX + i * (OPP_W + OPP_GAP);
+    private SeatLayout[] computeArcLayouts(int n) {
+        SeatLayout[] layouts = new SeatLayout[n];
+        if (n <= 0) {
+            return layouts;
         }
-        return xs;
+
+        double scale = seatScale(n);
+        double effW = OPP_W * scale;
+        double minCenterX = SEAT_LEFT_SAFE + effW / 2.0;
+        double maxCenterX = SEAT_RIGHT_SAFE - effW / 2.0;
+        double[] centerXs = symmetricCenterXs(n, minCenterX, maxCenterX, effW + SEAT_GAP);
+
+        for (int i = 0; i < n; i++) {
+            double norm = normalizedOffset(i, n);
+            double y = SEAT_TOP_SAFE + 24.0 * Math.abs(norm);
+            double rotation = norm * (n >= 4 ? 11.0 : 13.0);
+
+            layouts[i] = new SeatLayout(
+                    centerXs[i] - OPP_W / 2.0,
+                    y,
+                    rotation,
+                    scale
+            );
+        }
+        return layouts;
+    }
+
+    private static double seatScale(int opponentCount) {
+        if (opponentCount >= 4) {
+            return 0.76;
+        }
+        if (opponentCount == 3) {
+            return 0.9;
+        }
+        return 1.0;
+    }
+
+    private static double normalizedOffset(int index, int count) {
+        if (count <= 1) {
+            return 0.0;
+        }
+        return (2.0 * index / (count - 1)) - 1.0;
+    }
+
+    private static double[] symmetricCenterXs(int count,
+                                              double minCenterX,
+                                              double maxCenterX,
+                                              double minGap) {
+        double[] centers = new double[count];
+        if (count == 1) {
+            centers[0] = TABLE_CX;
+            return centers;
+        }
+
+        double half = (count - 1) / 2.0;
+        double stepByBounds = Math.min(
+                (maxCenterX - TABLE_CX) / half,
+                (TABLE_CX - minCenterX) / half
+        );
+        double step = Math.max(minGap, stepByBounds);
+
+        for (int i = 0; i < count; i++) {
+            centers[i] = TABLE_CX + (i - half) * step;
+        }
+        return centers;
+    }
+
+    private static final class SeatLayout {
+        final double x;
+        final double y;
+        final double rotation;
+        final double scale;
+
+        SeatLayout(double x, double y, double rotation, double scale) {
+            this.x = x;
+            this.y = y;
+            this.rotation = rotation;
+            this.scale = scale;
+        }
     }
 }

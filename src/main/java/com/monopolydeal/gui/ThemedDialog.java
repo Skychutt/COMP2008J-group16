@@ -285,29 +285,43 @@ public final class ThemedDialog {
     private static void showCard(Stage dialog, VBox card, Window owner) {
         card.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
 
-        Region dim = new Region();
-        dim.setStyle("-fx-background-color: rgba(0,0,0,0.55);");
-        dim.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        dim.setPickOnBounds(true);
-
-        StackPane root = new StackPane(dim, card);
+        StackPane root = new StackPane(card);
+        root.setPadding(new Insets(14));
+        root.setStyle("-fx-background-color: transparent;");
         StackPane.setAlignment(card, Pos.CENTER);
 
-        double width = 720;
-        double height = 520;
-        if (owner instanceof Stage) {
-            Stage ownerStage = (Stage) owner;
-            width = ownerStage.getWidth();
-            height = ownerStage.getHeight();
-            dialog.setX(ownerStage.getX());
-            dialog.setY(ownerStage.getY());
-        }
-
-        Scene scene = new Scene(root, width, height);
+        Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
         dialog.setScene(scene);
+        dialog.sizeToScene();
+        dialog.setOnShown(e -> centerOnOwner(dialog, owner));
+
         dialog.setAlwaysOnTop(true);
         dialog.showAndWait();
         dialog.setAlwaysOnTop(false);
+        dialog.setOnShown(null);
+    }
+
+    private static void centerOnOwner(Stage dialog, Window owner) {
+        double ownerX = 0;
+        double ownerY = 0;
+        double ownerW;
+        double ownerH;
+
+        if (owner != null) {
+            ownerX = owner.getX();
+            ownerY = owner.getY();
+            ownerW = owner.getWidth();
+            ownerH = owner.getHeight();
+        } else {
+            ownerW = dialog.getWidth();
+            ownerH = dialog.getHeight();
+        }
+
+        double dialogW = dialog.getWidth() > 0 ? dialog.getWidth() : dialog.getScene().getWidth();
+        double dialogH = dialog.getHeight() > 0 ? dialog.getHeight() : dialog.getScene().getHeight();
+
+        dialog.setX(ownerX + (ownerW - dialogW) / 2.0);
+        dialog.setY(ownerY + (ownerH - dialogH) / 2.0);
     }
 }
