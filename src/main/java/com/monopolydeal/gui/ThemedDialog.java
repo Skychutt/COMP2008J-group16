@@ -283,6 +283,8 @@ public final class ThemedDialog {
     }
 
     private static void showCard(Stage dialog, VBox card, Window owner) {
+        card.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+
         Region dim = new Region();
         dim.setStyle("-fx-background-color: rgba(0,0,0,0.55);");
         dim.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
@@ -295,8 +297,8 @@ public final class ThemedDialog {
         double height = 520;
         if (owner instanceof Stage) {
             Stage ownerStage = (Stage) owner;
-            width = Math.max(480, ownerStage.getWidth());
-            height = Math.max(360, ownerStage.getHeight());
+            width = ownerStage.getWidth();
+            height = ownerStage.getHeight();
             dialog.setX(ownerStage.getX());
             dialog.setY(ownerStage.getY());
         }
