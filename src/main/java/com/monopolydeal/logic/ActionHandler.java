@@ -993,19 +993,16 @@ public class ActionHandler {
         return multiplier;
     }
 
+    /**
+     * Sums the rent bonuses from any House/Hotel upgrades on the given set.
+     * Delegates to each card's {@link PropertyCard#getTotalRent()}, which walks
+     * the Decorator chain when available and falls back to the legacy upgrade list
+     * otherwise.
+     */
     private int getBuildingBonusForSet(PropertySet set) {
         int bonus = 0;
         for (PropertyCard pc : set.getCards()) {
-            for (Card u : pc.getUpgrades()) {
-                if (u instanceof ActionCard) {
-                    ActionType t = ((ActionCard) u).getType();
-                    if (t == ActionType.HOUSE) {
-                        bonus += 3;
-                    } else if (t == ActionType.HOTEL) {
-                        bonus += 4;
-                    }
-                }
-            }
+            bonus += pc.getTotalRent();
         }
         return bonus;
     }
@@ -1052,6 +1049,13 @@ public class ActionHandler {
         }
 
         PropertyCard host = target.getCards().get(0);
+        // Decorator chain + legacy upgrade list both maintained so UI rendering and rent
+        // calculation stay in sync when rent reads via {@link PropertyCard#getTotalRent()}.
+        if (building.getType() == ActionType.HOUSE) {
+            host.attachHouse();
+        } else {
+            host.attachHotel();
+        }
         host.attachUpgrade(building);
         gameLogic.getGameManager().notifyAllObservers(player.getName() + " placed "
                 + building.getName() + " on " + target.getColor() + " set.");
