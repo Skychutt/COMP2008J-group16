@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a75a9462-56fe-4223-9887-ca7ff601f4b8" name="更改" comment="" />
+    <list default="true" id="a75a9462-56fe-4223-9887-ca7ff601f4b8" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/decorator/HotelDecorator.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/decorator/HotelDecorator.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/decorator/HouseDecorator.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/decorator/HouseDecorator.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/decorator/PropertyDecorator.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/decorator/PropertyDecorator.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/ActionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/ActionHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/RentCalculator.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/logic/RentCalculator.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/PropertyCard.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/card/PropertyCard.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/PropertyDecoratorTest.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/PropertyDecoratorTest.class" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -50,7 +59,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "add",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
