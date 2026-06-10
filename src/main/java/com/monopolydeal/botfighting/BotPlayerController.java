@@ -1,4 +1,4 @@
-package com.monopolydeal.ai;
+package com.monopolydeal.botfighting;
 
 import com.monopolydeal.enums.ActionType;
 import com.monopolydeal.enums.PropertyType;
@@ -18,6 +18,9 @@ import java.util.Set;
 /**
  * Heuristic bot controller that prioritizes attacks and rent, then builds property sets.
  */
+//First make trouble and collect money (attack card → rent collection),
+//and then build (land → house → store → save money). Each step is greedy to choose the current best.
+
 public class BotPlayerController implements BotDecisionPolicy, DecisionResolver {
 
     @Override

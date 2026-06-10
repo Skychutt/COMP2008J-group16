@@ -1,4 +1,4 @@
-package com.monopolydeal.ai;
+package com.monopolydeal.botfighting;
 
 import com.monopolydeal.logic.GameLogic;
 import com.monopolydeal.model.Player;
