@@ -3,8 +3,8 @@ package com.monopolydeal.gui.board;
 import com.monopolydeal.gui.image.CardImageResolver;
 import com.monopolydeal.gui.theme.ThemedDialog;
 
-import com.monopolydeal.ai.BotPlayerController;
-import com.monopolydeal.ai.BotTurnScheduler;
+import com.monopolydeal.botfighting.BotPlayerController;
+import com.monopolydeal.botfighting.BotTurnScheduler;
 import com.monopolydeal.enums.ActionType;
 import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.interfaces.IGameObserver;

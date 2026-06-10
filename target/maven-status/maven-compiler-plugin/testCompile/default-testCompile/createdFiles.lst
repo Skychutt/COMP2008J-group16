@@ -1,0 +1,15 @@
+com\monopolydeal\DeckTest.class
+com\monopolydeal\GameManagerTest.class
+com\monopolydeal\AssetTransferManagerTest.class
+com\monopolydeal\PropertyDecoratorTest.class
+com\monopolydeal\RentCalculatorTest.class
+com\monopolydeal\PlayerTest.class
+com\monopolydeal\PropertySetTest.class
+com\monopolydeal\VictoryCheckerTest.class
+com\monopolydeal\BankAreaTest.class
+com\monopolydeal\PropertyAreaTest.class
+com\monopolydeal\RuleValidatorTest.class
+com\monopolydeal\ActionHandlerTest.class
+com\monopolydeal\KnownBugsTest.class
+com\monopolydeal\TurnManagerTest.class
+com\monopolydeal\HandTest.class

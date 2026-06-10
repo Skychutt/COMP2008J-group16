@@ -5,7 +5,7 @@ import com.monopolydeal.gui.board.GameFrame;
 import com.monopolydeal.gui.menu.MainMenuFrame;
 import com.monopolydeal.gui.theme.ThemedDialog;
 
-import com.monopolydeal.ai.BotPlayerController;
+import com.monopolydeal.botfighting.BotPlayerController;
 import com.monopolydeal.enums.PlayerType;
 import com.monopolydeal.logic.GameLogic;
 import com.monopolydeal.model.Deck;
