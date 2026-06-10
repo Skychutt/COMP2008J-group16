@@ -41,8 +41,8 @@ class DeckTest {
     @Order(3)
     void testInitialDeckSize() {
         Deck deck = Deck.getInstance();
-        // 110 cards total per Monopoly Deal rules
-        assertEquals(106, deck.drawPileSize(), "Deck must start with exactly 106 playable cards");
+        assertEquals(Deck.TOTAL_PLAYABLE_CARDS, deck.drawPileSize(),
+                "Deck must start with exactly 106 playable cards");
     }
 
     @Test
@@ -87,12 +87,12 @@ class DeckTest {
     void testReshuffleDiscardWhenDrawPileEmpty() {
         Deck deck = Deck.getInstance();
         // Draw all cards
-        List<Card> all = deck.draw(106);
-        assertEquals(106, all.size());
+        List<Card> all = deck.draw(Deck.TOTAL_PLAYABLE_CARDS);
+        assertEquals(Deck.TOTAL_PLAYABLE_CARDS, all.size());
         assertEquals(0, deck.drawPileSize());
         // Discard them all
         for (Card c : all) deck.addToDiscard(c);
-        assertEquals(106, deck.discardSize());
+        assertEquals(Deck.TOTAL_PLAYABLE_CARDS, deck.discardSize());
         // Drawing again should trigger reshuffle
         List<Card> redrawn = deck.draw(1);
         assertEquals(1, redrawn.size(), "Drawing from empty pile should reshuffle discard");
@@ -102,7 +102,7 @@ class DeckTest {
     @Order(9)
     void testDrawFromEmptyDeckReturnsEmptyList() {
         Deck deck = Deck.getInstance();
-        deck.draw(106); // exhaust deck without discarding
+        deck.draw(Deck.TOTAL_PLAYABLE_CARDS); // exhaust deck without discarding
         List<Card> result = deck.draw(1);
         assertTrue(result.isEmpty(), "Drawing from exhausted deck with no discard should return empty list");
     }

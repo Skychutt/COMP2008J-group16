@@ -10,7 +10,7 @@ import com.monopolydeal.model.card.ActionCard;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import com.monopolydeal.gui.ThemedDialog;
+import com.monopolydeal.gui.theme.ThemedDialog;
 
 import javafx.stage.Window;
 import java.util.ArrayList;
@@ -263,8 +263,8 @@ public class ActionHandler {
 
             Card discard = handCards.get(index);
             player.getHand().removeCard(discard.getId());
-            Deck.getInstance().addToDrawPileBottom(discard);
-            gm.notifyAllObservers(player.getName() + " discarded [" + discard.getName() + "] to bottom of draw pile (hand limit).");
+            Deck.getInstance().addToDiscard(discard);
+            gm.notifyAllObservers(player.getName() + " discarded [" + discard.getName() + "] to discard pile (hand limit).");
         }
     }
 

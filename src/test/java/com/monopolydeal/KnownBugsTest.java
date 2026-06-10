@@ -45,7 +45,7 @@ class KnownBugsTest {
     @Test
     @Order(1)
     void bug1_rentCardsHaveCorrectActionType() {
-        List<Card> all = Deck.getInstance().draw(110);
+        List<Card> all = Deck.getInstance().draw(Deck.TOTAL_PLAYABLE_CARDS);
 
         List<ActionCard> rentCards = all.stream()
                 .filter(c -> c instanceof ActionCard)
@@ -344,8 +344,8 @@ class KnownBugsTest {
      * 7-card hand limit was never enforced at the end of a turn.
      * A player could carry 9+ cards into the next turn with no penalty.
      *
-     * Fix: GameLogic.endTurn() now calls current.endTurn() (which enforces
-     * the limit) before switching to the next player.
+     * Fix: GameLogic.endTurn() now calls ActionHandler.enforceEndTurnDiscard()
+     * before switching to the next player.
      */
     @Test
     @Order(13)

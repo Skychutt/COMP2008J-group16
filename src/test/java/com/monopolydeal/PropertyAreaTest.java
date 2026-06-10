@@ -4,7 +4,8 @@ import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.model.Deck;
 import com.monopolydeal.model.PropertyArea;
 import com.monopolydeal.model.card.PropertyCard;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -103,5 +104,44 @@ class PropertyAreaTest {
         area.add(new PropertyCard("Br1", 1, PropertyType.BROWN, false));
         area.add(new PropertyCard("Or1", 2, PropertyType.ORANGE, false));
         assertEquals(2, area.getSets().size(), "Area must have one set per distinct color");
+    }
+
+    // ── Wildcard placement regression (万能牌放置颜色一致性) ─────────────────
+
+    /**
+     * When a two-color wild is placed via add(card, chosenColor), it must land
+     * in the chosen color's set (not the card's initial default color set).
+     */
+    @Test
+    void testWildcardLandsInChosenColorSet() {
+        PropertyArea area = new PropertyArea();
+        // Wild starts as RED but player commits it to YELLOW
+        PropertyCard wild = new PropertyCard("Wild Red/Yellow", 3, PropertyType.RED, true);
+        area.add(wild, PropertyType.YELLOW);
+
+        assertNotNull(area.getSet(PropertyType.YELLOW),
+                "YELLOW set must exist after wild is placed with chosenColor=YELLOW");
+        assertNull(area.getSet(PropertyType.RED),
+                "RED set must NOT be created when wild is committed to YELLOW");
+        assertEquals(PropertyType.YELLOW, wild.getColor(),
+                "Wild card's committed color must match the chosen color (YELLOW)");
+    }
+
+    /**
+     * 2 normal ORANGE + 1 wild committed to ORANGE = complete set via PropertyArea.
+     */
+    @Test
+    void testTwoNormalPlusOneWildViaAreaIsComplete() {
+        PropertyArea area = new PropertyArea();
+        area.add(new PropertyCard("Or1", 2, PropertyType.ORANGE, false));
+        area.add(new PropertyCard("Or2", 2, PropertyType.ORANGE, false));
+        // Wild Red/Yellow committed to ORANGE via chosenColor
+        PropertyCard wild = new PropertyCard("Wild Red/Yellow", 3, PropertyType.RED, true);
+        area.add(wild, PropertyType.ORANGE);
+
+        assertEquals(1, area.countCompleteSets(),
+                "2 normal + 1 wild in ORANGE must count as 1 complete set");
+        assertTrue(area.getSet(PropertyType.ORANGE).isComplete(),
+                "ORANGE set with 2 normals + 1 wild must be complete");
     }
 }

@@ -10,7 +10,6 @@ import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -74,15 +73,28 @@ public class GameServer {
     }
 
     public void bind() throws IOException {
-        serverSocket = new ServerSocket(port);
-        String ip = InetAddress.getLocalHost().getHostAddress();
+        // Bind to wildcard address (0.0.0.0) to accept connections from all network interfaces
+        serverSocket = new ServerSocket();
+        serverSocket.setReuseAddress(true);
+        serverSocket.bind(new java.net.InetSocketAddress("0.0.0.0", port));
+        String ip = LanAddressUtil.primaryAddress();
         System.out.println("[Server] Room " + roomCode + " on " + ip + ":" + port
                 + " | waiting for " + playerCount + " players");
     }
 
     public void acceptRemainingPlayers() throws IOException, InterruptedException {
+        serverSocket.setSoTimeout(60_000); // 60-second accept timeout to avoid infinite block
         while (clients.size() < playerCount) {
-            Socket socket = serverSocket.accept();
+            Socket socket;
+            try {
+                socket = serverSocket.accept();
+            } catch (java.net.SocketTimeoutException ste) {
+                // Accept timed out but we still need more players — continue waiting
+                if (clients.size() < playerCount) {
+                    continue;
+                }
+                break;
+            }
             ClientHandler handler = new ClientHandler(socket, this);
             int before = clients.size();
             handler.startReaderThread();
@@ -128,7 +140,15 @@ public class GameServer {
         }
 
         int idx = clients.size();
-        playerNames.set(idx, playerName);
+        // If this is the host (slot 0), keep the name set in constructor; otherwise update.
+        if (idx == 0) {
+            // Host reconnects with constructor-assigned name; allow override if name differs.
+            if (!playerName.equals(playerNames.get(0))) {
+                playerNames.set(0, playerName);
+            }
+        } else {
+            playerNames.set(idx, playerName);
+        }
         handler.assignPlayerIndex(idx);
         clients.add(handler);
 

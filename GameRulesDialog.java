@@ -48,7 +48,7 @@ public final class GameRulesDialog {
                     + "OBJECTIVE\n"
                     + "Be the first player to collect 3 complete property sets of different colors.\n\n"
                     + "SETUP\n"
-                    + "Each player starts with 5 cards. The deck has 110 cards.\n\n"
+                    + "Each player starts with 5 cards. The deck has 106 cards.\n\n"
                     + "TURN STRUCTURE\n"
                     + "1) Draw Phase: Draw 2 cards (draw 5 if hand is empty at turn start).\n"
                     + "2) Play Phase: Play up to 3 cards from your hand.\n"

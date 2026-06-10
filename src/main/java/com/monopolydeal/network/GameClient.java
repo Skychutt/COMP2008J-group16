@@ -61,7 +61,16 @@ public class GameClient {
     }
 
     public void connect(String joinRoomCode, String playerName) throws IOException {
-        socket = new Socket(host, port);
+        connect(joinRoomCode, playerName, true);
+    }
+
+    /**
+     * Connect to the server. If {@code startReceiver} is false, the caller must
+     * invoke {@link #startReceiverThread()} after setting up listeners.
+     */
+    public void connect(String joinRoomCode, String playerName, boolean startReceiver) throws IOException {
+        socket = new Socket();
+        socket.connect(new java.net.InetSocketAddress(host, port), 10_000);
         socket.setSoTimeout(120_000);
         out = new PrintWriter(socket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -93,6 +102,16 @@ public class GameClient {
             messageListener.onConnected(myPlayerIndex, myPlayerName, roomCode);
         }
 
+        if (startReceiver) {
+            startReceiverThread();
+        }
+    }
+
+    /**
+     * Starts the background receiver thread and heartbeat. Must be called after
+     * connect() if startReceiver was set to false.
+     */
+    public void startReceiverThread() {
         Thread receiver = new Thread(this::receiveLoop, "NetworkReceiver");
         receiver.setDaemon(true);
         receiver.start();

@@ -20,16 +20,15 @@ import java.util.Stack;
 public class Deck {
     /** Singleton instance of the Deck. */
     private static Deck instance;
+    public static final int TOTAL_PLAYABLE_CARDS = 106;
 
     private Stack<Card> drawPile;           // The main draw pile players draw from
     private Stack<Card> discard;            // The discard pile for used/excess cards
     private StandardCardFactory factory;    // Factory used to create card instances
-    private int totalDiscardedCount;        // Cards discarded (discard pile + hand-limit to draw bottom)
-    private Card lastDiscardedCard;         // Most recently discarded card (for UI preview)
 
     /**
      * Private constructor - initializes empty piles, creates the factory,
-     * and populates the deck with all 110 cards.
+     * and populates the deck with all 106 playable cards.
      */
     private Deck() {
         drawPile = new Stack<>();
@@ -183,24 +182,6 @@ public class Deck {
             return;
         }
         discard.push(c);
-        recordDiscard(c);
-    }
-
-    /**
-     * Put a card at the bottom of draw pile.
-     * Used for end-turn hand-limit discards per official rule.
-     */
-    public void addToDrawPileBottom(Card c) {
-        if (c == null) {
-            return;
-        }
-        drawPile.insertElementAt(c, 0);
-        recordDiscard(c);
-    }
-
-    private void recordDiscard(Card c) {
-        totalDiscardedCount++;
-        lastDiscardedCard = c;
     }
 
     /**
@@ -228,19 +209,9 @@ public class Deck {
         return discard.size();
     }
 
-    /** Total cards discarded this game (actions to discard pile + hand-limit discards). */
-    public int getTotalDiscardedCount() {
-        return totalDiscardedCount;
-    }
-
-    /**
-     * Top of the discard pile, or the last hand-limit discard if the pile is empty.
-     */
+    /** @return the current top card of the discard pile, or null when the pile is empty */
     public Card getVisibleDiscardTop() {
-        if (!discard.isEmpty()) {
-            return discard.peek();
-        }
-        return lastDiscardedCard;
+        return discard.isEmpty() ? null : discard.peek();
     }
 
     /** @return the draw pile stack */

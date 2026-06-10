@@ -93,7 +93,7 @@ public class GameLogic {
             return false;
         }
 
-        Deck.getInstance().addToDrawPileBottom(discard);
+        Deck.getInstance().addToDiscard(discard);
         return true;
     }
 
