@@ -1,7 +1,6 @@
 package com.monopolydeal.model;
 
 import com.monopolydeal.enums.PropertyType;
-import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
 import java.util.ArrayList;
@@ -113,12 +112,16 @@ public class PropertySet {
             case BLACK:
                 return 4;   // Railroad needs 4 cards
             default:
-                return 0;
+                // RAINBOW (and any unknown type) can never form a complete set;
+                // returning Integer.MAX_VALUE ensures need > 0 but cards can never
+                // reach this count, so isComplete() is always false.
+                return Integer.MAX_VALUE;
         }
     }
 
     @Override
     public String toString() {
-        return color + " Set (" + cards.size() + "/" + need + ")" + (isComplete() ? " [COMPLETE]" : "");
+        String needStr = (need == Integer.MAX_VALUE) ? "?" : String.valueOf(need);
+        return color + " Set (" + cards.size() + "/" + needStr + ")" + (isComplete() ? " [COMPLETE]" : "");
     }
 }
