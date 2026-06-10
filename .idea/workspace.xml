@@ -4,60 +4,44 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a75a9462-56fe-4223-9887-ca7ff601f4b8" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/SimpleTestRunner.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/SimpleTestRunner.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/javac-single.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/2026-06-08T18-17-33_553.dumpstream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/2026-06-08T18-22-57_920.dumpstream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/2026-06-08T18-33-55_718.dumpstream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/2026-06-08T18-37-57_103.dumpstream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.ActionHandlerTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.AssetTransferManagerTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.BankAreaTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.DeckTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.GameManagerTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.HandTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.KnownBugsTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.PlayerTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.PropertyAreaTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.PropertySetTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.RentCalculatorTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.RuleValidatorTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.TurnManagerTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/TEST-com.monopolydeal.VictoryCheckerTest.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.ActionHandlerTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.AssetTransferManagerTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.BankAreaTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.DeckTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.GameManagerTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.HandTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.KnownBugsTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.PlayerTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.PropertyAreaTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.PropertySetTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.RentCalculatorTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.RuleValidatorTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.TurnManagerTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/surefire-reports/com.monopolydeal.VictoryCheckerTest.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/ActionHandlerTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/AssetTransferManagerTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/BankAreaTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/DeckTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/GameManagerTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/HandTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/KnownBugsTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/PlayerTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/PropertyAreaTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/PropertyDecoratorTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/PropertySetTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/RentCalculatorTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/RuleValidatorTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/TurnManagerTest.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/test-classes/com/monopolydeal/VictoryCheckerTest.class" afterDir="false" />
+    <list default="true" id="d39a65c8-d0d9-407c-ac38-05b47c8e9eba" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GameRulesDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/GameRulesDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/board/TopStatusPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/board/TopStatusPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/menu/GameRulesDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/gui/menu/GameRulesDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/logic/ActionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/logic/ActionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/logic/GameLogic.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/logic/GameLogic.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/model/Deck.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/model/Deck.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/monopolydeal/network/GameStateSnapshot.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/monopolydeal/network/GameStateSnapshot.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/monopolydeal/DeckTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/monopolydeal/DeckTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/monopolydeal/KnownBugsTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/monopolydeal/KnownBugsTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/ControlPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/ControlPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/GameBoardPane.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/GameBoardPane.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/GameFrame.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/GameFrame.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/OpponentSeatPane.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/OpponentSeatPane.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/PlayerPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/PlayerPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/PropertyAreaPanel$LanePane.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/board/PropertyAreaPanel$LanePane.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/image/CardImageResolver.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/image/CardImageResolver.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/menu/MainMenuFrame$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/menu/MainMenuFrame$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/menu/MainMenuFrame$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/menu/MainMenuFrame$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/menu/MainMenuFrame$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/menu/MainMenuFrame$3.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/menu/MainMenuFrame.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/menu/MainMenuFrame.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/ConnectionProgressDialog.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/ConnectionProgressDialog.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkControlPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkControlPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkLobbyFrame$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkLobbyFrame$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkLobbyFrame.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkLobbyFrame.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkOpponentsPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkOpponentsPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkPlayerPanel.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/network/NetworkPlayerPanel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/theme/ThemedDialog.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/theme/ThemedDialog.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/theme/UITheme.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/gui/theme/UITheme.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertyArea$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertyArea$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertyArea.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertyArea.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertySet$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertySet$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertySet.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/model/PropertySet.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameServer.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/monopolydeal/network/GameServer.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,132 +60,37 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/Skychutt/COMP2008J-group16.git&quot;,
-    &quot;accountId&quot;: &quot;6507d74b-4b3d-4d29-8aa0-7bb4257b53b0&quot;
+    &quot;accountId&quot;: &quot;132c01c5-52aa-4bfd-acbd-f25b3e4a6532&quot;
   }
 }</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 0
 }</component>
-  <component name="ProjectId" id="3ElNj6TUgfhqawlHr8pmF2aT5Jz" />
+  <component name="ProjectId" id="3EwTaCyhIxLdPlPMiKvVJPRDGSP" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Main.executor": "Run",
-    "JUnit.GameManagerTest.executor": "Run",
-    "JUnit.KnownBugsTest.executor": "Run",
-    "JUnit.PlayerTest.executor": "Run",
-    "JUnit.PropertySetTest.executor": "Run",
-    "JUnit.RentCalculatorTest.executor": "Run",
-    "JUnit.TurnManagerTest.executor": "Run",
-    "JUnit.monopoly-deal中的所有.executor": "Run",
-    "Maven.monopoly-deal [javafx:run].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "正在合并 master",
-    "kotlin-language-version-configured": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "settings.editor.selected.configurable": "terminal",
-    "vue.rearranger.settings.migration": "true",
-    "应用程序.Main.executor": "Run"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.find.dps.bug.settings.CodeAssistSettingsConfigurable&quot;,
+    &quot;应用程序.Main.executor&quot;: &quot;Run&quot;
   }
-}]]></component>
-  <component name="RunManager" selected="JUnit.monopoly-deal中的所有">
-    <configuration name="monopoly-deal中的所有" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="monopoly-deal" />
-      <option name="PACKAGE_NAME" value="" />
-      <option name="TEST_OBJECT" value="package" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="project" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="monopoly-deal [javafx:run]" type="MavenRunConfiguration" factoryName="Maven" nameIsGenerated="true">
-      <MavenSettings>
-        <option name="myGeneralSettings" />
-        <option name="myRunnerSettings" />
-        <option name="myRunnerParameters">
-          <MavenRunnerParameters>
-            <option name="cmdOptions" />
-            <option name="profiles">
-              <set />
-            </option>
-            <option name="goals">
-              <list>
-                <option value="javafx:run" />
-              </list>
-            </option>
-            <option name="multimoduleDir" />
-            <option name="pomFileName" />
-            <option name="profilesMap">
-              <map />
-            </option>
-            <option name="projectsCmdOptionValues">
-              <list />
-            </option>
-            <option name="resolveToWorkspace" value="false" />
-            <option name="workingDirPath" value="$PROJECT_DIR$" />
-          </MavenRunnerParameters>
-        </option>
-      </MavenSettings>
-      <method v="2" />
-    </configuration>
-    <list>
-      <item itemvalue="JUnit.monopoly-deal中的所有" />
-      <item itemvalue="Maven.monopoly-deal [javafx:run]" />
-    </list>
-    <recent_temporary>
-      <list>
-        <item itemvalue="JUnit.monopoly-deal中的所有" />
-      </list>
-    </recent_temporary>
-  </component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.25557.131" />
-        <option value="bundled-js-predefined-d6986cc7102b-b598e85cdad2-JavaScript-IU-252.25557.131" />
-      </set>
-    </attachedChunks>
-  </component>
+}</component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="默认任务">
-      <changelist id="a75a9462-56fe-4223-9887-ca7ff601f4b8" name="更改" comment="" />
-      <created>1780749328315</created>
+      <changelist id="d39a65c8-d0d9-407c-ac38-05b47c8e9eba" name="更改" comment="" />
+      <created>1781088693393</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1780749328315</updated>
-      <workItem from="1780829370071" duration="19000" />
-      <workItem from="1780829413858" duration="5000" />
-      <workItem from="1780902291046" duration="215000" />
-      <workItem from="1780903665114" duration="2586000" />
-      <workItem from="1780907071380" duration="11000" />
-      <workItem from="1780910524018" duration="1066000" />
-      <workItem from="1780911646436" duration="1738000" />
-      <workItem from="1780913477481" duration="3943000" />
-      <workItem from="1780922009055" duration="36000" />
-      <workItem from="1780922796443" duration="30000" />
-      <workItem from="1780930381241" duration="573000" />
+      <updated>1781088693393</updated>
     </task>
     <servers />
-  </component>
-  <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="3" />
   </component>
 </project>

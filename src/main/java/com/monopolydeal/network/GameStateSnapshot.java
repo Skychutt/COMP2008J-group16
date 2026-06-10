@@ -25,7 +25,7 @@ public class GameStateSnapshot {
         sb.append("\"turn\":").append(gm.getTurn()).append(",");
         sb.append("\"currentPlayer\":\"").append(esc(gm.getCurrentPlayer().getName())).append("\",");
         sb.append("\"deckSize\":").append(Deck.getInstance().drawPileSize()).append(",");
-        sb.append("\"discardSize\":").append(Deck.getInstance().getTotalDiscardedCount()).append(",");
+        sb.append("\"discardSize\":").append(Deck.getInstance().discardSize()).append(",");
         Card discardTop = Deck.getInstance().getVisibleDiscardTop();
         if (discardTop != null) {
             sb.append("\"discardTop\":{");

@@ -142,11 +142,7 @@ public class TopStatusPanel extends BorderPane {
         } else {
             ivDiscardTop.setImage(resolver.getFallbackIcon(82, 124));
         }
-        if (!myTurn) {
-            refreshDropZoneStyle(false);
-        } else {
-            refreshDropZoneStyle(false);
-        }
+        refreshDropZoneStyle(false);
     }
 
     public void updateTableCenter(Player currentPlayer, CardImageResolver resolver,
@@ -232,7 +228,7 @@ public class TopStatusPanel extends BorderPane {
         } else {
             ivDiscardTop.setImage(resolver.getCardIcon(discardTop, 82, 124));
         }
-        lblDiscardCount.setText(String.valueOf(deck.getTotalDiscardedCount()));
+        lblDiscardCount.setText(String.valueOf(deck.discardSize()));
     }
 
     private void refreshDropZoneStyle(boolean hovered) {

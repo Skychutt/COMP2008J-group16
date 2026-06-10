@@ -263,8 +263,8 @@ public class ActionHandler {
 
             Card discard = handCards.get(index);
             player.getHand().removeCard(discard.getId());
-            Deck.getInstance().addToDrawPileBottom(discard);
-            gm.notifyAllObservers(player.getName() + " discarded [" + discard.getName() + "] to bottom of draw pile (hand limit).");
+            Deck.getInstance().addToDiscard(discard);
+            gm.notifyAllObservers(player.getName() + " discarded [" + discard.getName() + "] to discard pile (hand limit).");
         }
     }
 
