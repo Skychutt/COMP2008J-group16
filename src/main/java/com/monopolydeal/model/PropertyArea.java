@@ -4,7 +4,11 @@ import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.PropertyCard;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents a player's property area containing all their property sets.
@@ -56,10 +60,8 @@ public class PropertyArea {
             PropertyCard pc = (PropertyCard) c;
             PropertyType color = resolvePlacementColor(pc, chosenColor);
             sets.computeIfAbsent(color, PropertySet::new);
-            // Always commit the resolved placement color (not the raw chosenColor),
-            // so pc.getColor() is always consistent with the set it has been placed into.
             if (!pc.isColorCommitted()) {
-                pc.commitColor(color);
+                pc.commitColor(chosenColor != null ? chosenColor : color);
             }
             sets.get(color).add(pc);
         }
@@ -201,15 +203,6 @@ public class PropertyArea {
             return best;
         }
         return options.iterator().next();
-    }
-
-    private boolean hasNoPlacedProperties() {
-        for (PropertySet set : sets.values()) {
-            if (!set.getCards().isEmpty()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private int scorePlacement(PropertyType color) {

@@ -74,10 +74,6 @@ public class ControlPanel extends VBox {
         getChildren().addAll(title, lblBankTotal, scrollPane);
     }
 
-    public void updateTurnStatus(Player currentPlayer) {
-        // Bank panel no longer shows turn text.
-    }
-
     public void updateSelfAssets(Player currentPlayer) {
         cardList.getChildren().clear();
 

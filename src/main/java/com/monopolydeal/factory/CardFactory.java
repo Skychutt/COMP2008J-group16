@@ -9,7 +9,7 @@ import com.monopolydeal.model.card.PropertyCard;
 /**
  * Abstract Factory for creating different types of cards.
  * Uses the Abstract Factory design pattern to support unified card production.
- * Subclasses (StandardCardFactory, PremiumCardFactory) provide concrete implementations.
+ * The concrete implementation is {@link StandardCardFactory}.
  */
 public abstract class CardFactory {
 
