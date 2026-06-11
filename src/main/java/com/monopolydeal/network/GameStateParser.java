@@ -55,6 +55,8 @@ public class GameStateParser {
         public boolean isWild;
         public boolean needsChoice;
         public String actionType;
+        public boolean hasHouse;    // true if a House upgrade is attached
+        public boolean hasHotel;    // true if a Hotel upgrade is attached
     }
 
     /**
@@ -183,6 +185,8 @@ public class GameStateParser {
         ci.isWild     = parseBool(json, "isWild");
         ci.needsChoice= parseBool(json, "needsChoice");
         ci.actionType = parseStr(json, "actionType");
+        ci.hasHouse   = parseBool(json, "hasHouse");
+        ci.hasHotel   = parseBool(json, "hasHotel");
         return ci;
     }
 

@@ -115,7 +115,9 @@ public class GameStateSnapshot {
             PropertyCard pc = (PropertyCard) c;
             extra = ",\"color\":\"" + pc.getColor().name() + "\""
                   + ",\"isWild\":" + pc.isWild()
-                  + ",\"needsChoice\":" + pc.needsColorChoiceOnPlacement();
+                  + ",\"needsChoice\":" + pc.needsColorChoiceOnPlacement()
+                  + ",\"hasHouse\":" + pc.hasHouse()
+                  + ",\"hasHotel\":" + pc.hasHotel();
         } else if (c instanceof ActionCard) {
             cardType = "ACTION";
             ActionCard ac = (ActionCard) c;

@@ -4,7 +4,6 @@ import com.monopolydeal.enums.ActionType;
 import com.monopolydeal.enums.PropertyType;
 import com.monopolydeal.model.GameManager;
 import com.monopolydeal.model.Player;
-import com.monopolydeal.model.PropertySet;
 import com.monopolydeal.model.card.ActionCard;
 import com.monopolydeal.model.card.Card;
 import com.monopolydeal.model.card.MoneyCard;
@@ -118,6 +117,23 @@ public final class ClientGameMirror {
         boolean wild = info.isWild || looksLikeWildProperty(info.name);
         PropertyCard card = new PropertyCard(info.name, info.value, cardColor, wild);
         card.syncIdFromNetwork(info.id);
+
+        // Restore House / Hotel upgrades so RuleValidator.canAddHotel() works correctly
+        // on the client mirror. Both the decorator chain (used by getTotalRent()) and
+        // the legacy upgrades list (used by RuleValidator.countUpgrade()) must be populated.
+        if (info.hasHouse || info.hasHotel) {
+            ActionCard houseCard = new ActionCard("House", 3,
+                    com.monopolydeal.enums.ActionType.HOUSE, false);
+            card.attachHouse();          // decorator chain
+            card.attachUpgrade(houseCard); // legacy list → RuleValidator.countUpgrade()
+        }
+        if (info.hasHotel) {
+            ActionCard hotelCard = new ActionCard("Hotel", 4,
+                    com.monopolydeal.enums.ActionType.HOTEL, false);
+            card.attachHotel();          // decorator chain
+            card.attachUpgrade(hotelCard); // legacy list → RuleValidator.countUpgrade()
+        }
+
         return card;
     }
 
