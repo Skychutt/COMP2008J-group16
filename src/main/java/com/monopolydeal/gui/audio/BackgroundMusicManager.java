@@ -61,10 +61,6 @@ public final class BackgroundMusicManager {
         }
     }
 
-    public double getVolume() {
-        return volume;
-    }
-
     public int getVolumePercent() {
         return (int) Math.round(volume * 100.0);
     }

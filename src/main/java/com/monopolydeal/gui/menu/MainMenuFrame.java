@@ -4,7 +4,6 @@ import com.monopolydeal.gui.MonopolyDealGUIApp;
 import com.monopolydeal.gui.network.NetworkGameFrame;
 import com.monopolydeal.gui.network.NetworkLobbyFrame;
 import com.monopolydeal.gui.theme.ThemedConfirmDialog;
-import com.monopolydeal.gui.theme.ThemedDialog;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -111,14 +110,6 @@ public class MainMenuFrame {
                 }
             });
         }
-    }
-
-    private void showComingSoon(String modeName) {
-        ThemedDialog.showInfo(
-                stage,
-                modeName,
-                modeName + " is not available yet.\nPlease use Local Game for now."
-        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────

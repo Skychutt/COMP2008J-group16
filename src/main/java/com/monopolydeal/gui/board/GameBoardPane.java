@@ -65,16 +65,7 @@ public class GameBoardPane extends StackPane {
     private static final double LOCAL_PLAYER_W = 1244;
     private static final double LOCAL_PLAYER_H = 220;
 
-    private static final double NETWORK_CENTER_W = 650;
-    private static final double NETWORK_CENTER_X = (BOARD_W - NETWORK_CENTER_W) / 2.0;
-    private static final double NETWORK_CENTER_Y = 192;
-    private static final double NETWORK_CTRL_X = 5;
-    private static final double NETWORK_CTRL_Y = 195;
-    private static final double NETWORK_PLAYER_Y = 535;
-    private static final double NETWORK_PLAYER_H = 265;
-
     private static final double OPP_W = OpponentSeatPane.ZONE_W;
-    private static final double OPP_H = OpponentSeatPane.ZONE_H;
     private static final double TABLE_CX = BOARD_W / 2.0;
 
     private static final double SEAT_LEFT_SAFE = 205;
