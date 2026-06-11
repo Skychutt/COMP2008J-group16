@@ -209,6 +209,30 @@ public class Deck {
         return discard.size();
     }
 
+    /**
+     * LAN client mirror: align local pile sizes with the server snapshot for display only.
+     * Does not reconstruct hidden draw-pile cards — only counts and the visible discard top.
+     */
+    public void applyNetworkMirror(int drawSize, int discardSize, Card discardTop) {
+        drawPile.clear();
+        discard.clear();
+
+        int safeDraw = Math.max(0, drawSize);
+        for (int i = 0; i < safeDraw; i++) {
+            drawPile.push(factory.createMoney(1));
+        }
+
+        int safeDiscard = Math.max(0, discardSize);
+        for (int i = 0; i < safeDiscard; i++) {
+            boolean isTop = (i == safeDiscard - 1);
+            if (isTop && discardTop != null) {
+                discard.push(discardTop);
+            } else {
+                discard.push(factory.createMoney(1));
+            }
+        }
+    }
+
     /** @return the current top card of the discard pile, or null when the pile is empty */
     public Card getVisibleDiscardTop() {
         return discard.isEmpty() ? null : discard.peek();

@@ -98,6 +98,33 @@ public class GameManager {
     }
 
     /**
+     * LAN client mirror: create player seats without touching {@link Deck}.
+     * The authoritative deck lives only on the server; clients must not shuffle or deal locally.
+     */
+    public void initPlayersOnly(int count, List<String> displayNames) {
+        if (count < 2 || count > 5) {
+            throw new IllegalArgumentException("Monopoly Deal supports 2 to 5 players.");
+        }
+
+        players.clear();
+        gameOver = false;
+
+        for (int i = 0; i < count; i++) {
+            String name = "Player " + (i + 1);
+            if (displayNames != null && i < displayNames.size()) {
+                String custom = displayNames.get(i);
+                if (custom != null && !custom.trim().isEmpty()) {
+                    name = custom.trim();
+                }
+            }
+            Player player = new Player(String.valueOf(i + 1), name);
+            player.setPlayerType(PlayerType.HUMAN);
+            players.add(player);
+        }
+        turn = 0;
+    }
+
+    /**
      * Initialize a game with explicit human/AI seat configuration.
      * @param playerSetups one setup per seat (2-5 players)
      */

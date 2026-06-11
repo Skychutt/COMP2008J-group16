@@ -33,7 +33,6 @@ com\monopolydeal\model\WildcardArtOrientation.class
 com\monopolydeal\logic\ActionHandler.class
 com\monopolydeal\network\ClientHandler.class
 com\monopolydeal\logic\AssetTransferManager$PaymentMode.class
-com\monopolydeal\ai\BotDecisionPolicy.class
 com\monopolydeal\gui\menu\SinglePlayerSetupPanel$SetupListener.class
 com\monopolydeal\network\GameClient$MessageListener.class
 com\monopolydeal\logic\AssetTransferManager$PaymentResult.class
@@ -49,7 +48,6 @@ com\monopolydeal\network\DecisionPayload.class
 com\monopolydeal\model\GameManager$PlayerSetup.class
 com\monopolydeal\model\PropertyArea$1.class
 com\monopolydeal\gui\board\GameFrame.class
-com\monopolydeal\ai\BotPlayerController.class
 com\monopolydeal\logic\RuleValidator.class
 com\monopolydeal\network\NetworkMessage.class
 com\monopolydeal\MonopolyDealConsole.class
@@ -76,7 +74,6 @@ com\monopolydeal\gui\menu\MainMenuFrame$3.class
 com\monopolydeal\gui\network\NetworkLobbyFrame.class
 com\monopolydeal\decorator\PropertyDecorator.class
 com\monopolydeal\gui\image\CardImageResolver.class
-com\monopolydeal\ai\BotTurnChoice$Kind.class
 com\monopolydeal\model\card\Card.class
 com\monopolydeal\network\GameStateParser$PlayerInfo.class
 com\monopolydeal\gui\board\RecentLogPanel.class
@@ -86,13 +83,13 @@ com\monopolydeal\gui\network\NetworkGameFrame$2.class
 com\monopolydeal\network\GameClient.class
 com\monopolydeal\network\GameServer$DecisionWaiter.class
 com\monopolydeal\network\GameServer$ServerStatusListener.class
+com\monopolydeal\botfighting\BotTurnScheduler$1.class
 com\monopolydeal\gui\board\PropertyColorChooser.class
 com\monopolydeal\model\Hand.class
 com\monopolydeal\gui\theme\UITheme.class
 com\monopolydeal\gui\image\ImageActionButton.class
 com\monopolydeal\gui\menu\MainMenuFrame$2.class
 com\monopolydeal\gui\network\NetworkLobbyFrame$1.class
-com\monopolydeal\ai\BotTurnScheduler$1.class
 com\monopolydeal\interfaces\IProperty.class
 com\monopolydeal\logic\TurnManager.class
 com\monopolydeal\gui\menu\SinglePlayerSetupPanel.class
@@ -104,16 +101,14 @@ com\monopolydeal\enums\ActionType.class
 com\monopolydeal\gui\board\PropertyAreaPanel$LanePane.class
 com\monopolydeal\network\LanAddressUtil.class
 com\monopolydeal\model\Deck.class
+com\monopolydeal\botfighting\BotPlayerController$1.class
 com\monopolydeal\model\PropertySet.class
 com\monopolydeal\factory\StandardCardFactory.class
 com\monopolydeal\logic\AssetTransferManager.class
-com\monopolydeal\ai\BotTurnScheduler.class
-com\monopolydeal\ai\BotPlayerController$1.class
 com\monopolydeal\gui\theme\BackgroundUtil.class
 com\monopolydeal\network\GameServer$JoinResult.class
 com\monopolydeal\gui\board\OpponentSeatPane.class
 com\monopolydeal\model\card\MoneyCard.class
-com\monopolydeal\ai\BotTurnChoice.class
 com\monopolydeal\gui\menu\MainMenuPanel.class
 com\monopolydeal\decorator\HouseDecorator.class
 com\monopolydeal\logic\AssetTransferManager$PaymentChooser.class

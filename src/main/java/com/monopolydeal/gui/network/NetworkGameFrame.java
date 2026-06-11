@@ -346,7 +346,7 @@ public class NetworkGameFrame implements GamePanelHost {
         mirrorManager = GameManager.getInstance();
         mirrorLogic = new GameLogic(mirrorManager);
         mirrorLogic.getActionHandler().setDialogOwner(stage);
-        mirrorManager.initGame(names.size(), names);
+        mirrorManager.initPlayersOnly(names.size(), names);
         mirrorReady = true;
         ClientGameMirror.applySnapshot(mirrorManager, snap, myPlayerIndex);
     }
@@ -363,15 +363,16 @@ public class NetworkGameFrame implements GamePanelHost {
             return;
         }
 
-        if (!mirrorReady) {
+        // Deck / discard / opponent seats always come from the server snapshot.
         topStatusPanel.updateFromSnapshot(snap, imageResolver, myTurn, discardMode, discardRemaining);
-            board.updateFromSnapshot(snap, myPlayerIndex, imageResolver, this);
+        board.updateFromSnapshot(snap, myPlayerIndex, imageResolver, this);
+
+        if (!mirrorReady) {
             return;
         }
 
-        Player current = mirrorManager.getCurrentPlayer();
         Player viewPlayer = getViewPlayer();
-        if (current == null || viewPlayer == null) {
+        if (viewPlayer == null) {
             return;
         }
 
@@ -379,16 +380,10 @@ public class NetworkGameFrame implements GamePanelHost {
         if (meInfo != null) {
             viewPlayer.setActions(meInfo.actions);
         }
-        GameStateParser.PlayerInfo turnInfo = findPlayerInfo(snap, snap.turn);
-        if (turnInfo != null && current.getActions() != turnInfo.actions) {
-            current.setActions(turnInfo.actions);
-        }
 
-        topStatusPanel.updateTableCenter(current, imageResolver, snap.gameOver, discardMode, discardRemaining);
         playerPanel.updatePlayerView(viewPlayer, snap.gameOver, discardMode, discardRemaining, myTurn);
         refreshPropertyPanelOnly(viewPlayer);
         controlPanel.updateSelfAssets(viewPlayer);
-        board.updateOpponents(mirrorManager.getPlayers(), viewPlayer, imageResolver);
         if (!snap.gameOver) {
             board.setWinnerBanner(null);
         }
