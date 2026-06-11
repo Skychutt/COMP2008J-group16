@@ -125,13 +125,13 @@ public final class ClientGameMirror {
             ActionCard houseCard = new ActionCard("House", 3,
                     com.monopolydeal.enums.ActionType.HOUSE, false);
             card.attachHouse();          // decorator chain
-            card.attachUpgrade(houseCard); // legacy list → RuleValidator.countUpgrade()
+            card.attachUpgrade(houseCard); // legacy list for rule checks
         }
         if (info.hasHotel) {
             ActionCard hotelCard = new ActionCard("Hotel", 4,
                     com.monopolydeal.enums.ActionType.HOTEL, false);
             card.attachHotel();          // decorator chain
-            card.attachUpgrade(hotelCard); // legacy list → RuleValidator.countUpgrade()
+            card.attachUpgrade(hotelCard); // legacy list for rule checks
         }
 
         return card;

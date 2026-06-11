@@ -600,6 +600,7 @@ public class GameFrame implements IGameObserver, GamePanelHost {
     }
 
     private int previewRentMultiplier() {
+        // Mirror the local pending Double Rent state in the board preview.
         int multiplier = 1;
         for (int i = 0; i < gameLogic.getPendingDoubleRentCount(); i++) {
             multiplier *= 2;

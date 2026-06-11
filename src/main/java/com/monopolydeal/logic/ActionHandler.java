@@ -986,6 +986,7 @@ public class ActionHandler {
     }
 
     private int previewRentMultiplier() {
+        // Preview the currently pending Double Rent effects without consuming them.
         int multiplier = 1;
         for (int i = 0; i < gameLogic.getPendingDoubleRentCount(); i++) {
             multiplier *= 2;
@@ -1000,6 +1001,7 @@ public class ActionHandler {
      * otherwise.
      */
     private int getBuildingBonusForSet(PropertySet set) {
+        // Sum all property upgrade bonuses in the set.
         int bonus = 0;
         for (PropertyCard pc : set.getCards()) {
             bonus += pc.getTotalRent();

@@ -70,6 +70,7 @@ public class GameStateSnapshot {
         sb.append("],");
 
         sb.append("\"hand\":[");
+        // Only the active viewer receives full hand details.
         if (idx == viewerIdx) {
             List<Card> handCards = p.getHand().getCards();
             for (int i = 0; i < handCards.size(); i++) {
@@ -113,6 +114,7 @@ public class GameStateSnapshot {
         if (c instanceof PropertyCard) {
             cardType = "PROPERTY";
             PropertyCard pc = (PropertyCard) c;
+            // Expose only public property state in the snapshot.
             extra = ",\"color\":\"" + pc.getColor().name() + "\""
                   + ",\"isWild\":" + pc.isWild()
                   + ",\"needsChoice\":" + pc.needsColorChoiceOnPlacement()

@@ -92,6 +92,7 @@ public class RuleValidator {
                             : "Cannot play [Debt Collector] because there is no opponent to charge.";
                 case DOUBLE_RENT:
                     if (isDoubleRentBoostCard(actionCard)) {
+                        // Boost card must have a rent card to amplify this turn.
                         return canUseDoubleRentNow(player)
                                 ? null
                                 : "Cannot play [Double The Rent] because there is no rent card and matching property set to boost this turn.";
@@ -127,6 +128,7 @@ public class RuleValidator {
         if (player == null) {
             return false;
         }
+        // Look for any playable rent card in hand.
         for (Card c : player.getHand().getCards()) {
             if (!(c instanceof ActionCard)) {
                 continue;
@@ -171,6 +173,7 @@ public class RuleValidator {
             return false;
         }
 
+        // A moved full wild must still land on a legal rent target.
         for (PropertySet set : player.getPropertyArea().getSets()) {
             if (set.getColor() == PropertyType.RAINBOW || set.getCards().isEmpty()) {
                 continue;

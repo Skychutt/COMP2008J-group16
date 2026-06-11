@@ -209,6 +209,7 @@ public class PropertyAreaPanel extends HBox {
 
             int rent = 0;
             if (set != null) {
+                // Show the preview rent with the current multiplier applied.
                 rent = totalRent(set) * rentMultiplier;
                 List<PropertyCard> cards = set.getCards();
                 for (int i = 0; i < cards.size(); i++) {

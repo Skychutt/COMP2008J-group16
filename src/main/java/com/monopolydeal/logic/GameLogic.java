@@ -58,6 +58,7 @@ public class GameLogic {
      * 0 pending -> x1, 1 pending -> x2, 2 pending -> x4.
      */
     public int consumeRentMultiplier() {
+        // Consume once so the effect only applies to the next rent event.
         int multiplier = 1;
         for (int i = 0; i < pendingDoubleRentCount; i++) {
             multiplier *= 2;

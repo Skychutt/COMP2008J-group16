@@ -202,6 +202,7 @@ public class AssetTransferManager {
             return Collections.emptyList();
         }
         List<Card> sorted = new ArrayList<>(availableAssets);
+        // Pay with small cards first to reduce overpay.
         sorted.sort(Comparator.comparingInt(Card::getValue));
         List<Card> chosen = new ArrayList<>();
         int sum = 0;
@@ -248,6 +249,7 @@ public class AssetTransferManager {
         }
         bank.removeIf(c -> c == null || c.getValue() <= 0);
         props.removeIf(c -> c == null || c.getValue() <= 0);
+        // Keep payment selection flexible for different UI flows.
         switch (mode) {
             case USE_MONEY_ONLY:
                 return bank;

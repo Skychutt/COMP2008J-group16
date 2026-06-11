@@ -250,6 +250,7 @@ public class PropertyCard extends Card implements IPlayable, IUpgradable, IPrope
      * Count how many layers in the chain are instances of the given decorator subclass.
      */
     private int countDecoratorsOfType(Class<? extends PropertyDecorator> type) {
+        // Walk from outside to inside and count matching layers.
         int count = 0;
         PropertyDecorator current = decoratorChain;
         while (current != null) {
@@ -296,7 +297,7 @@ public class PropertyCard extends Card implements IPlayable, IUpgradable, IPrope
             }
             return total;
         }
-        // Fallback: legacy upgrades list (still populated by GUI / tests).
+        // Fallback for legacy callers that still use the raw upgrade list.
         int bonus = 0;
         for (Card u : upgrades) {
             if (u instanceof ActionCard) {
