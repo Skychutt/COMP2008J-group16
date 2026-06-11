@@ -233,13 +233,16 @@ public class NetworkGameFrame implements GamePanelHost {
                 GameStateParser.Snapshot snap = GameStateParser.parse(stateJson, myPlayerIndex);
                 snapshot = snap;
                 if (snap != null) {
-                    if (!mirrorReady && snap.players != null && !snap.players.isEmpty()) {
-                        initMirrorFromSnapshot(snap);
-                    }
                     myTurn = !snap.gameOver && snap.turn == myPlayerIndex;
-                    syncMirror(snap);
                 }
                 Platform.runLater(() -> {
+                    if (snap != null) {
+                        if (!mirrorReady && snap.players != null && !snap.players.isEmpty()) {
+                            initMirrorFromSnapshot(snap);
+                        } else {
+                            syncMirror(snap);
+                        }
+                    }
                     hideHomeIfNeeded();
                     if (!stage.isShowing()) {
                         stage.show();
@@ -349,6 +352,7 @@ public class NetworkGameFrame implements GamePanelHost {
         mirrorManager.initPlayersOnly(names.size(), names);
         mirrorReady = true;
         ClientGameMirror.applySnapshot(mirrorManager, snap, myPlayerIndex);
+        // initMirrorFromSnapshot already applied the first snapshot; skip duplicate sync below.
     }
 
     private void syncMirror(GameStateParser.Snapshot snap) {
@@ -363,11 +367,10 @@ public class NetworkGameFrame implements GamePanelHost {
             return;
         }
 
-        // Deck / discard / opponent seats always come from the server snapshot.
         topStatusPanel.updateFromSnapshot(snap, imageResolver, myTurn, discardMode, discardRemaining);
-        board.updateFromSnapshot(snap, myPlayerIndex, imageResolver, this);
 
         if (!mirrorReady) {
+            board.updateFromSnapshot(snap, myPlayerIndex, imageResolver, this);
             return;
         }
 
@@ -380,6 +383,9 @@ public class NetworkGameFrame implements GamePanelHost {
         if (meInfo != null) {
             viewPlayer.setActions(meInfo.actions);
         }
+
+        // Same OpponentSeatPane as local mode: hand backs only; properties on hover below.
+        board.updateOpponents(mirrorManager.getPlayers(), viewPlayer, imageResolver);
 
         playerPanel.updatePlayerView(viewPlayer, snap.gameOver, discardMode, discardRemaining, myTurn);
         refreshPropertyPanelOnly(viewPlayer);

@@ -10,6 +10,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
@@ -44,6 +45,8 @@ public class OpponentSeatPane extends VBox {
                             Consumer<Player> hoverHandler, Runnable exitHandler) {
         setPrefSize(ZONE_W, ZONE_H);
         setMaxSize(ZONE_W, ZONE_H);
+        setMinSize(ZONE_W, ZONE_H);
+        setClip(new Rectangle(ZONE_W, ZONE_H));
         setStyle(NORMAL_STYLE);
         setSpacing(4);
         setAlignment(Pos.TOP_CENTER);

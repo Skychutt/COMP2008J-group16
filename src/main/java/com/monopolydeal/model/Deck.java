@@ -210,9 +210,11 @@ public class Deck {
     }
 
     /**
-     * LAN client mirror: align local pile sizes with the server snapshot for display only.
-     * Does not reconstruct hidden draw-pile cards — only counts and the visible discard top.
+     * @deprecated LAN clients must not call this on the shared singleton — it corrupts the
+     *             authoritative server deck when host and server run in the same JVM.
+     *             Deck counts are shown from {@link com.monopolydeal.network.GameStateParser.Snapshot} instead.
      */
+    @Deprecated
     public void applyNetworkMirror(int drawSize, int discardSize, Card discardTop) {
         drawPile.clear();
         discard.clear();

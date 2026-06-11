@@ -2,7 +2,6 @@ package com.monopolydeal.network;
 
 import com.monopolydeal.enums.ActionType;
 import com.monopolydeal.enums.PropertyType;
-import com.monopolydeal.model.Deck;
 import com.monopolydeal.model.GameManager;
 import com.monopolydeal.model.Player;
 import com.monopolydeal.model.PropertySet;
@@ -28,7 +27,6 @@ public final class ClientGameMirror {
         }
 
         gm.applyMirrorFlags(snap.turn, snap.gameOver);
-        syncDeckMirror(snap);
 
         for (GameStateParser.PlayerInfo info : snap.players) {
             if (info.index < 0 || info.index >= gm.getPlayers().size()) {
@@ -78,14 +76,6 @@ public final class ClientGameMirror {
                 }
             }
         }
-    }
-
-    private static void syncDeckMirror(GameStateParser.Snapshot snap) {
-        Card discardTop = null;
-        if (snap.discardTop != null) {
-            discardTop = toCard(snap.discardTop);
-        }
-        Deck.getInstance().applyNetworkMirror(snap.deckSize, snap.discardSize, discardTop);
     }
 
     private static Card toCard(GameStateParser.CardInfo info) {

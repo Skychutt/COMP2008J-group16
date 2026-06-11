@@ -8,15 +8,12 @@ import com.monopolydeal.network.GameStateParser;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
@@ -54,6 +51,8 @@ public class NetworkOpponentSeatPane extends VBox {
         double zoneH = OpponentSeatPane.ZONE_H;
         setPrefSize(zoneW, zoneH);
         setMaxSize(zoneW, zoneH);
+        setMinSize(zoneW, zoneH);
+        setClip(new Rectangle(zoneW, zoneH));
         setStyle(isCurrentTurn
                 ? "-fx-background-color: rgba(12,38,22,0.95);" +
                 "-fx-border-color: rgba(238,190,82,0.95);" +
@@ -81,32 +80,10 @@ public class NetworkOpponentSeatPane extends VBox {
         stats.setStyle("-fx-text-fill: #b8e8c0;");
 
         HBox handRow = buildHandRow(player.handSize, resolver);
-        List<GameStateParser.CardInfo> props = collectProps(player);
-        FlowPane propRow = new FlowPane(3, 0);
-        propRow.setAlignment(Pos.CENTER);
-        int maxShow = Math.min(props.size(), 6);
-        for (int i = 0; i < maxShow; i++) {
-            GameStateParser.CardInfo c = props.get(i);
-            ImageView iv = new ImageView(resolver.getCardIconFromInfo(c, 26, 40));
-            iv.setFitWidth(26);
-            iv.setFitHeight(40);
-            Tooltip.install(iv, new Tooltip(c.name));
-            propRow.getChildren().add(iv);
-        }
-        if (props.size() > 6) {
-            Label more = new Label("+" + (props.size() - 6));
-            more.setFont(UITheme.FONT_SUBTITLE);
-            more.setStyle("-fx-text-fill: #d0e8b8;");
-            propRow.getChildren().add(more);
-        }
-        if (props.isEmpty()) {
-            Label noProps = new Label("No properties yet");
-            noProps.setFont(UITheme.FONT_BODY);
-            noProps.setStyle("-fx-text-fill: #7db890;");
-            propRow.getChildren().add(noProps);
-        }
 
-        getChildren().addAll(name, stats, handRow, propRow);
+        // Match local OpponentSeatPane: only show hand backs here.
+        // Property details appear in the bottom property panel on hover.
+        getChildren().addAll(name, stats, handRow);
         wireDropTarget(dropValidator, dropHandler);
         wireHoverPreview(hoverHandler, exitHandler);
     }
@@ -192,17 +169,5 @@ public class NetworkOpponentSeatPane extends VBox {
             row.getChildren().add(empty);
         }
         return row;
-    }
-
-    private static List<GameStateParser.CardInfo> collectProps(GameStateParser.PlayerInfo player) {
-        List<GameStateParser.CardInfo> cards = new ArrayList<>();
-        if (player.propertySets != null) {
-            for (GameStateParser.PropertySetInfo psi : player.propertySets) {
-                if (psi.cards != null) {
-                    cards.addAll(psi.cards);
-                }
-            }
-        }
-        return cards;
     }
 }

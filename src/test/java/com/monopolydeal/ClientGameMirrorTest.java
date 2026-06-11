@@ -35,7 +35,14 @@ class ClientGameMirrorTest {
     }
 
     @Test
-    void applySnapshotSyncsDeckCountsFromServer() {
+    void applySnapshotDoesNotMutateSharedDeck() {
+        Deck deck = Deck.getInstance();
+        GameManager serverGm = GameManager.getInstance();
+        serverGm.initGame(2, java.util.List.of("A", "B"));
+        int drawAfterDeal = deck.drawPileSize();
+        int discardAfterDeal = deck.discardSize();
+
+        GameManager.reset();
         GameManager gm = GameManager.getInstance();
         gm.initPlayersOnly(2, java.util.List.of("A", "B"));
 
@@ -75,11 +82,9 @@ class ClientGameMirrorTest {
 
         ClientGameMirror.applySnapshot(gm, snap, 0);
 
-        Deck deck = Deck.getInstance();
-        assertEquals(91, deck.drawPileSize());
-        assertEquals(2, deck.discardSize());
-        assertNotNull(deck.getVisibleDiscardTop());
-        assertEquals("Pass Go", deck.getVisibleDiscardTop().getName());
+        assertEquals(drawAfterDeal, deck.drawPileSize(),
+                "LAN client mirror must not rewrite the shared Deck singleton");
+        assertEquals(discardAfterDeal, deck.discardSize());
         assertEquals(1, gm.getPlayers().get(0).getHand().size());
         assertEquals(5, gm.getPlayers().get(1).getVisibleHandSize());
     }
