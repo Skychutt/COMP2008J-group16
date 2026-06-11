@@ -283,7 +283,9 @@ public class GameBoardPane extends StackPane {
                     resolver,
                     isTurn,
                     networkFrame == null ? null : cardId -> networkFrame.canTargetOpponentWithCard(cardId, opp.index),
-                    networkFrame == null ? null : cardId -> networkFrame.playCardOnTarget(opp.index, cardId)
+                    networkFrame == null ? null : cardId -> networkFrame.playCardOnTarget(opp.index, cardId),
+                    networkFrame == null ? null : () -> networkFrame.showPropertyPreviewForIndex(opp.index),
+                    networkFrame == null ? null : networkFrame::clearPropertyPreview
             );
             applySeatLayout(seat, layout);
             opponentSeats.add(seat);

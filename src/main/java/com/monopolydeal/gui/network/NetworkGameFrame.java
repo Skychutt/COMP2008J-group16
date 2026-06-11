@@ -614,6 +614,13 @@ public class NetworkGameFrame implements GamePanelHost {
         }
     }
 
+    public void showPropertyPreviewForIndex(int playerIndex) {
+        if (playerIndex == myPlayerIndex) {
+            return;
+        }
+        showPropertyPreview(findMirrorPlayer(playerIndex));
+    }
+
     public void showPropertyPreview(Player player) {
         if (player == null || player == getViewPlayer()) {
             return;

@@ -40,14 +40,16 @@ public class NetworkOpponentSeatPane extends VBox {
     public NetworkOpponentSeatPane(GameStateParser.PlayerInfo player,
                                    CardImageResolver resolver,
                                    boolean isCurrentTurn) {
-        this(player, resolver, isCurrentTurn, null, null);
+        this(player, resolver, isCurrentTurn, null, null, null, null);
     }
 
     public NetworkOpponentSeatPane(GameStateParser.PlayerInfo player,
                                    CardImageResolver resolver,
                                    boolean isCurrentTurn,
                                    IntPredicate dropValidator,
-                                   IntConsumer dropHandler) {
+                                   IntConsumer dropHandler,
+                                   Runnable hoverHandler,
+                                   Runnable exitHandler) {
         double zoneW = OpponentSeatPane.ZONE_W;
         double zoneH = OpponentSeatPane.ZONE_H;
         setPrefSize(zoneW, zoneH);
@@ -106,6 +108,16 @@ public class NetworkOpponentSeatPane extends VBox {
 
         getChildren().addAll(name, stats, handRow, propRow);
         wireDropTarget(dropValidator, dropHandler);
+        wireHoverPreview(hoverHandler, exitHandler);
+    }
+
+    private void wireHoverPreview(Runnable hoverHandler, Runnable exitHandler) {
+        if (hoverHandler != null) {
+            setOnMouseEntered(e -> hoverHandler.run());
+        }
+        if (exitHandler != null) {
+            setOnMouseExited(e -> exitHandler.run());
+        }
     }
 
     private void wireDropTarget(IntPredicate dropValidator, IntConsumer dropHandler) {
